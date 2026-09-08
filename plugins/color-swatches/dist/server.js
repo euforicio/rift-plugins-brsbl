@@ -6,8 +6,8 @@ var __filename = __fileURLToPath(import.meta.url);
 var __dirname = __pathDirname(__filename);
 
 // server.ts
-async function plugin(bb) {
-  bb.log.info("color-swatches ready");
+async function plugin(rift) {
+  rift.log.info("color-swatches ready");
 }
 export {
   plugin as default

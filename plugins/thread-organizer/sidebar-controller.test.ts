@@ -134,7 +134,7 @@ describe("workflow sidebar controller", () => {
     const building = section("sec_building", "Building", false);
     sidebar(personal, testing, planning, design, inbox, building);
     window.localStorage.setItem(
-      "bb.sidebar.manualSectionOrder",
+      "rift.sidebar.manualSectionOrder",
       JSON.stringify(
         order(
           "personal",
@@ -151,7 +151,7 @@ describe("workflow sidebar controller", () => {
     await vi.waitFor(() =>
       expect(
         JSON.parse(
-          window.localStorage.getItem("bb.sidebar.manualSectionOrder")!,
+          window.localStorage.getItem("rift.sidebar.manualSectionOrder")!,
         ),
       ).toEqual(
         order(
@@ -182,7 +182,7 @@ describe("workflow sidebar controller", () => {
     );
     const root = sidebar(inbox, planning, building, testing);
     window.localStorage.setItem(
-      "bb.sidebar.manualSectionOrder",
+      "rift.sidebar.manualSectionOrder",
       JSON.stringify(
         order(
           "sec_inbox",
@@ -212,7 +212,7 @@ describe("workflow sidebar controller", () => {
       "sec_on-hold",
     );
     window.localStorage.setItem(
-      "bb.sidebar.manualSectionOrder",
+      "rift.sidebar.manualSectionOrder",
       JSON.stringify(chosen),
     );
     root.insertBefore(building, planning);
@@ -220,7 +220,7 @@ describe("workflow sidebar controller", () => {
 
     expect(
       JSON.parse(
-        window.localStorage.getItem("bb.sidebar.manualSectionOrder")!,
+        window.localStorage.getItem("rift.sidebar.manualSectionOrder")!,
       ),
     ).toEqual(chosen);
     expect(saveConfig.mock.calls[0]?.[0].stages.map((stage) => stage.key)).toEqual(
@@ -255,7 +255,7 @@ describe("workflow sidebar controller", () => {
       "sec_on-hold",
     );
     window.localStorage.setItem(
-      "bb.sidebar.manualSectionOrder",
+      "rift.sidebar.manualSectionOrder",
       JSON.stringify(configured),
     );
     const controller = mount(config, saveConfig);
@@ -266,7 +266,7 @@ describe("workflow sidebar controller", () => {
     );
 
     window.localStorage.setItem(
-      "bb.sidebar.manualSectionOrder",
+      "rift.sidebar.manualSectionOrder",
       JSON.stringify([
         configured[1],
         configured[0],
@@ -278,7 +278,7 @@ describe("workflow sidebar controller", () => {
     await vi.waitFor(() =>
       expect(
         JSON.parse(
-          window.localStorage.getItem("bb.sidebar.manualSectionOrder")!,
+          window.localStorage.getItem("rift.sidebar.manualSectionOrder")!,
         ),
       ).toEqual(configured),
     );

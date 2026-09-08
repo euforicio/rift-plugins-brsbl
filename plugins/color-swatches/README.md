@@ -3,12 +3,12 @@
 Makes CSS color literals visible at a glance in thread code and submitted user
 messages — hex, `rgb()`, `hsl()`, `oklch()` and friends.
 
-![Color Swatches in bb](docs/screenshot.png)
+![Color Swatches in rift](docs/screenshot.png)
 
 ## Install
 
 ```sh
-bb plugin install git:https://github.com/brsbl/bb-plugins.git@plugin/color-swatches --yes
+rift plugin install "path:$PWD/plugins/color-swatches" --yes
 ```
 
 ## Use
@@ -27,7 +27,7 @@ as `#123` and `#1234` do not get mistaken for colors.
 Two rendering paths keep thread behavior intact:
 
 - **Code is never rewritten.** Its chip is drawn in `::before` from a custom
-  property on bb's existing token, so streaming, selection, and copied text are
+  property on rift's existing token, so streaming, selection, and copied text are
   unchanged.
 - **Submitted user messages retain React's text node.** The plugin inserts a
   small chip host beside each literal without changing the copied text, and
@@ -40,5 +40,5 @@ The composer is never decorated.
 ```sh
 npm install
 npm run check   # typecheck, build, test
-bb plugin install "path:$PWD" --yes
+rift plugin install "path:$PWD" --yes
 ```

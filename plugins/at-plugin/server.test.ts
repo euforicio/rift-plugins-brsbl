@@ -1,11 +1,11 @@
 import { readFile } from "node:fs/promises";
 
-import type { PluginMentionSearchContext } from "@get-bb/plugin-sdk";
+import type { PluginMentionSearchContext } from "@riftlabs/plugin-sdk";
 import {
   createFakePluginHost,
   type FakeMentionProviderRecord,
   type FakePluginHarness,
-} from "@get-bb/plugin-sdk/testing";
+} from "@riftlabs/plugin-sdk/testing";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { CommunityCatalogRecord } from "./community-catalog";
@@ -36,6 +36,10 @@ function installed(
 ): InstalledPluginRecord {
   return {
     app: { bundle: null, hasApp: false },
+    collections: [],
+    screenshots: [],
+    providerIds: [],
+    icons: {},
     capabilities: [capability("skill")],
     cliCommand: null,
     description: "Plugin description",
@@ -68,7 +72,12 @@ function community(
   overrides: Partial<CommunityCatalogRecord> = {},
 ): CommunityCatalogRecord {
   return {
-    author: { name: "Publisher", url: null },
+    author: { name: "Publisher", url: null, github: null },
+    collections: [],
+    screenshots: [],
+    iconTinted: false,
+    repositoryUrl: null,
+    installs: null,
     category: "Developer tools",
     compatible: true,
     description: "Catalog description",
@@ -78,8 +87,8 @@ function community(
     iconUrl: null,
     incompatibleReason: null,
     installed: false,
-    marketplace: "bb-community",
-    marketplaceDisplayName: "BB Community",
+    marketplace: "rift-community",
+    marketplaceDisplayName: "Rift Community",
     official: false,
     pluginId: "noema",
     publisherKey: "publisher",
@@ -120,8 +129,8 @@ afterEach(() => {
 
 describe("provider registration and package shape", () => {
   it("registers only Installed then Community with the default @ trigger", async () => {
-    const { bb, harness } = createFakePluginHost({ pluginId: "at-plugin" });
-    await plugin(bb);
+    const { rift, harness } = createFakePluginHost({ pluginId: "at-plugin" });
+    await plugin(rift);
 
     const registrations = harness.inspection.registrations;
     expect(registrations.mentionProviders.map(({ id, label, triggers }) => ({ id, label, triggers }))).toEqual([
@@ -145,27 +154,27 @@ describe("provider registration and package shape", () => {
     );
   });
 
-  it("uses the vendored SDK 0.4.8 and ships only the faithful AtIcon backend branding", async () => {
+  it("uses the vendored SDK 0.4.48 and ships only the faithful AtIcon backend branding", async () => {
     const packageText = await readFile(new URL("./package.json", import.meta.url), "utf8");
     const packageJson: unknown = JSON.parse(packageText);
     const icon = (await readFile(new URL("./assets/at.svg", import.meta.url), "utf8")).trim();
 
     expect(packageJson).toMatchObject({
-      name: "bb-plugin-at-plugin",
-      engines: { bbPluginSdk: ">=0.4.8" },
-      bb: {
+      name: "rift-plugin-at-plugin",
+      engines: { riftPluginSdk: ">=0.4.48" },
+      rift: {
         name: "@Plugin",
         branding: { icon: "./assets/at.svg" },
         server: "./server.ts",
         skills: [],
       },
       devDependencies: {
-        "@get-bb/plugin-sdk": "file:../../tooling/vendor/get-bb-plugin-sdk-0.4.8.tgz",
+        "@riftlabs/plugin-sdk": "0.4.48",
       },
     });
     expect(packageJson).not.toHaveProperty("dependencies");
-    expect(packageJson).not.toHaveProperty("bb.app");
-    expect(packageJson).not.toHaveProperty("bb.host");
+    expect(packageJson).not.toHaveProperty("rift.app");
+    expect(packageJson).not.toHaveProperty("rift.host");
     expect(icon).toBe(
       '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.5"><path d="M15.6 8.40033V12.9003C15.6 14.3915 16.8088 15.6003 18.3 15.6003C19.7912 15.6003 21 14.3915 21 12.9003V12C21 7.02944 16.9706 3 12 3C7.02944 3 3 7.02944 3 12C3 16.9706 7.02944 21 12 21C14.0265 21 15.8965 20.3302 17.4009 19.2M15.6 12.0003C15.6 13.9886 13.9882 15.6003 12 15.6003C10.0118 15.6003 8.4 13.9886 8.4 12.0003C8.4 10.0121 10.0118 8.40033 12 8.40033C13.9882 8.40033 15.6 10.0121 15.6 12.0003Z"/></svg>',
     );
@@ -176,16 +185,16 @@ describe("provider searches", () => {
   it("uses only each provider's SDK read and returns its host row", async () => {
     const inventory = [installed()];
     const catalog = [community({ displayName: "Git Memory", pluginId: "git-memory" })];
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "at-plugin",
       sdk: {
         plugins: {
           list: async () => ({ plugins: inventory }),
-          catalog: { search: async () => catalog },
+          catalog: { search: async () => ({ results: catalog, collections: [] }) },
         },
       },
     });
-    await plugin(bb);
+    await plugin(rift);
 
     const installedRows = await mentionProvider(harness, "installed").search(MENTION_CONTEXT);
     expect(installedRows).toEqual([
@@ -199,7 +208,7 @@ describe("provider searches", () => {
       {
         id: encodeCommunityItemId({
           pluginId: "git-memory",
-          marketplace: "bb-community",
+          marketplace: "rift-community",
           entryId: "noema-entry",
         }),
         title: "Git Memory",
@@ -214,7 +223,7 @@ describe("provider searches", () => {
   });
 
   it("isolates Installed and Community SDK rejections without leaking diagnostics", async () => {
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "at-plugin",
       sdk: {
         plugins: {
@@ -229,7 +238,7 @@ describe("provider searches", () => {
         },
       },
     });
-    await plugin(bb);
+    await plugin(rift);
 
     await expect(mentionProvider(harness, "installed").search(MENTION_CONTEXT)).resolves.toEqual(
       [],
@@ -246,11 +255,11 @@ describe("provider searches", () => {
 
 describe("Installed resolution", () => {
   it("re-reads live inventory and returns the exact bounded Installed pointer", async () => {
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "at-plugin",
       sdk: { plugins: { list: async () => ({ plugins: [installed()] }) } },
     });
-    await plugin(bb);
+    await plugin(rift);
 
     await expect(
       mentionProvider(harness, "installed").resolve(encodeInstalledItemId("github")),
@@ -280,11 +289,11 @@ describe("Installed resolution", () => {
         "GitHub no longer exposes an agent capability. Reload or update it, or remove @GitHub, then retry.",
     },
   ])("uses the curated $label error", async ({ plugins, message }) => {
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "at-plugin",
       sdk: { plugins: { list: async () => ({ plugins }) } },
     });
-    await plugin(bb);
+    await plugin(rift);
 
     await expect(
       mentionProvider(harness, "installed").resolve(encodeInstalledItemId("github")),
@@ -292,8 +301,8 @@ describe("Installed resolution", () => {
   });
 
   it("rejects malformed ids without reading inventory or exposing decode details", async () => {
-    const { bb, harness } = createFakePluginHost({ pluginId: "at-plugin" });
-    await plugin(bb);
+    const { rift, harness } = createFakePluginHost({ pluginId: "at-plugin" });
+    await plugin(rift);
 
     await expect(mentionProvider(harness, "installed").resolve("%2f")).rejects.toThrow(
       "This Installed plugin reference is invalid. Remove the mention and choose the plugin again.",
@@ -302,7 +311,7 @@ describe("Installed resolution", () => {
   });
 
   it("replaces inventory rejection details with a stable verification error", async () => {
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "at-plugin",
       sdk: {
         plugins: {
@@ -312,7 +321,7 @@ describe("Installed resolution", () => {
         },
       },
     });
-    await plugin(bb);
+    await plugin(rift);
 
     await expect(
       mentionProvider(harness, "installed").resolve(encodeInstalledItemId("github")),
@@ -325,22 +334,22 @@ describe("Installed resolution", () => {
 describe("Community resolution", () => {
   const identity = {
     pluginId: "noema",
-    marketplace: "bb-community",
+    marketplace: "rift-community",
     entryId: "noema-entry",
   };
   const itemId = encodeCommunityItemId(identity);
 
   it("requires the exact live catalog identity and returns the Community pointer", async () => {
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "at-plugin",
       sdk: {
         plugins: {
           list: async () => ({ plugins: [] }),
-          catalog: { search: async () => [community()] },
+          catalog: { search: async () => ({ results: [community()], collections: [] }) },
         },
       },
     });
-    await plugin(bb);
+    await plugin(rift);
 
     await expect(mentionProvider(harness, "community").resolve(itemId)).resolves.toEqual({
       context: buildCommunityPluginContext({ name: "Noema", ...identity }),
@@ -360,55 +369,55 @@ describe("Community resolution", () => {
       label: "missing exact entry",
       entry: community({ entryId: "replacement" }),
       message:
-        "noema is no longer available in bb Community. Remove @noema or choose a current result, then retry.",
+        "noema is no longer available in rift Community. Remove @noema or choose a current result, then retry.",
     },
     {
       label: "mismatched stable plugin id",
       entry: community({ pluginId: "replacement" }),
       message:
-        "noema is no longer available in bb Community. Remove @noema or choose a current result, then retry.",
+        "noema is no longer available in rift Community. Remove @noema or choose a current result, then retry.",
     },
     {
       label: "mismatched marketplace",
       entry: community({ marketplace: "other-marketplace" }),
       message:
-        "noema is no longer available in bb Community. Remove @noema or choose a current result, then retry.",
+        "noema is no longer available in rift Community. Remove @noema or choose a current result, then retry.",
     },
     {
       label: "missing live display name",
       entry: community({ displayName: " \t" }),
       message:
-        "noema is no longer available in bb Community. Remove @noema or choose a current result, then retry.",
+        "noema is no longer available in rift Community. Remove @noema or choose a current result, then retry.",
     },
     {
       label: "catalog-incompatible",
       entry: community({ compatible: false }),
       message:
-        "Noema is no longer listed for this version of bb. Remove @Noema or choose a current result, then retry.",
+        "Noema is no longer listed for this version of rift. Remove @Noema or choose a current result, then retry.",
     },
     {
       label: "already installed but missing from inventory",
       entry: community({ installed: true }),
       message:
-        "Noema is no longer available in bb Community. Remove @Noema or choose a current result, then retry.",
+        "Noema is no longer available in rift Community. Remove @Noema or choose a current result, then retry.",
     },
   ])("uses the curated $label error", async ({ entry, message }) => {
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "at-plugin",
       sdk: {
         plugins: {
           list: async () => ({ plugins: [] }),
-          catalog: { search: async () => [entry] },
+          catalog: { search: async () => ({ results: [entry], collections: [] }) },
         },
       },
     });
-    await plugin(bb);
+    await plugin(rift);
 
     await expect(mentionProvider(harness, "community").resolve(itemId)).rejects.toThrow(message);
   });
 
   it("upgrades a newly installed usable target before catalog lookup", async () => {
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "at-plugin",
       sdk: {
         plugins: {
@@ -421,7 +430,7 @@ describe("Community resolution", () => {
         },
       },
     });
-    await plugin(bb);
+    await plugin(rift);
 
     await expect(mentionProvider(harness, "community").resolve(itemId)).resolves.toEqual({
       context: buildInstalledPluginContext({ name: "Noema Live", pluginId: "noema" }),
@@ -442,18 +451,18 @@ describe("Community resolution", () => {
         "Noema no longer exposes an agent capability. Reload or update it, or remove @Noema, then retry.",
     },
   ])("blocks an installed-but-unusable target without catalog access", async ({ installedTarget, message }) => {
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "at-plugin",
       sdk: { plugins: { list: async () => ({ plugins: [installedTarget] }) } },
     });
-    await plugin(bb);
+    await plugin(rift);
 
     await expect(mentionProvider(harness, "community").resolve(itemId)).rejects.toThrow(message);
     expect(harness.inspection.sdk.calls.map((call) => call.path)).toEqual(["plugins.list"]);
   });
 
   it("curates catalog rejection and malformed-reference errors", async () => {
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "at-plugin",
       sdk: {
         plugins: {
@@ -466,11 +475,11 @@ describe("Community resolution", () => {
         },
       },
     });
-    await plugin(bb);
+    await plugin(rift);
     const provider = mentionProvider(harness, "community");
 
     await expect(provider.resolve(itemId)).rejects.toThrow(
-      "noema could not be verified in bb Community right now. Retry, or remove @noema to send without it.",
+      "noema could not be verified in rift Community right now. Retry, or remove @noema to send without it.",
     );
     await expect(provider.resolve("invalid")).rejects.toThrow(
       "This Community plugin reference is invalid. Remove the mention and choose the plugin again.",
@@ -478,7 +487,7 @@ describe("Community resolution", () => {
   });
 
   it("curates inventory rejection before Community catalog access", async () => {
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "at-plugin",
       sdk: {
         plugins: {
@@ -488,7 +497,7 @@ describe("Community resolution", () => {
         },
       },
     });
-    await plugin(bb);
+    await plugin(rift);
 
     await expect(mentionProvider(harness, "community").resolve(itemId)).rejects.toThrow(
       "noema could not be verified right now. Retry, or remove @noema to send without it.",
@@ -501,7 +510,7 @@ describe("hard SDK read timeouts", () => {
   it("aborts a never-settling Installed search and returns no rows", async () => {
     vi.useFakeTimers();
     let signal: AbortSignal | undefined;
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "at-plugin",
       sdk: {
         plugins: {
@@ -512,7 +521,7 @@ describe("hard SDK read timeouts", () => {
         },
       },
     });
-    await plugin(bb);
+    await plugin(rift);
     const pending = mentionProvider(harness, "installed").search(MENTION_CONTEXT);
 
     await vi.advanceTimersByTimeAsync(SDK_READ_TIMEOUT_MS);
@@ -524,7 +533,7 @@ describe("hard SDK read timeouts", () => {
   it("aborts a never-settling Community search and returns no rows", async () => {
     vi.useFakeTimers();
     let signal: AbortSignal | undefined;
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "at-plugin",
       sdk: {
         plugins: {
@@ -537,7 +546,7 @@ describe("hard SDK read timeouts", () => {
         },
       },
     });
-    await plugin(bb);
+    await plugin(rift);
     const pending = mentionProvider(harness, "community").search(MENTION_CONTEXT);
 
     await vi.advanceTimersByTimeAsync(SDK_READ_TIMEOUT_MS);
@@ -549,7 +558,7 @@ describe("hard SDK read timeouts", () => {
   it("aborts a never-settling Installed resolver with its curated verification error", async () => {
     vi.useFakeTimers();
     let signal: AbortSignal | undefined;
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "at-plugin",
       sdk: {
         plugins: {
@@ -560,7 +569,7 @@ describe("hard SDK read timeouts", () => {
         },
       },
     });
-    await plugin(bb);
+    await plugin(rift);
     const pending = mentionProvider(harness, "installed").resolve(
       encodeInstalledItemId("github"),
     );
@@ -577,7 +586,7 @@ describe("hard SDK read timeouts", () => {
   it("aborts a never-settling Community catalog resolver with its curated error", async () => {
     vi.useFakeTimers();
     let signal: AbortSignal | undefined;
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "at-plugin",
       sdk: {
         plugins: {
@@ -591,16 +600,16 @@ describe("hard SDK read timeouts", () => {
         },
       },
     });
-    await plugin(bb);
+    await plugin(rift);
     const pending = mentionProvider(harness, "community").resolve(
       encodeCommunityItemId({
         pluginId: "noema",
-        marketplace: "bb-community",
+        marketplace: "rift-community",
         entryId: "noema-entry",
       }),
     );
     const rejection = expect(pending).rejects.toThrow(
-      "noema could not be verified in bb Community right now. Retry, or remove @noema to send without it.",
+      "noema could not be verified in rift Community right now. Retry, or remove @noema to send without it.",
     );
 
     await vi.advanceTimersByTimeAsync(SDK_READ_TIMEOUT_MS);
@@ -611,16 +620,16 @@ describe("hard SDK read timeouts", () => {
 });
 
 describe("resolver independence and SDK safety", () => {
-  it("resolves different ids independently and leaves duplicate message dedupe to BB", async () => {
+  it("resolves different ids independently and leaves duplicate message dedupe to Rift", async () => {
     const plugins = [
       installed(),
       installed({ id: "linear", name: "Linear" }),
     ];
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "at-plugin",
       sdk: { plugins: { list: async () => ({ plugins }) } },
     });
-    await plugin(bb);
+    await plugin(rift);
     const provider = mentionProvider(harness, "installed");
 
     const github = await provider.resolve(encodeInstalledItemId("github"));
@@ -634,22 +643,22 @@ describe("resolver independence and SDK safety", () => {
   });
 
   it("records only the two allowed read-only SDK paths and never calls a target handler", async () => {
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "at-plugin",
       sdk: {
         plugins: {
           list: async () => ({ plugins: [] }),
-          catalog: { search: async () => [community()] },
+          catalog: { search: async () => ({ results: [community()], collections: [] }) },
         },
       },
     });
-    await plugin(bb);
+    await plugin(rift);
     await mentionProvider(harness, "installed").search(MENTION_CONTEXT);
     await mentionProvider(harness, "community").search(MENTION_CONTEXT);
     await mentionProvider(harness, "community").resolve(
       encodeCommunityItemId({
         pluginId: "noema",
-        marketplace: "bb-community",
+        marketplace: "rift-community",
         entryId: "noema-entry",
       }),
     );

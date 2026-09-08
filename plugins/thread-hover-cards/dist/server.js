@@ -11,7 +11,7 @@ var __export = (target, all) => {
 };
 
 // server.ts
-import { defineRpcContract } from "@get-bb/plugin-sdk";
+import { defineRpcContract } from "@riftlabs/plugin-sdk";
 
 // ../../node_modules/zod/v4/classic/external.js
 var external_exports = {};
@@ -14533,6 +14533,7 @@ var displayStatusSchema = external_exports.enum([
   "error",
   "host-reconnecting",
   "idle",
+  "pending",
   "provisioning",
   "starting",
   "stopping",
@@ -14620,7 +14621,7 @@ var sectionSummarySchema = external_exports.object({
   /** Threads that failed. Separate from questions: debugging is not answering. */
   failed: external_exports.number().int().nonnegative(),
   /**
-   * False for a row that looks like a section but is not one bb stores —
+   * False for a row that looks like a section but is not one rift stores —
    * Pinned, Unorganized, and the other built-in groups. The card stays shut
    * rather than reporting an error for a row that never had a summary.
    */
@@ -14630,7 +14631,7 @@ var sectionSummarySchema = external_exports.object({
   /** Threads blocked on the user answering something. */
   questions: external_exports.number().int().nonnegative(),
   total: external_exports.number().int().nonnegative(),
-  /** Unread by bb's own rule, so the card agrees with the app. */
+  /** Unread by rift's own rule, so the card agrees with the app. */
   unread: external_exports.number().int().nonnegative(),
   working: external_exports.number().int().nonnegative()
 }).strict();
@@ -14821,8 +14822,8 @@ function recordSkippedStage(recorder, name) {
     outcome: "skipped"
   });
 }
-function recordDiagnostics(bb, rpc, subject, diagnostics) {
-  bb.log.debug(
+function recordDiagnostics(rift, rpc, subject, diagnostics) {
+  rift.log.debug(
     `thread-hover-cards:timing ${JSON.stringify({ diagnostics, rpc, subject })}`
   );
 }
@@ -14978,7 +14979,7 @@ var LatestSummaryRequestGate = class {
     }
   }
 };
-async function currentTurnTiming(bb, threadId, status, signal, recorder) {
+async function currentTurnTiming(rift, threadId, status, signal, recorder) {
   if (!isRunningStatus(status) && status !== "idle") {
     recordSkippedStage(recorder, "timeline");
     recordSkippedStage(recorder, "turnStartedEvent");
@@ -14988,7 +14989,7 @@ async function currentTurnTiming(bb, threadId, status, signal, recorder) {
     recorder,
     "timeline",
     () => safely(
-      bb.sdk.threads.timeline(
+      rift.sdk.threads.timeline(
         status === "idle" ? { threadId, segmentLimit: "1", signal } : {
           threadId,
           segmentLimit: "1",
@@ -15018,7 +15019,7 @@ async function currentTurnTiming(bb, threadId, status, signal, recorder) {
     recorder,
     "turnStartedEvent",
     () => safely(
-      bb.sdk.threads.events.wait({
+      rift.sdk.threads.events.wait({
         afterSeq: String(Math.max(0, anchorSeq - 1)),
         signal,
         threadId,
@@ -15105,9 +15106,9 @@ function providerDisplayName(providerId) {
       return providerId;
   }
 }
-function plugin(bb) {
+function plugin(rift) {
   const recordBackgroundRefresh = (timing) => {
-    bb.log.debug(
+    rift.log.debug(
       `thread-hover-cards:cache-refresh ${JSON.stringify(timing)}`
     );
   };
@@ -15137,7 +15138,7 @@ function plugin(bb) {
     true
   );
   const summaryRequests = new LatestSummaryRequestGate(2);
-  bb.rpc.register(rpcContract, {
+  rift.rpc.register(rpcContract, {
     async threadSummary({ clientId, generation, threadId }) {
       const recorder = createDiagnostics();
       const deadlineAt = Date.now() + SUMMARY_LOOKUP_TIMEOUT_MS;
@@ -15163,7 +15164,7 @@ function plugin(bb) {
           "thread",
           () => within(
             safely(
-              bb.sdk.threads.get({
+              rift.sdk.threads.get({
                 include: "environment",
                 signal,
                 threadId
@@ -15181,7 +15182,7 @@ function plugin(bb) {
             "environment",
             () => within(
               safely(
-                bb.sdk.environments.get({
+                rift.sdk.environments.get({
                   environmentId: thread.environmentId,
                   signal
                 })
@@ -15206,7 +15207,7 @@ function plugin(bb) {
             `host:${environment.hostId}`,
             () => within(
               safely(
-                bb.sdk.hosts.get({
+                rift.sdk.hosts.get({
                   hostId: environment.hostId,
                   signal
                 })
@@ -15223,7 +15224,7 @@ function plugin(bb) {
             `project:${thread.projectId}`,
             () => within(
               safely(
-                bb.sdk.projects.get({
+                rift.sdk.projects.get({
                   projectId: thread.projectId,
                   signal
                 })
@@ -15237,7 +15238,7 @@ function plugin(bb) {
           "executionOptions",
           () => within(
             safely(
-              bb.sdk.threads.defaultExecutionOptions({ signal, threadId })
+              rift.sdk.threads.defaultExecutionOptions({ signal, threadId })
             ),
             remainingMs()
           ),
@@ -15248,7 +15249,7 @@ function plugin(bb) {
           stageName,
           () => within(
             safely(
-              bb.sdk.threads.conversationOutline({
+              rift.sdk.threads.conversationOutline({
                 signal,
                 threadId
               })
@@ -15264,7 +15265,7 @@ function plugin(bb) {
           "messageTimeline",
           () => within(
             safely(
-              bb.sdk.threads.timeline({
+              rift.sdk.threads.timeline({
                 includeNestedRows: "false",
                 segmentLimit: "1",
                 signal,
@@ -15295,7 +15296,7 @@ function plugin(bb) {
           latestAssistantMessage ?? ""
         );
         const diagnostics = finishDiagnostics(recorder);
-        recordDiagnostics(bb, "threadSummary", threadId, diagnostics);
+        recordDiagnostics(rift, "threadSummary", threadId, diagnostics);
         return {
           currentTurnCompletedAt: null,
           currentTurnStartedAt: null,
@@ -15324,7 +15325,7 @@ function plugin(bb) {
         };
       } catch (error51) {
         recordDiagnostics(
-          bb,
+          rift,
           "threadSummary",
           threadId,
           finishDiagnostics(recorder)
@@ -15344,7 +15345,7 @@ function plugin(bb) {
           recorder,
           "thread",
           () => within(
-            safely(bb.sdk.threads.get({ signal, threadId })),
+            safely(rift.sdk.threads.get({ signal, threadId })),
             remainingMs()
           ),
           { unavailableWhenNull: true }
@@ -15352,7 +15353,7 @@ function plugin(bb) {
         if (!thread) throw new Error("Thread timing unavailable.");
         const timing = await within(
           currentTurnTiming(
-            bb,
+            rift,
             threadId,
             thread.runtime.displayStatus,
             signal,
@@ -15361,7 +15362,7 @@ function plugin(bb) {
           remainingMs()
         );
         const diagnostics = finishDiagnostics(recorder);
-        recordDiagnostics(bb, "threadTiming", threadId, diagnostics);
+        recordDiagnostics(rift, "threadTiming", threadId, diagnostics);
         return {
           currentTurnCompletedAt: timing?.completedAt ?? null,
           currentTurnStartedAt: timing?.startedAt ?? null,
@@ -15370,7 +15371,7 @@ function plugin(bb) {
         };
       } catch (error51) {
         recordDiagnostics(
-          bb,
+          rift,
           "threadTiming",
           threadId,
           finishDiagnostics(recorder)
@@ -15389,7 +15390,7 @@ function plugin(bb) {
           "thread",
           () => within(
             safely(
-              bb.sdk.threads.get({
+              rift.sdk.threads.get({
                 include: "environment",
                 signal,
                 threadId
@@ -15407,7 +15408,7 @@ function plugin(bb) {
             "environment",
             () => within(
               safely(
-                bb.sdk.environments.get({
+                rift.sdk.environments.get({
                   environmentId: thread.environmentId,
                   signal
                 })
@@ -15427,7 +15428,7 @@ function plugin(bb) {
         if (!thread.environmentId || environment?.isGitRepo === false) {
           recordSkippedStage(recorder, "pullRequest");
           const diagnostics2 = finishDiagnostics(recorder);
-          recordDiagnostics(bb, "threadPullRequest", threadId, diagnostics2);
+          recordDiagnostics(rift, "threadPullRequest", threadId, diagnostics2);
           return {
             diagnostics: diagnostics2,
             pullRequest: { kind: "absent" },
@@ -15455,7 +15456,7 @@ function plugin(bb) {
             async () => {
               const result2 = await within(
                 safely(
-                  bb.sdk.environments.pullRequest({
+                  rift.sdk.environments.pullRequest({
                     environmentId: thread.environmentId,
                     signal
                   })
@@ -15464,7 +15465,7 @@ function plugin(bb) {
               );
               const environmentAfterLookup = await within(
                 safely(
-                  bb.sdk.environments.get({
+                  rift.sdk.environments.get({
                     environmentId: thread.environmentId,
                     signal
                   })
@@ -15483,7 +15484,7 @@ function plugin(bb) {
           "environmentVerify",
           () => within(
             safely(
-              bb.sdk.environments.get({
+              rift.sdk.environments.get({
                 environmentId: thread.environmentId,
                 signal
               })
@@ -15519,7 +15520,7 @@ function plugin(bb) {
           pullRequest = { kind: "unavailable" };
         }
         const diagnostics = finishDiagnostics(recorder);
-        recordDiagnostics(bb, "threadPullRequest", threadId, diagnostics);
+        recordDiagnostics(rift, "threadPullRequest", threadId, diagnostics);
         return {
           diagnostics,
           pullRequest,
@@ -15527,7 +15528,7 @@ function plugin(bb) {
         };
       } catch (error51) {
         recordDiagnostics(
-          bb,
+          rift,
           "threadPullRequest",
           threadId,
           finishDiagnostics(recorder)
@@ -15549,7 +15550,7 @@ function plugin(bb) {
       try {
         if (stableSectionId === void 0 && BUILT_IN_SECTION_NAMES.has(name)) {
           const diagnostics2 = finishDiagnostics(recorder);
-          recordDiagnostics(bb, "sectionSummary", name, diagnostics2);
+          recordDiagnostics(rift, "sectionSummary", name, diagnostics2);
           return {
             diagnostics: diagnostics2,
             failed: 0,
@@ -15567,7 +15568,7 @@ function plugin(bb) {
           () => withinCached(
             sectionDirectory.get(
               "sections",
-              () => safely(bb.sdk.threadSections.list({ signal }))
+              () => safely(rift.sdk.threadSections.list({ signal }))
             ),
             directoryBudgetMs()
           )
@@ -15589,7 +15590,7 @@ function plugin(bb) {
           }
           if (section === null) {
             const diagnostics2 = finishDiagnostics(recorder);
-            recordDiagnostics(bb, "sectionSummary", name, diagnostics2);
+            recordDiagnostics(rift, "sectionSummary", name, diagnostics2);
             return {
               diagnostics: diagnostics2,
               failed: 0,
@@ -15609,7 +15610,7 @@ function plugin(bb) {
           () => withinCached(
             sectionDirectory.get(
               "projects",
-              () => safely(bb.sdk.projects.list({ includePersonal: true, signal }))
+              () => safely(rift.sdk.projects.list({ includePersonal: true, signal }))
             ),
             directoryBudgetMs()
           )
@@ -15634,7 +15635,7 @@ function plugin(bb) {
             resolvedSectionId,
             () => within(
               safely(
-                bb.sdk.threads.list({
+                rift.sdk.threads.list({
                   archived: false,
                   hasParent: false,
                   includeHidden: false,
@@ -15651,19 +15652,19 @@ function plugin(bb) {
           (thread) => scopedProjectId === null || thread.projectId === scopedProjectId
         );
         const diagnostics = finishDiagnostics(recorder);
-        recordDiagnostics(bb, "sectionSummary", name, diagnostics);
+        recordDiagnostics(rift, "sectionSummary", name, diagnostics);
         return {
           ...summarizeSectionThreads(threads, projectNameById),
           diagnostics,
           known: true
         };
       } catch (error51) {
-        recordDiagnostics(bb, "sectionSummary", name, finishDiagnostics(recorder));
+        recordDiagnostics(rift, "sectionSummary", name, finishDiagnostics(recorder));
         throw error51;
       }
     }
   });
-  bb.background.service("section-directory-warm", {
+  rift.background.service("section-directory-warm", {
     async start(signal) {
       while (!signal.aborted) {
         const startedAt = monotonicNow();
@@ -15672,18 +15673,18 @@ function plugin(bb) {
         const [sections, projects] = await Promise.all([
           sectionDirectory.get(
             "sections",
-            () => within(safely(bb.sdk.threadSections.list({ signal })), 1e4)
+            () => within(safely(rift.sdk.threadSections.list({ signal })), 1e4)
           ),
           sectionDirectory.get(
             "projects",
             () => within(
-              safely(bb.sdk.projects.list({ includePersonal: true, signal })),
+              safely(rift.sdk.projects.list({ includePersonal: true, signal })),
               1e4
             )
           )
         ]);
         if (signal.aborted) return;
-        bb.log.debug(
+        rift.log.debug(
           `thread-hover-cards:section-directory ${JSON.stringify({
             durationMs: roundedDuration(startedAt),
             projects: projects.value?.length ?? null,
@@ -15694,7 +15695,7 @@ function plugin(bb) {
       }
     }
   });
-  bb.log.info("Thread hover cards loaded.");
+  rift.log.info("Thread hover cards loaded.");
 }
 export {
   plugin as default,

@@ -3,7 +3,7 @@ import {
   createFakePluginHost,
   makeThreadResponse,
   type FakePluginHost,
-} from "@get-bb/plugin-sdk/testing";
+} from "@riftlabs/plugin-sdk/testing";
 import { z } from "zod";
 import plugin, {
   commentBodySchema,
@@ -20,7 +20,7 @@ const threadPageSchema = z.object({
 
 async function loadPlugin(): Promise<FakePluginHost> {
   const host = createFakePluginHost({ pluginId: "timeline-comments" });
-  await plugin(host.bb);
+  await plugin(host.rift);
   return host;
 }
 
@@ -66,7 +66,7 @@ async function createComment(
 describe("timeline comments backend", () => {
   it("enforces foreign keys and creates a scoped root thread before publishing", async () => {
     const host = await loadPlugin();
-    const db = host.bb.storage.database();
+    const db = host.rift.storage.database();
     expect(db.pragma("foreign_keys", { simple: true })).toBe(1);
 
     const created = await createComment(host, "Make the contract explicit.");
@@ -205,7 +205,7 @@ describe("timeline comments backend", () => {
       expectedVersion: latest.thread.rootComment.version,
       expectedThreadVersion: latest.thread.version,
     });
-    const db = host.bb.storage.database();
+    const db = host.rift.storage.database();
     expect(
       db.prepare("SELECT COUNT(*) AS count FROM comment_threads").get(),
     ).toEqual({ count: 0 });
@@ -401,7 +401,7 @@ describe("timeline comments backend", () => {
     expect(summary).toMatchObject({ threadCount: 2, commentCount: 3 });
 
     const provider = host.harness.registrations.mentionProviders[0]!;
-    const db = host.bb.storage.database();
+    const db = host.rift.storage.database();
     const prepare = vi.spyOn(db, "prepare");
     prepare.mockClear();
     await host.harness.callRpc("getThreadHandoffSummary", {
@@ -452,7 +452,7 @@ describe("timeline comments backend", () => {
     expect(refreshed.context).not.toContain("second source");
   });
 
-  it("removes plugin-owned comments when their BB thread is deleted", async () => {
+  it("removes plugin-owned comments when their Rift thread is deleted", async () => {
     const host = await loadPlugin();
     await createComment(host, "Delete with the thread");
     await createComment(host, "Keep another thread", {
@@ -463,7 +463,7 @@ describe("timeline comments backend", () => {
       thread: makeThreadResponse({ id: "thr_1" }),
     });
 
-    const db = host.bb.storage.database();
+    const db = host.rift.storage.database();
     expect(
       db
         .prepare(
@@ -487,7 +487,7 @@ describe("timeline comments backend", () => {
         body,
       });
     }
-    host.bb.storage
+    host.rift.storage
       .database()
       .prepare(
         `INSERT INTO comments (
@@ -697,7 +697,7 @@ describe("timeline comments backend", () => {
     const host = await loadPlugin();
     const created = await createComment(host, "Escaped ID");
     const escapedId = "--generated-comment-thread";
-    const db = host.bb.storage.database();
+    const db = host.rift.storage.database();
     db.transaction(() => {
       db.prepare(
         `INSERT INTO comment_threads (
@@ -781,7 +781,7 @@ describe("timeline comments backend", () => {
     expect(commentPage.nextCursor).toEqual(expect.any(String));
 
     const exact = "😀".repeat(240_000);
-    host.bb.storage
+    host.rift.storage
       .database()
       .prepare(
         `UPDATE comment_threads

@@ -16,7 +16,7 @@ import {
   useRealtimeConnectionState,
   useRpc,
   type PluginThreadPanelProps,
-} from "@get-bb/plugin-sdk/app";
+} from "@riftlabs/plugin-sdk/app";
 import type {
   TimelineCommentThreadSummary,
   timelineCommentsRpcContract,
@@ -198,14 +198,14 @@ function AddCommentsAction() {
     error === null ? actionLabel : `${actionLabel}: ${error}`;
 
   return (
-    <span className="bb-comments-composer-action-wrap">
+    <span className="rift-comments-composer-action-wrap">
       {error !== null ? (
-        <span className="bb-comments-composer-action-error" role="alert">
+        <span className="rift-comments-composer-action-error" role="alert">
           Couldn’t add comments
         </span>
       ) : null}
       {notice !== null ? (
-        <span className="bb-comments-composer-action-status" role="status">
+        <span className="rift-comments-composer-action-status" role="status">
           {notice}
         </span>
       ) : null}
@@ -214,13 +214,13 @@ function AddCommentsAction() {
           <TooltipPrimitive.Trigger asChild>
             <button
               type="button"
-              className="bb-comments-composer-action"
+              className="rift-comments-composer-action"
               aria-label={actionLabel}
               disabled={busy}
               onMouseDown={(event) => event.preventDefault()}
               onClick={() => void addComments()}
             >
-              <span className="bb-comments-composer-action-icon">
+              <span className="rift-comments-composer-action-icon">
                 <HugeiconsIcon
                   icon={ChatFeedback01Icon}
                   aria-hidden="true"
@@ -231,7 +231,7 @@ function AddCommentsAction() {
           </TooltipPrimitive.Trigger>
           <TooltipPrimitive.Portal>
             <TooltipPrimitive.Content
-              className="bb-comments-composer-action-tooltip"
+              className="rift-comments-composer-action-tooltip"
               side="top"
               sideOffset={7}
               collisionPadding={8}
@@ -365,9 +365,9 @@ function CommentPanel({ threadId }: PluginThreadPanelProps) {
   };
 
   return (
-    <section className="bb-comments-panel" aria-label="Timeline comments">
+    <section className="rift-comments-panel" aria-label="Timeline comments">
       <div
-        className="bb-comments-filters"
+        className="rift-comments-filters"
         role="group"
         aria-label="Comment state"
       >
@@ -384,35 +384,35 @@ function CommentPanel({ threadId }: PluginThreadPanelProps) {
       </div>
 
       {error !== null ? (
-        <div className="bb-comments-panel-error" role="status">
+        <div className="rift-comments-panel-error" role="status">
           {error}
         </div>
       ) : null}
-      <div className="bb-comments-panel-list">
+      <div className="rift-comments-panel-list">
         {!loading && threads.length === 0 ? (
-          <div className="bb-comments-empty">
+          <div className="rift-comments-empty">
             No {filter === "all" ? "" : `${filter} `}comments.
           </div>
         ) : null}
         {threads.map((item) => {
           return (
             <article
-              className="bb-comments-panel-row"
+              className="rift-comments-panel-row"
               data-active={activeId === item.id ? "true" : undefined}
               key={item.id}
             >
               <button
                 type="button"
-                className="bb-comments-row-summary"
+                className="rift-comments-row-summary"
                 onClick={() => void activate(item)}
               >
-                <span className="bb-comments-row-source">
+                <span className="rift-comments-row-source">
                   “{excerpt(item.selector.exact, 90)}”
                 </span>
-                <span className="bb-comments-row-body">
+                <span className="rift-comments-row-body">
                   {excerpt(item.rootComment.body, 140)}
                 </span>
-                <span className="bb-comments-row-meta">
+                <span className="rift-comments-row-meta">
                   {item.replyCount}{" "}
                   {item.replyCount === 1 ? "reply" : "replies"}
                   {item.resolvedAt !== null ? " · Resolved" : ""}
@@ -425,11 +425,11 @@ function CommentPanel({ threadId }: PluginThreadPanelProps) {
             </article>
           );
         })}
-        {loading ? <div className="bb-comments-loading">Loading…</div> : null}
+        {loading ? <div className="rift-comments-loading">Loading…</div> : null}
         {!loading && nextCursor !== null ? (
           <button
             type="button"
-            className="bb-comments-load-more"
+            className="rift-comments-load-more"
             onClick={() => void loadThreads(true)}
           >
             Load more

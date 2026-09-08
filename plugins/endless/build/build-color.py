@@ -45,7 +45,7 @@ OVERRIDE = """
  * SELECTOR: `:root:not(.dark)`, not `:root, .light`. This block loads AFTER
  * the endless palette, and `:root` has the same specificity as `.dark` — so a
  * plain `:root` here BEATS the dark block and leaks light values into dark
- * mode. bb never sets a `.light` class either (light is the ABSENCE of
+ * mode. rift never sets a `.light` class either (light is the ABSENCE of
  * `.dark`), so `.light` alone matches nothing. `:root:not(.dark)` is the only
  * form that is both light-only and immune to the ordering. Caught by auditing
  * dark mode after the first attempt, which regressed 3 pairs.
@@ -126,11 +126,11 @@ OVERRIDE = """
   --surface-selected: rgba(121, 173, 214, 0.30);       /* chalk blue, sampled #6998a8 */
   --surface-selected-border: rgba(121, 173, 214, 0.75);
   --selection-color-default: rgba(121, 173, 214, 0.42);
-  /* bb derives the 'open in split' row colour with color-mix(in oklch …);
+  /* rift derives the 'open in split' row colour with color-mix(in oklch …);
    * on these warm low-chroma surfaces that mix serialises a powerless hue,
    * which Chrome renders as hue 0 — a pink row. Pin it to a soft chalk-blue
    * wash instead: a lighter member of the same blue selection system. */
-  --bb-sidebar-open-in-split-background: rgba(105, 152, 168, 0.14);
+  --rift-sidebar-open-in-split-background: rgba(105, 152, 168, 0.14);
   --sidebar-ring: #2e6f95;
   --sidebar-search-match: #d9e5ec;
   --sidebar-search-match-border: #2e6f95;
@@ -238,7 +238,7 @@ DARK_OVERRIDE = """
   --surface-selected: rgba(47, 180, 255, 0.20);      /* the blue light — lit hands */
   --surface-selected-border: rgba(47, 180, 255, 0.85);
   --selection-color-default: rgba(47, 180, 255, 0.30);
-  --bb-sidebar-open-in-split-background: rgba(47, 180, 255, 0.10);  /* see light note */
+  --rift-sidebar-open-in-split-background: rgba(47, 180, 255, 0.10);  /* see light note */
   --sidebar-search-match: #241a14;
   --sidebar-search-match-border: #ff6a1f;
 
@@ -300,19 +300,19 @@ SEAM_RULE = """
 .dark .fixed.bg-sidebar { --sidebar-noise: __STARS_SOFT__; }
 
 
-/* bb sets --bb-sidebar-open-in-split-background ON the row element via
+/* rift sets --rift-sidebar-open-in-split-background ON the row element via
  * color-mix(in oklch …); with warm low-chroma surfaces the mix serialises a
  * powerless hue that Chrome renders as hue 0 — a pink row. A root-level
  * token cannot beat an element-level declaration, so this overrides at the
  * element's own selector (loads later; :root:not(.dark) also out-specifies). */
-:root:not(.dark) .bb-sidebar-open-in-split-row {
-  --bb-sidebar-open-in-split-background: rgba(105, 152, 168, 0.14);
+:root:not(.dark) .rift-sidebar-open-in-split-row {
+  --rift-sidebar-open-in-split-background: rgba(105, 152, 168, 0.14);
 }
-.dark .bb-sidebar-open-in-split-row {
-  --bb-sidebar-open-in-split-background: rgba(47, 180, 255, 0.10);
+.dark .rift-sidebar-open-in-split-row {
+  --rift-sidebar-open-in-split-background: rgba(47, 180, 255, 0.10);
 }
 
-/* Blacklight text renders with greyscale antialiasing. bb's default subpixel
+/* Blacklight text renders with greyscale antialiasing. rift's default subpixel
  * smoothing draws RGB fringes around light glyphs, and on a near-true-black
  * field those fringes read as a glow around every character. Greyscale AA is
  * the standard fix for light-on-dark halation. Scoped to dark only; light
@@ -329,7 +329,7 @@ SEAM_RULE = """
  * silently overrides the variant's tokens — the sidebar was rendering the
  * WRONG THEME. This block loads later at equal specificity, so the frame
  * actually wears the blacklight. --surface-recessed-soft-solid is pinned to
- * the same black because bb paints it behind row lists; leaving it lighter
+ * the same black because rift paints it behind row lists; leaving it lighter
  * would bring back the banding the base block documents. */
 .dark .fixed.bg-sidebar {
   --sidebar: #070707;

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from "vitest";
-import type { PluginContentScriptContext } from "@get-bb/plugin-sdk/app";
+import type { PluginContentScriptContext } from "@riftlabs/plugin-sdk/app";
 import {
   beginTimelineComment,
   focusTimelineComment,
@@ -74,15 +74,15 @@ describe("timeline comments controller teardown", () => {
       openPanel: () => true,
     });
     const composer = document.querySelector<HTMLElement>(
-      ".bb-comments-composer",
+      ".rift-comments-composer",
     )!;
     expect(composer).not.toBeNull();
-    expect(composer.querySelector(".bb-comments-composer-footer")).toBeNull();
+    expect(composer.querySelector(".rift-comments-composer-footer")).toBeNull();
     expect(
       composer.querySelector('button[aria-label="Submit comment"] svg'),
     ).not.toBeNull();
     const textarea = composer.querySelector<HTMLTextAreaElement>(
-      ".bb-comments-reply-input",
+      ".rift-comments-reply-input",
     )!;
     expect(composer.querySelector('[data-comment-new-composer="true"]')).not.toBeNull();
     expect(textarea.getAttribute("aria-label")).toBe("Add a comment");
@@ -159,7 +159,7 @@ describe("timeline comments controller teardown", () => {
       openPanel: () => true,
     });
 
-    expect(document.querySelector(".bb-comments-composer")).not.toBeNull();
+    expect(document.querySelector(".rift-comments-composer")).not.toBeNull();
     controller.abort();
     dispose();
     document.getSelection()!.removeAllRanges();
@@ -404,20 +404,20 @@ describe("timeline comments controller teardown", () => {
     );
 
     await vi.waitFor(() =>
-      expect(document.querySelector(".bb-comments-marker")).not.toBeNull(),
+      expect(document.querySelector(".rift-comments-marker")).not.toBeNull(),
     );
     narrowMessageGutter = true;
     window.dispatchEvent(new Event("resize"));
     await vi.waitFor(() =>
-      expect(document.querySelector(".bb-comments-marker")).toBeNull(),
+      expect(document.querySelector(".rift-comments-marker")).toBeNull(),
     );
     narrowMessageGutter = false;
     window.dispatchEvent(new Event("resize"));
     await vi.waitFor(() =>
-      expect(document.querySelector(".bb-comments-marker")).not.toBeNull(),
+      expect(document.querySelector(".rift-comments-marker")).not.toBeNull(),
     );
     document
-      .querySelector<HTMLButtonElement>(".bb-comments-marker")!
+      .querySelector<HTMLButtonElement>(".rift-comments-marker")!
       .click();
     await vi.waitFor(() =>
       expect(document.body.textContent).toContain("Visible comment"),
@@ -428,10 +428,10 @@ describe("timeline comments controller teardown", () => {
         'button[aria-label="Send thread to agent"]',
       )!
       .click();
-    expect(document.querySelector(".bb-comments-thread")).not.toBeNull();
+    expect(document.querySelector(".rift-comments-thread")).not.toBeNull();
 
     const markerBeforeHandoff = document.querySelector<HTMLButtonElement>(
-      ".bb-comments-marker",
+      ".rift-comments-marker",
     )!;
     const restoreHandoffMarkerFocus = vi.spyOn(markerBeforeHandoff, "focus");
     const unregisterHandoff = subscribeTimelineCommentHandoff({
@@ -445,7 +445,7 @@ describe("timeline comments controller teardown", () => {
       )!
       .click();
     await vi.waitFor(() =>
-      expect(document.querySelector(".bb-comments-thread")).toBeNull(),
+      expect(document.querySelector(".rift-comments-thread")).toBeNull(),
     );
     expect(restoreHandoffMarkerFocus).not.toHaveBeenCalled();
     unregisterHandoff();
@@ -456,7 +456,7 @@ describe("timeline comments controller teardown", () => {
     );
 
     const markerBeforeHide = document.querySelector<HTMLButtonElement>(
-      ".bb-comments-marker",
+      ".rift-comments-marker",
     )!;
     const restoreHiddenMarkerFocus = vi.spyOn(markerBeforeHide, "focus");
     const requestsBeforeNonVisibilityMutation = listRequests.length;
@@ -467,30 +467,30 @@ describe("timeline comments controller teardown", () => {
 
     panes[0]!.setAttribute("aria-hidden", "true");
     await vi.waitFor(() => {
-      expect(document.querySelector(".bb-comments-marker")).not.toBeNull();
-      expect(document.querySelector(".bb-comments-thread")).toBeNull();
+      expect(document.querySelector(".rift-comments-marker")).not.toBeNull();
+      expect(document.querySelector(".rift-comments-thread")).toBeNull();
       expect(listRequests.at(-1)).toEqual(["thr_1", "thr_2"]);
     });
     expect(restoreHiddenMarkerFocus).not.toHaveBeenCalled();
 
     panes[0]!.removeAttribute("aria-hidden");
     await vi.waitFor(() => {
-      expect(document.querySelector(".bb-comments-marker")).not.toBeNull();
+      expect(document.querySelector(".rift-comments-marker")).not.toBeNull();
       expect(listRequests.at(-1)).toEqual(["thr_1", "thr_2"]);
     });
     document
-      .querySelector<HTMLButtonElement>(".bb-comments-marker")!
+      .querySelector<HTMLButtonElement>(".rift-comments-marker")!
       .click();
     await vi.waitFor(() =>
       expect(document.body.textContent).toContain("Visible comment"),
     );
 
     const visibleMarker = document.querySelector<HTMLButtonElement>(
-      ".bb-comments-marker",
+      ".rift-comments-marker",
     )!;
     const restoreVisibleMarkerFocus = vi.spyOn(visibleMarker, "focus");
     document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
-    expect(document.querySelector(".bb-comments-thread")).toBeNull();
+    expect(document.querySelector(".rift-comments-thread")).toBeNull();
     expect(restoreVisibleMarkerFocus).toHaveBeenCalledTimes(1);
     visibleMarker.click();
     await vi.waitFor(() =>
@@ -499,8 +499,8 @@ describe("timeline comments controller teardown", () => {
 
     panes[1]!.setAttribute("aria-hidden", "true");
     await vi.waitFor(() => {
-      expect(document.querySelector(".bb-comments-marker")).not.toBeNull();
-      expect(document.querySelector(".bb-comments-thread")).not.toBeNull();
+      expect(document.querySelector(".rift-comments-marker")).not.toBeNull();
+      expect(document.querySelector(".rift-comments-thread")).not.toBeNull();
       expect(listRequests.at(-1)).toEqual(["thr_1"]);
     });
 
@@ -513,8 +513,8 @@ describe("timeline comments controller teardown", () => {
     panes[0]!.remove();
     await vi.waitFor(() => {
       expect(listRequests.at(-1)).toEqual(["thr_2"]);
-      expect(document.querySelector(".bb-comments-marker")).toBeNull();
-      expect(document.querySelector(".bb-comments-thread")).toBeNull();
+      expect(document.querySelector(".rift-comments-marker")).toBeNull();
+      expect(document.querySelector(".rift-comments-thread")).toBeNull();
     });
     delayedListResponse.resolve();
 
@@ -648,11 +648,11 @@ describe("timeline comments controller teardown", () => {
       selectedText: "source",
       openPanel: () => true,
     });
-    expect(document.querySelector(".bb-comments-composer")).not.toBeNull();
+    expect(document.querySelector(".rift-comments-composer")).not.toBeNull();
 
     document.querySelector<HTMLElement>("[data-split-pane-id]")!.hidden = true;
     await vi.waitFor(() =>
-      expect(document.querySelector(".bb-comments-composer")).toBeNull(),
+      expect(document.querySelector(".rift-comments-composer")).toBeNull(),
     );
 
     unregister();
@@ -778,7 +778,7 @@ describe("timeline comments controller teardown", () => {
       block: "center",
       behavior: "smooth",
     });
-    expect(document.querySelector(".bb-comments-thread")).not.toBeNull();
+    expect(document.querySelector(".rift-comments-thread")).not.toBeNull();
     await vi.waitFor(() =>
       expect(document.body.textContent).toContain("Resolved review note"),
     );
@@ -888,7 +888,7 @@ describe("timeline comments controller teardown", () => {
 
     expect(healthChanged).not.toHaveBeenCalled();
     expect(
-      document.querySelector("[data-bb-plugin-decoration='timeline-comments']"),
+      document.querySelector("[data-rift-plugin-decoration='timeline-comments']"),
     ).toBeNull();
     unsubscribe();
     unregisterWindow();

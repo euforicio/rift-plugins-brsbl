@@ -10,7 +10,12 @@ function community(
   overrides: Partial<CommunityCatalogRecord> = {},
 ): CommunityCatalogRecord {
   return {
-    author: { name: "Publisher", url: null },
+    author: { name: "Publisher", url: null, github: null },
+    collections: [],
+    screenshots: [],
+    iconTinted: false,
+    repositoryUrl: null,
+    installs: null,
     category: "Developer tools",
     compatible: true,
     description: "Catalog description",
@@ -20,8 +25,8 @@ function community(
     iconUrl: null,
     incompatibleReason: null,
     installed: false,
-    marketplace: "bb-community",
-    marketplaceDisplayName: "BB Community",
+    marketplace: "rift-community",
+    marketplaceDisplayName: "Rift Community",
     official: false,
     pluginId: "example",
     publisherKey: "publisher",
@@ -32,7 +37,7 @@ function community(
 }
 
 describe("Community eligibility", () => {
-  it("keeps only compatible, uninstalled bb-community entries", () => {
+  it("keeps only compatible, uninstalled rift-community entries", () => {
     const entries = [
       community({ pluginId: "valid", entryId: "valid", displayName: "Valid" }),
       community({ pluginId: "installed", entryId: "installed", installed: true }),
@@ -144,7 +149,7 @@ describe("Community discovery", () => {
   it("sanitizes and bounds rows while preserving all opaque identity fields", () => {
     const entry = community({
       pluginId: "plug:in%一",
-      marketplace: "bb-community",
+      marketplace: "rift-community",
       entryId: "entry:50%二",
       displayName: `\u0000 Name\n${"😀".repeat(100)}`,
       description: `\u0085Description\t${"界".repeat(200)}`,
@@ -157,7 +162,7 @@ describe("Community discovery", () => {
     expect(utf8ByteLength(item?.subtitle ?? "")).toBeLessThanOrEqual(240);
     expect(decodeCommunityItemId(item?.id ?? "")).toEqual({
       pluginId: "plug:in%一",
-      marketplace: "bb-community",
+      marketplace: "rift-community",
       entryId: "entry:50%二",
     });
   });

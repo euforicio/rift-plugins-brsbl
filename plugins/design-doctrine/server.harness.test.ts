@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
 
-import { createFakePluginHost } from "@get-bb/plugin-sdk/testing";
+import { createFakePluginHost } from "@riftlabs/plugin-sdk/testing";
 import { describe, expect, it, vi } from "vitest";
 
 import plugin from "./server";
@@ -34,7 +34,7 @@ function agentContext(title: string) {
     project: {
       id: "project-test",
       kind: "standard" as const,
-      name: "bb",
+      name: "rift",
       gitRemoteUrl: null,
     },
     environment: {
@@ -45,21 +45,24 @@ function agentContext(title: string) {
       branchName: "test",
     },
     host: { id: "host-test", name: "Test host" },
-    provider: { id: "codex", model: "test" },
-    sideChat: false,
+    provider: {
+      id: "codex",
+      model: "test",
+      capabilities: { supportsNativeUserQuestion: true },
+    },
     origin: { kind: null, pluginId: null },
   };
 }
 
 describe("Design Doctrine plugin contract", () => {
-  it("registers its RPC, CLI, and watcher through the bb harness", async () => {
-    const { bb, harness } = createFakePluginHost({
+  it("registers its RPC, CLI, and watcher through the rift harness", async () => {
+    const { rift, harness } = createFakePluginHost({
       pluginId: "design-doctrine",
       sdk: { threads: { list: async () => [] } },
       agentSkillIds: ["design-doctrine"],
     });
 
-    await plugin(bb);
+    await plugin(rift);
 
     expect(harness.inspection.registrations.rpcMethods).toEqual([
       "getLibrary",
@@ -93,12 +96,12 @@ describe("Design Doctrine plugin contract", () => {
   });
 
   it("keeps reads available while the webhook awaits secure configuration", async () => {
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "design-doctrine",
       sdk: { threads: { list: async () => [] } },
       agentSkillIds: ["design-doctrine"],
     });
-    await plugin(bb);
+    await plugin(rift);
 
     const response = await harness.behavior.fetchHttp("POST", "/github", {
       body: "{}",
@@ -113,13 +116,13 @@ describe("Design Doctrine plugin contract", () => {
 
   it("authenticates raw webhook bytes before interpreting the event", async () => {
     const secret = "test-webhook-secret";
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "design-doctrine",
       settings: { githubWebhookSecret: secret },
       sdk: { threads: { list: async () => [] } },
       agentSkillIds: ["design-doctrine"],
     });
-    await plugin(bb);
+    await plugin(rift);
     const body = JSON.stringify({ zen: "Keep it logically awesome. 🌱" });
     const signature = `sha256=${createHmac("sha256", secret).update(body).digest("hex")}`;
 
@@ -156,12 +159,12 @@ describe("Design Doctrine plugin contract", () => {
   });
 
   it("automatically configures bounded guidance and an exact-task search tool", async () => {
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "design-doctrine",
       sdk: { threads: { list: async () => [] } },
       agentSkillIds: ["design-doctrine"],
     });
-    await plugin(bb);
+    await plugin(rift);
 
     const configuration = await harness.behavior.resolveAgentConfiguration(
       agentContext("Redesign the compact utility toolbar"),
@@ -204,7 +207,7 @@ describe("Design Doctrine plugin contract", () => {
   });
 
   it("keeps diagnostic surfaces available when the initial corpus is unavailable", async () => {
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "design-doctrine",
       settings: {
         doctrinePath: join(tmpdir(), "missing-design-doctrine-at-startup"),
@@ -213,7 +216,7 @@ describe("Design Doctrine plugin contract", () => {
       agentSkillIds: ["design-doctrine"],
     });
 
-    await expect(plugin(bb)).resolves.toBeUndefined();
+    await expect(plugin(rift)).resolves.toBeUndefined();
     expect(harness.inspection.registrations.rpcMethods).toEqual([
       "getLibrary",
     ]);
@@ -256,7 +259,7 @@ describe("Design Doctrine plugin contract", () => {
       createdHandlers: number | undefined;
       idleHandlers: number | undefined;
     } | null = null;
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "design-doctrine",
       sdk: {
         threads: {
@@ -276,7 +279,7 @@ describe("Design Doctrine plugin contract", () => {
       },
     });
 
-    await expect(plugin(bb)).resolves.toBeUndefined();
+    await expect(plugin(rift)).resolves.toBeUndefined();
     await vi.waitFor(() => expect(registrationsAtInventoryStart).not.toBeNull());
     expect(registrationsAtInventoryStart?.rpcMethods).toEqual(["getLibrary"]);
     expect(registrationsAtInventoryStart?.cliName).toBe("doctrine");

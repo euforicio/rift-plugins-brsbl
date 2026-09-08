@@ -1,22 +1,22 @@
-# bb plugins
+# Rift plugins
 
-Ten bb plugins I use for product design work, kept together with the few build and repository tools they share. [![CI](https://github.com/brsbl/bb-plugins/actions/workflows/ci.yml/badge.svg)](https://github.com/brsbl/bb-plugins/actions/workflows/ci.yml)
+Rift Labs maintains this fork of [Bersabel Tadesse’s plugin collection](https://github.com/brsbl/bb-plugins) for Rift. Original plugin authorship, attribution, and licensing are preserved. [![CI](https://github.com/euforicio/rift-plugins-brsbl/actions/workflows/ci.yml/badge.svg)](https://github.com/euforicio/rift-plugins-brsbl/actions/workflows/ci.yml)
 
-[bb](https://getbb.app) is an agentic IDE for running coding agents across projects, threads, and environments. Its plugins can add UI, commands, skills, and server capabilities; this repository is where I build and maintain mine.
+[Rift](https://riftlabs.app) is an agentic IDE for running coding agents across projects, threads, and environments. Its plugins can add UI, commands, skills, and server capabilities; this repository is where I build and maintain mine.
 
 ## Plugins
 
-Each plugin has its own workspace under `plugins/` and a short README with the story behind it.
+Each plugin has its own workspace under `plugins/` and a short README with the story behind it. Run the local install commands below from a checkout of this fork after `npm ci`.
 
 ### Design Doctrine
 
 Turns recurring product-design feedback into a searchable rule library that agents can apply while designing, building, and critiquing. Its maintenance workflow keeps the rules grounded in real review evidence.
 
-![Design Doctrine's searchable rule library open in bb](plugins/design-doctrine/docs/screenshot.png)
+![Design Doctrine's searchable rule library open in rift](plugins/design-doctrine/docs/screenshot.png)
 
 [Source](plugins/design-doctrine) · [README](plugins/design-doctrine/README.md)
 
-Install: `bb plugin install git:https://github.com/brsbl/bb-plugins.git@plugin/design-doctrine --yes`
+Install: `rift plugin install "path:$PWD/plugins/design-doctrine" --yes`
 
 ### GitHub Activity
 
@@ -26,11 +26,11 @@ Brings incoming comments and mentions from GitHub pull requests and issues you a
 
 [Source](plugins/github-notifications) · [README](plugins/github-notifications/README.md)
 
-Install: `bb plugin install git:https://github.com/brsbl/bb-plugins.git@plugin/github-notifications --yes`
+Install: `rift plugin install "path:$PWD/plugins/github-notifications" --yes`
 
 ### Prompt Improver
 
-Rewrites a rough bb composer draft into a clearer, context-complete prompt for review before you send it. The rewrite can be cancelled or undone without leaving the composer.
+Rewrites a rough rift composer draft into a clearer, context-complete prompt for review before you send it. The rewrite can be cancelled or undone without leaving the composer.
 
 ![Prompt Improver working on a composer draft](plugins/improve-prompt/docs/screenshot-running.png)
 
@@ -38,7 +38,7 @@ Rewrites a rough bb composer draft into a clearer, context-complete prompt for r
 
 [Source](plugins/improve-prompt) · [README](plugins/improve-prompt/README.md)
 
-Install: `bb plugin install git:https://github.com/brsbl/bb-plugins.git@plugin/improve-prompt --yes`
+Install: `rift plugin install "path:$PWD/plugins/improve-prompt" --yes`
 
 ### Thread Hover Cards
 
@@ -50,95 +50,95 @@ Shows a thread's live status, latest agent update, execution context, repository
 
 [Source](plugins/thread-hover-cards) · [README](plugins/thread-hover-cards/README.md)
 
-Install: `bb plugin install git:https://github.com/brsbl/bb-plugins.git@plugin/thread-hover-cards --yes`
+Install: `rift plugin install "path:$PWD/plugins/thread-hover-cards" --yes`
 
 ### Thread Organizer
 
 Organizes work into configurable workflow sections and keeps unread idle threads in Inbox until work resumes or you explicitly clear them.
 
-![Thread Organizer showing the current development-phase sections in bb's sidebar](plugins/thread-organizer/docs/screenshot.png)
+![Thread Organizer showing the current development-phase sections in rift's sidebar](plugins/thread-organizer/docs/screenshot.png)
 
 [Source](plugins/thread-organizer) · [README](plugins/thread-organizer/README.md)
 
-Install: `bb plugin install git:https://github.com/brsbl/bb-plugins.git@plugin/thread-organizer --yes`
+Install: `rift plugin install "path:$PWD/plugins/thread-organizer" --yes`
 
 ### Mesh Gradient
 
 Creates, edits, saves, and shares reusable mesh gradients from a visual studio beside a thread. Users can hand an exact saved gradient to the current agent, while agents can generate gradients, inspect the shared library, and apply saved designs through the same plugin.
 
-![Mesh Gradient's visual editor open beside a bb thread](plugins/mesh-gradient/docs/screenshot.png)
+![Mesh Gradient's visual editor open beside a rift thread](plugins/mesh-gradient/docs/screenshot.png)
 
 [Source](plugins/mesh-gradient) · [README](plugins/mesh-gradient/README.md)
 
-Install: `bb plugin install git:https://github.com/brsbl/bb-plugins.git@plugin/mesh-gradient --yes`
+Install: `rift plugin install "path:$PWD/plugins/mesh-gradient" --yes`
 
 ### Endless
 
-Frank Ocean's *Endless* as a bb palette — achromatic, grained, squared. Ten years to the day.
+Frank Ocean's *Endless* as a rift palette — achromatic, grained, squared. Ten years to the day.
 
-![The Endless palette in bb](plugins/endless/docs/screenshot.png)
+![The Endless palette in rift](plugins/endless/docs/screenshot.png)
 
 [Source](plugins/endless) · [README](plugins/endless/README.md)
 
-Install: `bb plugin install git:https://github.com/brsbl/bb-plugins.git@plugin/endless --yes`
+Install: `rift plugin install "path:$PWD/plugins/endless" --yes`
 
 ### Theme Preview
 
-A skeleton of the bb app in every configuration — sidebar, splits, panels, overlays, real thread timelines and controls — drawn from the active theme's tokens, so a palette can be judged before it ships.
+A skeleton of the rift app in every configuration — sidebar, splits, panels, overlays, real thread timelines and controls — drawn from the active theme's tokens, so a palette can be judged before it ships.
 
-![Theme Preview in bb](plugins/theme-preview/docs/screenshot.png)
+![Theme Preview in rift](plugins/theme-preview/docs/screenshot.png)
 
 [Source](plugins/theme-preview) · [README](plugins/theme-preview/README.md)
 
-Install: `bb plugin install git:https://github.com/brsbl/bb-plugins.git@plugin/theme-preview --yes`
+Install: `rift plugin install "path:$PWD/plugins/theme-preview" --yes`
 
 ### Color Swatches
 
 Renders an inline swatch beside every color literal in a thread — hex, `rgb()`, `hsl()`, `oklch()` and friends — the way an editor decorates code.
 
-![Color Swatches in bb](plugins/color-swatches/docs/screenshot.png)
+![Color Swatches in rift](plugins/color-swatches/docs/screenshot.png)
 
 [Source](plugins/color-swatches) · [README](plugins/color-swatches/README.md)
 
-Install: `bb plugin install git:https://github.com/brsbl/bb-plugins.git@plugin/color-swatches --yes`
+Install: `rift plugin install "path:$PWD/plugins/color-swatches" --yes`
 
 ### Open in Moss
 
-Makes local Markdown links in bb open directly in Moss, with bb's viewer kept as the fallback.
+Makes local Markdown links in rift open directly in Moss, with rift's viewer kept as the fallback.
 
-![A Markdown file link from bb open in Moss](plugins/open-in-moss/docs/screenshot.png)
+![A Markdown file link from rift open in Moss](plugins/open-in-moss/docs/screenshot.png)
 
 [Source](plugins/open-in-moss) · [README](plugins/open-in-moss/README.md)
 
-Install: `bb plugin install git:https://github.com/brsbl/bb-plugins.git@plugin/open-in-moss --yes`
+Install: `rift plugin install "path:$PWD/plugins/open-in-moss" --yes`
 
 ### @Plugin
 
-Adds installed and Community plugins to bb's existing `@` menu without installing or invoking them.
+Adds installed and Community plugins to rift's existing `@` menu without installing or invoking them.
 
-![Plugin mentions in bb](plugins/at-plugin/docs/screenshot.png)
+![Plugin mentions in rift](plugins/at-plugin/docs/screenshot.png)
 
 [Source](plugins/at-plugin) · [README](plugins/at-plugin/README.md)
 
-Install: `bb plugin install git:https://github.com/brsbl/bb-plugins.git@plugin/at-plugin --yes`
+Install: `rift plugin install "path:$PWD/plugins/at-plugin" --yes`
 
 ### Timeline Comments
 
 Attaches durable discussion threads to selected timeline text. Users and agents can reply, edit, resolve or reopen comments, review them together, and add open feedback to the composer for follow-up.
 
-![Timeline Comments adding a comment from bb's text-selection menu](plugins/timeline-comments/docs/selection-action.png)
+![Timeline Comments adding a comment from rift's text-selection menu](plugins/timeline-comments/docs/selection-action.png)
 
 ![An anchored Timeline Comments pill with comment actions and its reply composer](plugins/timeline-comments/docs/screenshot.png)
 
-![Timeline Comments copying an open comment into bb's composer for agent follow-up](plugins/timeline-comments/docs/send-to-agent.png)
+![Timeline Comments copying an open comment into rift's composer for agent follow-up](plugins/timeline-comments/docs/send-to-agent.png)
 
-![Timeline Comments List showing an open comment in bb's right panel](plugins/timeline-comments/docs/comments-panel.png)
+![Timeline Comments List showing an open comment in rift's right panel](plugins/timeline-comments/docs/comments-panel.png)
 
 [Source](plugins/timeline-comments) · [README](plugins/timeline-comments/README.md)
 
-Install: `bb plugin install git:https://github.com/brsbl/bb-plugins.git@plugin/timeline-comments --yes`
+Install: `rift plugin install "path:$PWD/plugins/timeline-comments" --yes`
 
-Each `plugin/*` install ref is generated from `main` after CI passes. The separate refs are necessary because bb installs from the root of a git checkout.
+The `plugins/` subdirectories contain the maintained sources. Install-ref publication is disabled in this fork; use a catalog entry pinned to the fork commit and the plugin subdirectory, or install a local plugin path.
 
 ## Develop
 
@@ -150,6 +150,6 @@ npm run check
 npm run new:plugin -- --slug example --name "Example" --description "Adds an example capability."
 ```
 
-To work on one plugin, install its workspace directly: `bb plugin install "path:$PWD/plugins/<slug>" --yes`.
+To work on one plugin, install its workspace directly: `rift plugin install "path:$PWD/plugins/<slug>" --yes`.
 
 See [contributor guidance](CONTRIBUTING.md), the [plugin catalog entry template](tooling/plugin-catalog-entry.md), and [repository tooling](tooling/README.md).

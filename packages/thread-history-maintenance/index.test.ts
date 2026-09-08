@@ -1,7 +1,7 @@
 import {
   createFakePluginHost,
   makeThreadResponse,
-} from "@get-bb/plugin-sdk/testing";
+} from "@riftlabs/plugin-sdk/testing";
 import { describe, expect, it, vi } from "vitest";
 
 import { createThreadHistoryMaintenance } from "./index.js";
@@ -15,7 +15,7 @@ const scanOptions = {
 
 function httpError(status: number, code: string | null) {
   return Object.assign(new Error(`HTTP ${status}`), {
-    name: "BbHttpError",
+    name: "RiftHttpError",
     body: null,
     code,
     status,
@@ -153,7 +153,7 @@ function createHarness() {
 describe("idle-episode thread history maintenance", () => {
   it("reads timelines one segment at a time to stay within the server query depth", async () => {
     const harness = createHarness();
-    const maintenance = createThreadHistoryMaintenance(harness.bb);
+    const maintenance = createThreadHistoryMaintenance(harness.rift);
     await maintenance.scan(scanOptions);
     harness.setTimeline(
       [userRow("msg_1", 1, 20, "Learn this without overloading SQLite.")],
@@ -207,7 +207,7 @@ describe("idle-episode thread history maintenance", () => {
       activeTimelineReads -= 1;
       return timeline([userRow("msg", 1, 100, "Learn this feedback.")], 1);
     });
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "history-test",
       sdk: {
         threads: {
@@ -221,7 +221,7 @@ describe("idle-episode thread history maintenance", () => {
         },
       },
     });
-    const maintenance = createThreadHistoryMaintenance(bb);
+    const maintenance = createThreadHistoryMaintenance(rift);
 
     try {
       await maintenance.scan(scanOptions);
@@ -257,7 +257,7 @@ describe("idle-episode thread history maintenance", () => {
     const getTimeline = vi.fn(async () =>
       timeline([userRow("msg", 1, 100, "Learn this ready feedback.")], 1),
     );
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "history-test",
       sdk: {
         threads: {
@@ -271,7 +271,7 @@ describe("idle-episode thread history maintenance", () => {
         },
       },
     });
-    const maintenance = createThreadHistoryMaintenance(bb);
+    const maintenance = createThreadHistoryMaintenance(rift);
 
     try {
       await maintenance.scan(scanOptions);
@@ -310,7 +310,7 @@ describe("idle-episode thread history maintenance", () => {
       }),
     );
     let listed: typeof threads = [];
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "history-test",
       sdk: {
         threads: {
@@ -332,7 +332,7 @@ describe("idle-episode thread history maintenance", () => {
         },
       },
     });
-    const maintenance = createThreadHistoryMaintenance(bb);
+    const maintenance = createThreadHistoryMaintenance(rift);
 
     try {
       await maintenance.scan(scanOptions);
@@ -360,7 +360,7 @@ describe("idle-episode thread history maintenance", () => {
 
   it("does not replay stale lifecycle events delivered before the baseline", async () => {
     const harness = createHarness();
-    const maintenance = createThreadHistoryMaintenance(harness.bb);
+    const maintenance = createThreadHistoryMaintenance(harness.rift);
 
     await maintenance.observeThread(harness.setThread(10));
     await expect(maintenance.scan(scanOptions)).resolves.toMatchObject({
@@ -375,7 +375,7 @@ describe("idle-episode thread history maintenance", () => {
 
   it("tracks newly created threads so their first idle episode is learnable", async () => {
     const harness = createHarness();
-    const maintenance = createThreadHistoryMaintenance(harness.bb);
+    const maintenance = createThreadHistoryMaintenance(harness.rift);
     await maintenance.scan(scanOptions);
     await maintenance.forgetThread("thr_test");
 
@@ -400,7 +400,7 @@ describe("idle-episode thread history maintenance", () => {
 
   it("queues an unknown idle thread created after the established baseline", async () => {
     const harness = createHarness();
-    const maintenance = createThreadHistoryMaintenance(harness.bb);
+    const maintenance = createThreadHistoryMaintenance(harness.rift);
     await maintenance.scan(scanOptions);
     await maintenance.forgetThread("thr_test");
 
@@ -437,7 +437,7 @@ describe("idle-episode thread history maintenance", () => {
 
   it("defers a queued thread that became active again", async () => {
     const harness = createHarness();
-    const maintenance = createThreadHistoryMaintenance(harness.bb);
+    const maintenance = createThreadHistoryMaintenance(harness.rift);
     await maintenance.scan(scanOptions);
     await maintenance.observeThread(harness.setThread(21));
     harness.setThread(30, "active");
@@ -458,7 +458,7 @@ describe("idle-episode thread history maintenance", () => {
 
   it("baselines once, queues idle threads, and advances per-thread checkpoints", async () => {
     const harness = createHarness();
-    const maintenance = createThreadHistoryMaintenance(harness.bb);
+    const maintenance = createThreadHistoryMaintenance(harness.rift);
 
     await expect(maintenance.scan(scanOptions)).resolves.toMatchObject({
       baseline_established: true,
@@ -529,7 +529,7 @@ describe("idle-episode thread history maintenance", () => {
 
   it("keeps a newer idle episode queued when an older lease advances", async () => {
     const harness = createHarness();
-    const maintenance = createThreadHistoryMaintenance(harness.bb);
+    const maintenance = createThreadHistoryMaintenance(harness.rift);
     await maintenance.scan(scanOptions);
 
     const firstIdle = harness.setThread(21);
@@ -560,7 +560,7 @@ describe("idle-episode thread history maintenance", () => {
 
   it("uses startup inventory reconciliation only to recover missed events", async () => {
     const harness = createHarness();
-    const first = createThreadHistoryMaintenance(harness.bb);
+    const first = createThreadHistoryMaintenance(harness.rift);
     await first.scan(scanOptions);
     expect(harness.list).toHaveBeenCalledTimes(2);
 
@@ -569,7 +569,7 @@ describe("idle-episode thread history maintenance", () => {
       [userRow("msg_1", 1, 20, "Recovered after downtime.")],
       1,
     );
-    const afterRestart = createThreadHistoryMaintenance(harness.bb);
+    const afterRestart = createThreadHistoryMaintenance(harness.rift);
     const scanned = await afterRestart.scan(scanOptions);
 
     expect(harness.list).toHaveBeenCalledTimes(4);
@@ -583,11 +583,11 @@ describe("idle-episode thread history maintenance", () => {
 
   it("prunes absent threads and their lease items during reconciliation", async () => {
     const harness = createHarness();
-    const maintenance = createThreadHistoryMaintenance(harness.bb);
+    const maintenance = createThreadHistoryMaintenance(harness.rift);
     await maintenance.scan(scanOptions);
     await maintenance.observeThread(harness.setThread(21));
 
-    const db = harness.bb.storage.database();
+    const db = harness.rift.storage.database();
     db.prepare(
       `INSERT INTO thread_history_lease_items (
         lease_id, thread_id, target_sequence, target_at,
@@ -622,7 +622,7 @@ describe("idle-episode thread history maintenance", () => {
   it("prunes a candidate on thread_not_found but propagates transient lookup errors", async () => {
     const missingHarness = createHarness();
     const missingMaintenance = createThreadHistoryMaintenance(
-      missingHarness.bb,
+      missingHarness.rift,
     );
     await missingMaintenance.scan(scanOptions);
     await missingMaintenance.observeThread(missingHarness.setThread(21));
@@ -639,7 +639,7 @@ describe("idle-episode thread history maintenance", () => {
 
     const transientHarness = createHarness();
     const transientMaintenance = createThreadHistoryMaintenance(
-      transientHarness.bb,
+      transientHarness.rift,
     );
     await transientMaintenance.scan(scanOptions);
     await transientMaintenance.observeThread(transientHarness.setThread(21));
@@ -656,7 +656,7 @@ describe("idle-episode thread history maintenance", () => {
 
   it("revalidates after loading and defers an idle thread updated mid-read", async () => {
     const harness = createHarness();
-    const maintenance = createThreadHistoryMaintenance(harness.bb);
+    const maintenance = createThreadHistoryMaintenance(harness.rift);
     await maintenance.scan(scanOptions);
     await maintenance.observeThread(harness.setThread(21));
     harness.getTimeline.mockImplementationOnce(async () => {
@@ -679,7 +679,7 @@ describe("idle-episode thread history maintenance", () => {
 
   it("revalidates after loading and defers a thread that becomes active", async () => {
     const harness = createHarness();
-    const maintenance = createThreadHistoryMaintenance(harness.bb);
+    const maintenance = createThreadHistoryMaintenance(harness.rift);
     await maintenance.scan(scanOptions);
     await maintenance.observeThread(harness.setThread(21));
     harness.getTimeline.mockImplementationOnce(async () => {
@@ -713,7 +713,7 @@ describe("idle-episode thread history maintenance", () => {
     );
     let listed: typeof threads = [];
     const getCounts = new Map<string, number>();
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "history-test",
       sdk: {
         threads: {
@@ -733,7 +733,7 @@ describe("idle-episode thread history maintenance", () => {
         },
       },
     });
-    const maintenance = createThreadHistoryMaintenance(bb);
+    const maintenance = createThreadHistoryMaintenance(rift);
 
     try {
       await maintenance.scan(scanOptions);
@@ -755,7 +755,7 @@ describe("idle-episode thread history maintenance", () => {
 
   it("prunes a thread deleted between timeline load and revalidation", async () => {
     const harness = createHarness();
-    const maintenance = createThreadHistoryMaintenance(harness.bb);
+    const maintenance = createThreadHistoryMaintenance(harness.rift);
     await maintenance.scan(scanOptions);
     const idle = harness.setThread(21);
     await maintenance.observeThread(idle);
@@ -778,7 +778,7 @@ describe("idle-episode thread history maintenance", () => {
 
   it("drains an unchanged multi-page timeline without skipping or looping", async () => {
     const harness = createHarness();
-    const maintenance = createThreadHistoryMaintenance(harness.bb);
+    const maintenance = createThreadHistoryMaintenance(harness.rift);
     await maintenance.scan(scanOptions);
     await maintenance.observeThread(harness.setThread(21));
 
@@ -850,11 +850,11 @@ describe("idle-episode thread history maintenance", () => {
       ],
       2,
     );
-    await harness.bb.storage.kv.set("legacy:v1", {
+    await harness.rift.storage.kv.set("legacy:v1", {
       version: 1,
       cursor: { created_at: 20, item_id: "thr_previous" },
     });
-    const maintenance = createThreadHistoryMaintenance(harness.bb, {
+    const maintenance = createThreadHistoryMaintenance(harness.rift, {
       legacyStateKeys: ["legacy:v1"],
     });
 
@@ -863,7 +863,7 @@ describe("idle-episode thread history maintenance", () => {
       baseline_established: true,
       episodes: [{ messages: [{ source_key: "msg_new" }] }],
     });
-    expect(await harness.bb.storage.kv.get("legacy:v1")).toBeUndefined();
+    expect(await harness.rift.storage.kv.get("legacy:v1")).toBeUndefined();
     await maintenance.release(scanned.lease_id!);
     await harness.harness.lifecycle.dispose();
   });

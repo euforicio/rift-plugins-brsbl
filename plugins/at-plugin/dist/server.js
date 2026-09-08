@@ -136,14 +136,14 @@ function buildCommunityPluginContext(reference) {
       `Plugin id: ${JSON.stringify(pluginId)}`,
       `Marketplace: ${JSON.stringify(marketplace)}`,
       `Catalog entry: ${JSON.stringify(entryId)}`,
-      "None of this plugin's capabilities are available. Do not claim or attempt to use them. Explain that the user must install it through bb's Plugins flow before use. The mention itself is not installation consent.",
+      "None of this plugin's capabilities are available. Do not claim or attempt to use them. Explain that the user must install it through rift's Plugins flow before use. The mention itself is not installation consent.",
       "This mention is a peer of any other plugin mentions in the message and does not establish execution order."
     ].join("\n")
   );
 }
 
 // community-catalog.ts
-var COMMUNITY_MARKETPLACE = "bb-community";
+var COMMUNITY_MARKETPLACE = "rift-community";
 var RESULT_LIMIT = 6;
 function folded(value) {
   return value.toLowerCase();
@@ -339,17 +339,17 @@ function inventoryVerificationError(target) {
 }
 function communityMissingError(target) {
   return new Error(
-    `${target} is no longer available in bb Community. Remove @${target} or choose a current result, then retry.`
+    `${target} is no longer available in rift Community. Remove @${target} or choose a current result, then retry.`
   );
 }
 function communityIncompatibleError(target) {
   return new Error(
-    `${target} is no longer listed for this version of bb. Remove @${target} or choose a current result, then retry.`
+    `${target} is no longer listed for this version of rift. Remove @${target} or choose a current result, then retry.`
   );
 }
 function communityVerificationError(target) {
   return new Error(
-    `${target} could not be verified in bb Community right now. Retry, or remove @${target} to send without it.`
+    `${target} could not be verified in rift Community right now. Retry, or remove @${target} to send without it.`
   );
 }
 function invalidInstalledReferenceError() {
@@ -378,14 +378,14 @@ function exactCommunityEntry(entries, identity) {
     (entry) => entry.pluginId === identity.pluginId && entry.marketplace === identity.marketplace && entry.entryId === identity.entryId
   );
 }
-async function plugin(bb) {
-  bb.ui.registerMentionProvider({
+async function plugin(rift) {
+  rift.ui.registerMentionProvider({
     id: "installed",
     label: "Installed",
     async search({ query }) {
       try {
-        const inventory = await boundedSdkRead((signal) => bb.sdk.plugins.list({ signal }));
-        return searchInstalledPlugins(inventory.plugins, query, bb.pluginId);
+        const inventory = await boundedSdkRead((signal) => rift.sdk.plugins.list({ signal }));
+        return searchInstalledPlugins(inventory.plugins, query, rift.pluginId);
       } catch {
         return [];
       }
@@ -400,7 +400,7 @@ async function plugin(bb) {
       const fallback = fallbackTarget(pluginId);
       let inventory;
       try {
-        inventory = await boundedSdkRead((signal) => bb.sdk.plugins.list({ signal }));
+        inventory = await boundedSdkRead((signal) => rift.sdk.plugins.list({ signal }));
       } catch {
         throw inventoryVerificationError(fallback);
       }
@@ -409,15 +409,15 @@ async function plugin(bb) {
       return resolveInstalledRecord(installed);
     }
   });
-  bb.ui.registerMentionProvider({
+  rift.ui.registerMentionProvider({
     id: "community",
     label: "Community",
     async search({ query }) {
       try {
         const entries = await boundedSdkRead(
-          (signal) => bb.sdk.plugins.catalog.search({ query, signal })
+          (signal) => rift.sdk.plugins.catalog.search({ query, signal })
         );
-        return searchCommunityPlugins(entries, query);
+        return searchCommunityPlugins(entries.results, query);
       } catch {
         return [];
       }
@@ -435,7 +435,7 @@ async function plugin(bb) {
       const fallback = fallbackTarget(identity.pluginId);
       let inventory;
       try {
-        inventory = await boundedSdkRead((signal) => bb.sdk.plugins.list({ signal }));
+        inventory = await boundedSdkRead((signal) => rift.sdk.plugins.list({ signal }));
       } catch {
         throw inventoryVerificationError(fallback);
       }
@@ -444,12 +444,12 @@ async function plugin(bb) {
       let entries;
       try {
         entries = await boundedSdkRead(
-          (signal) => bb.sdk.plugins.catalog.search({ query: identity.pluginId, signal })
+          (signal) => rift.sdk.plugins.catalog.search({ query: identity.pluginId, signal })
         );
       } catch {
         throw communityVerificationError(fallback);
       }
-      const entry = exactCommunityEntry(entries, identity);
+      const entry = exactCommunityEntry(entries.results, identity);
       if (entry === void 0) throw communityMissingError(fallback);
       const liveTarget = boundUntrustedText(entry.displayName, MAX_ITEM_TITLE_BYTES);
       if (liveTarget.length === 0) throw communityMissingError(fallback);

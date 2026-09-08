@@ -1,7 +1,7 @@
 import "../app.css";
 import { registerTimelineCommentThreadWindow } from "../bridge.js";
 import { mountTimelineCommentsController } from "../controller.js";
-import type { PluginContentScriptContext } from "@get-bb/plugin-sdk/app";
+import type { PluginContentScriptContext } from "@riftlabs/plugin-sdk/app";
 
 const threadId = "thr_browser";
 const messageId = "msg_browser";
@@ -173,15 +173,15 @@ void (async () => {
   try {
     await wait(300);
     const overlay = document.querySelector<HTMLElement>(
-      ".bb-comments-overlay",
+      ".rift-comments-overlay",
     );
     if (
-      overlay?.parentElement?.dataset.bbPluginDecoration !== "timeline-comments"
+      overlay?.parentElement?.dataset.riftPluginDecoration !== "timeline-comments"
     ) {
       throw new Error("Overlay is outside the plugin CSS ownership boundary");
     }
     const markers = [
-      ...document.querySelectorAll<HTMLButtonElement>(".bb-comments-marker"),
+      ...document.querySelectorAll<HTMLButtonElement>(".rift-comments-marker"),
     ];
     if (markers.length !== 1)
       throw new Error(`Expected 1 local cluster, got ${markers.length}`);
@@ -194,12 +194,12 @@ void (async () => {
       .querySelector("svg")!
       .getBoundingClientRect();
     const clusterCountRect = overflow
-      .querySelector(".bb-comments-marker-count")!
+      .querySelector(".rift-comments-marker-count")!
       .getBoundingClientRect();
     if (clusterIconRect.width !== 15 || clusterIconRect.height !== 15)
       throw new Error("Cluster icon does not match the single-marker icon size");
     if (
-      overflow.dataset.bbCommentGutter === "left" &&
+      overflow.dataset.riftCommentGutter === "left" &&
       clusterCountRect.right > clusterIconRect.left
     )
       throw new Error("Left-gutter cluster count is not gutter-side");
@@ -213,7 +213,7 @@ void (async () => {
 
     overflow.click();
     await wait(30);
-    const cluster = document.querySelector<HTMLElement>(".bb-comments-cluster");
+    const cluster = document.querySelector<HTMLElement>(".rift-comments-cluster");
     if (cluster === null || cluster.querySelectorAll("button").length !== 8) {
       throw new Error("Overflow marker did not expose all grouped threads");
     }
@@ -224,11 +224,11 @@ void (async () => {
 
     cluster.querySelector<HTMLButtonElement>("button")!.click();
     await wait(80);
-    const popover = document.querySelector<HTMLElement>(".bb-comments-thread");
+    const popover = document.querySelector<HTMLElement>(".rift-comments-thread");
     if (popover === null)
       throw new Error("Thread marker did not open its popover");
     if (
-      popover.parentElement?.dataset.bbPluginDecoration !== "timeline-comments"
+      popover.parentElement?.dataset.riftPluginDecoration !== "timeline-comments"
     )
       throw new Error(
         "Thread popover is outside the plugin CSS ownership boundary",
@@ -238,7 +238,7 @@ void (async () => {
     if (document.activeElement !== popover)
       throw new Error("Thread popover did not receive focus");
     let reply = popover.querySelector<HTMLTextAreaElement>(
-      ".bb-comments-reply-input",
+      ".rift-comments-reply-input",
     );
     let replyButton = popover.querySelector<HTMLButtonElement>(
       'button[aria-label="Submit comment"]',
@@ -250,11 +250,11 @@ void (async () => {
       replyStyle.fontSize !== "13px" ||
       replyStyle.fontFamily !== getComputedStyle(document.body).fontFamily
     ) {
-      throw new Error("Reply input typography did not match BB normal text");
+      throw new Error("Reply input typography did not match Rift normal text");
     }
     const emptyReplyHeight = reply.getBoundingClientRect().height;
     let replyComposer = reply.closest<HTMLElement>(
-      ".bb-comments-mention-input",
+      ".rift-comments-mention-input",
     )!;
     const restingBorderColor = getComputedStyle(replyComposer).borderColor;
     reply.focus();
@@ -265,7 +265,7 @@ void (async () => {
       focusedComposerStyle.boxShadow === "none"
     ) {
       throw new Error(
-        `Focused reply did not use the BB ring treatment: resting=${restingBorderColor} focused=${focusedComposerStyle.borderColor} shadow=${focusedComposerStyle.boxShadow}`,
+        `Focused reply did not use the Rift ring treatment: resting=${restingBorderColor} focused=${focusedComposerStyle.borderColor} shadow=${focusedComposerStyle.boxShadow}`,
       );
     }
     setTextareaValue(reply, "First line\nSecond line\nThird line");
@@ -300,10 +300,10 @@ void (async () => {
     setTextareaValue(reply, "x".repeat(10_001));
     await wait(150);
     if (
-      replyComposer.querySelector(".bb-comments-error") === null ||
+      replyComposer.querySelector(".rift-comments-error") === null ||
       getComputedStyle(replyComposer).borderColor === restingBorderColor
     ) {
-      throw new Error("Invalid reply did not expose the BB destructive state");
+      throw new Error("Invalid reply did not expose the Rift destructive state");
     }
     setTextareaValue(reply, "");
     await wait(30);
@@ -323,49 +323,49 @@ void (async () => {
       !reply.readOnly ||
       getComputedStyle(
         replyComposer.querySelector<HTMLElement>(
-          ".bb-comments-input-surface",
+          ".rift-comments-input-surface",
         )!,
       ).backgroundColor === "rgba(0, 0, 0, 0)"
     ) {
-      throw new Error("Submitting reply did not expose its disabled BB state");
+      throw new Error("Submitting reply did not expose its disabled Rift state");
     }
     await wait(140);
     reply = popover.querySelector<HTMLTextAreaElement>(
-      ".bb-comments-reply-input",
+      ".rift-comments-reply-input",
     );
-    replyComposer = reply.closest<HTMLElement>(".bb-comments-mention-input")!;
+    replyComposer = reply.closest<HTMLElement>(".rift-comments-mention-input")!;
     if (replyComposer.hasAttribute("aria-busy") || reply.readOnly)
       throw new Error("Submitted reply did not restore the editable state");
     if (!popover.textContent?.includes("Unable to save this comment."))
       throw new Error("Failed reply did not expose the error state");
-    if (CSS.highlights.get("bb-timeline-comments")?.size !== 8) {
+    if (CSS.highlights.get("rift-timeline-comments")?.size !== 8) {
       throw new Error("Custom Highlight registry did not retain every anchor");
     }
-    if (CSS.highlights.get("bb-timeline-comments-active")?.size !== 1) {
+    if (CSS.highlights.get("rift-timeline-comments-active")?.size !== 1) {
       throw new Error("Open thread did not strengthen exactly one highlight");
     }
 
     popover
       .querySelector<HTMLElement>(
-        '.bb-comments-actions-menu > button[aria-label="Comment actions"]',
+        '.rift-comments-actions-menu > button[aria-label="Comment actions"]',
       )
       ?.click();
     await wait(30);
     const actionsMenu = document.querySelector<HTMLElement>(
-      ".bb-comments-actions-popover",
+      ".rift-comments-actions-popover",
     );
     if (actionsMenu === null)
       throw new Error("Comment actions menu did not open");
     if (
       popover.contains(actionsMenu) ||
-      actionsMenu.parentElement?.dataset.bbPluginDecoration !==
+      actionsMenu.parentElement?.dataset.riftPluginDecoration !==
         "timeline-comments"
     ) {
       throw new Error("Comment actions menu was not rendered in its portal");
     }
     if (
       getComputedStyle(
-        popover.querySelector<HTMLElement>(".bb-comments-thread-comments")!,
+        popover.querySelector<HTMLElement>(".rift-comments-thread-comments")!,
       ).overflowY !== "auto"
     ) {
       throw new Error("Opening comment actions disabled comment scrolling");
@@ -427,7 +427,7 @@ void (async () => {
     );
     await wait(0);
     if (
-      document.querySelector(".bb-comments-actions-popover") !== null ||
+      document.querySelector(".rift-comments-actions-popover") !== null ||
       document.activeElement === document.body
     ) {
       throw new Error("Tab did not dismiss the menu and preserve focus");
@@ -435,7 +435,7 @@ void (async () => {
 
     popover
       .querySelector<HTMLButtonElement>(
-        '.bb-comments-actions-menu > button[aria-label="Comment actions"]',
+        '.rift-comments-actions-menu > button[aria-label="Comment actions"]',
       )
       ?.click();
     await wait(0);
@@ -448,7 +448,7 @@ void (async () => {
     );
     await wait(0);
     if (
-      document.querySelector(".bb-comments-actions-popover") !== null ||
+      document.querySelector(".rift-comments-actions-popover") !== null ||
       document.activeElement === document.body
     ) {
       throw new Error("Shift+Tab did not dismiss the menu and preserve focus");
@@ -456,36 +456,36 @@ void (async () => {
 
     popover
       .querySelector<HTMLButtonElement>(
-        '.bb-comments-actions-menu > button[aria-label="Comment actions"]',
+        '.rift-comments-actions-menu > button[aria-label="Comment actions"]',
       )
       ?.click();
     await wait(0);
     popover.focus({ preventScroll: true });
     await wait(0);
-    if (document.querySelector(".bb-comments-actions-popover") !== null)
+    if (document.querySelector(".rift-comments-actions-popover") !== null)
       throw new Error("Moving focus outside did not dismiss the actions menu");
 
     const commentsScroller = popover.querySelector<HTMLElement>(
-      ".bb-comments-thread-comments",
+      ".rift-comments-thread-comments",
     )!;
     commentsScroller.scrollTop = 0;
     popover
       .querySelector<HTMLButtonElement>(
-        '.bb-comments-actions-menu > button[aria-label="Comment actions"]',
+        '.rift-comments-actions-menu > button[aria-label="Comment actions"]',
       )
       ?.click();
     commentsScroller.scrollTop = commentsScroller.scrollHeight;
     commentsScroller.dispatchEvent(new Event("scroll"));
     await wait(30);
-    if (document.querySelector(".bb-comments-actions-popover") !== null)
+    if (document.querySelector(".rift-comments-actions-popover") !== null)
       throw new Error("Scrolling its trigger out of view did not dismiss menu");
     commentsScroller.scrollTop = 0;
     commentsScroller.dispatchEvent(new Event("scroll"));
     await wait(30);
 
     const clippedTrigger = popover.querySelector<HTMLButtonElement>(
-      `[data-bb-comment-id="comment_root"] ` +
-        '.bb-comments-actions-menu > button[aria-label="Comment actions"]',
+      `[data-rift-comment-id="comment_root"] ` +
+        '.rift-comments-actions-menu > button[aria-label="Comment actions"]',
     )!;
     const scrollerRect = commentsScroller.getBoundingClientRect();
     const triggerRect = clippedTrigger.getBoundingClientRect();
@@ -519,7 +519,7 @@ void (async () => {
       document.addEventListener = originalAddEventListener;
     }
     if (
-      document.querySelector(".bb-comments-actions-popover") !== null ||
+      document.querySelector(".rift-comments-actions-popover") !== null ||
       clippedTrigger.getAttribute("aria-expanded") !== "false" ||
       pointerdownListenerAdds !== 0
     ) {
@@ -533,7 +533,7 @@ void (async () => {
 
     popover
       .querySelector<HTMLButtonElement>(
-        '.bb-comments-actions-menu > button[aria-label="Comment actions"]',
+        '.rift-comments-actions-menu > button[aria-label="Comment actions"]',
       )
       ?.click();
     await wait(0);
@@ -542,37 +542,37 @@ void (async () => {
     );
     await wait(0);
     if (
-      document.querySelector(".bb-comments-actions-popover") !== null ||
-      document.querySelector(".bb-comments-thread") === null
+      document.querySelector(".rift-comments-actions-popover") !== null ||
+      document.querySelector(".rift-comments-thread") === null
     ) {
       throw new Error("Escape did not dismiss only the comment actions menu");
     }
     popover
       .querySelector<HTMLButtonElement>(
-        '.bb-comments-actions-menu > button[aria-label="Comment actions"]',
+        '.rift-comments-actions-menu > button[aria-label="Comment actions"]',
       )
       ?.click();
     const originalBody = popover.querySelector<HTMLElement>(
-      '[data-bb-comment-id="comment_root"] .bb-comments-comment-body',
+      '[data-rift-comment-id="comment_root"] .rift-comments-comment-body',
     );
     const originalReplyInput = popover.querySelector<HTMLTextAreaElement>(
-      ".bb-comments-reply-input",
+      ".rift-comments-reply-input",
     );
     if (originalBody === null || originalReplyInput === null)
       throw new Error("Thread fixture omitted persistent edit surfaces");
-    const originalEditingRow = originalBody.closest(".bb-comments-comment");
+    const originalEditingRow = originalBody.closest(".rift-comments-comment");
     setTextareaValue(originalReplyInput, "Preserve this reply draft");
     const editButton = [
       ...document.querySelectorAll<HTMLButtonElement>(
-        ".bb-comments-actions-popover button",
+        ".rift-comments-actions-popover button",
       ),
     ].find((button) => button.textContent?.trim() === "Edit");
     editButton?.click();
     await wait(0);
-    if (document.querySelector(".bb-comments-actions-popover") !== null)
+    if (document.querySelector(".rift-comments-actions-popover") !== null)
       throw new Error("Comment action did not dismiss its portal menu");
     const editInput = popover.querySelector<HTMLTextAreaElement>(
-      '[data-bb-comment-id="comment_root"] .bb-comments-edit-input',
+      '[data-rift-comment-id="comment_root"] .rift-comments-edit-input',
     );
     if (
       editInput === null ||
@@ -580,7 +580,7 @@ void (async () => {
     ) {
       throw new Error("Comment edit did not expose its incremental editor");
     }
-    const editingRow = editInput.closest<HTMLElement>(".bb-comments-comment")!;
+    const editingRow = editInput.closest<HTMLElement>(".rift-comments-comment")!;
     const cancelEditButton = editingRow.querySelector<HTMLButtonElement>(
       'button[aria-label="Cancel comment edit"]',
     );
@@ -593,7 +593,7 @@ void (async () => {
     ) {
       throw new Error("Comment edit rebuilt the row or omitted its height animation");
     }
-    const replyRegion = popover.querySelector<HTMLElement>(".bb-comments-reply");
+    const replyRegion = popover.querySelector<HTMLElement>(".rift-comments-reply");
     if (
       replyRegion?.dataset.editing !== "true" ||
       replyRegion.getAttribute("inert") === null
@@ -601,12 +601,12 @@ void (async () => {
       throw new Error("Editing above replies did not incrementally collapse them");
     }
     const saveEdit = popover.querySelector<HTMLButtonElement>(
-      '[data-bb-comment-id="comment_root"] button[aria-label="Submit comment"]',
+      '[data-rift-comment-id="comment_root"] button[aria-label="Submit comment"]',
     );
     if (saveEdit?.disabled !== false)
       throw new Error("Unchanged comment cannot exit editing like Moss");
     const localFooter = editingRow.querySelector(
-      ".bb-comments-edit-footer",
+      ".rift-comments-edit-footer",
     );
     if (localFooter === null)
       throw new Error("Earlier-comment edit footer did not stay under its comment");
@@ -616,7 +616,7 @@ void (async () => {
     );
     await wait(0);
     if (
-      document.querySelector(".bb-comments-thread") === null ||
+      document.querySelector(".rift-comments-thread") === null ||
       editingRow.dataset.editing === "true" ||
       replyRegion?.dataset.editing !== "false"
     ) {
@@ -624,7 +624,7 @@ void (async () => {
     }
     if (
       originalReplyInput !==
-        popover.querySelector<HTMLTextAreaElement>(".bb-comments-reply-input") ||
+        popover.querySelector<HTMLTextAreaElement>(".rift-comments-reply-input") ||
       originalReplyInput.value !== "Preserve this reply draft"
     ) {
       throw new Error("Editing rebuilt or cleared the mounted reply composer");
@@ -639,27 +639,27 @@ void (async () => {
     await waitUntil(
       () =>
         originalReplyInput.value === "" &&
-        [...popover.querySelectorAll(".bb-comments-comment")].some((row) =>
+        [...popover.querySelectorAll(".rift-comments-comment")].some((row) =>
           row.textContent?.includes("Preserve this reply draft"),
         ),
       "Reply RPC did not settle and render its inserted reply",
     );
-    const insertedReply = [...popover.querySelectorAll(".bb-comments-comment")]
+    const insertedReply = [...popover.querySelectorAll(".rift-comments-comment")]
       .find((row) => row.textContent?.includes("Preserve this reply draft"));
     if (
-      document.querySelector(".bb-comments-thread") !== popover ||
+      document.querySelector(".rift-comments-thread") !== popover ||
       originalReplyInput !==
-        popover.querySelector<HTMLTextAreaElement>(".bb-comments-reply-input") ||
+        popover.querySelector<HTMLTextAreaElement>(".rift-comments-reply-input") ||
       originalReplyInput.value !== "" ||
       insertedReply === undefined ||
       insertedReply.getAnimations().length === 0
     ) {
       throw new Error(
         `Reply did not insert incrementally into the open thread: ${JSON.stringify({
-          threadPreserved: document.querySelector(".bb-comments-thread") === popover,
+          threadPreserved: document.querySelector(".rift-comments-thread") === popover,
           inputPreserved:
             originalReplyInput ===
-            popover.querySelector<HTMLTextAreaElement>(".bb-comments-reply-input"),
+            popover.querySelector<HTMLTextAreaElement>(".rift-comments-reply-input"),
           inputValue: originalReplyInput.value,
           inserted: insertedReply !== undefined,
           animations: insertedReply?.getAnimations().length ?? 0,
@@ -667,8 +667,8 @@ void (async () => {
       );
     }
     const restoredCommentAction = popover.querySelector<HTMLButtonElement>(
-      `[data-bb-comment-id="comment_root"] ` +
-        '.bb-comments-actions-menu > button[aria-label="Comment actions"]',
+      `[data-rift-comment-id="comment_root"] ` +
+        '.rift-comments-actions-menu > button[aria-label="Comment actions"]',
     );
     if (document.activeElement !== restoredCommentAction)
       throw new Error("Cancelling edit did not restore comment action focus");
@@ -676,20 +676,20 @@ void (async () => {
     document.dispatchEvent(
       new KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
     );
-    if (document.querySelector(".bb-comments-thread") !== null) {
+    if (document.querySelector(".rift-comments-thread") !== null) {
       throw new Error("Escape did not dismiss the thread popover");
     }
-    if (!document.activeElement?.classList.contains("bb-comments-marker")) {
+    if (!document.activeElement?.classList.contains("rift-comments-marker")) {
       throw new Error("Popover dismissal did not restore marker focus");
     }
     document
-      .querySelector<HTMLButtonElement>(".bb-comments-marker")
+      .querySelector<HTMLButtonElement>(".rift-comments-marker")
       ?.click();
     document
-      .querySelector<HTMLButtonElement>(".bb-comments-cluster button")
+      .querySelector<HTMLButtonElement>(".rift-comments-cluster button")
       ?.click();
     await wait(80);
-    if (document.querySelector(".bb-comments-thread") === null)
+    if (document.querySelector(".rift-comments-thread") === null)
       throw new Error("Thread popover did not reopen");
     if (
       [...document.querySelectorAll("button")].some((button) =>

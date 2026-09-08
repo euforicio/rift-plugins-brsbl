@@ -1,3 +1,5 @@
+import type { RiftPluginApi } from "@riftlabs/plugin-sdk";
+
 export const WORKFLOW_CONFIG_VERSION = 2 as const;
 
 export const SECTION_ICON_OPTIONS = [
@@ -181,7 +183,7 @@ export interface OrganizableThread {
   parentThreadId: string | null;
   sectionId: string | null;
   sourceThreadId: string | null;
-  status: "active" | "error" | "idle" | "starting" | "stopping";
+  status: Awaited<ReturnType<RiftPluginApi["sdk"]["threads"]["get"]>>["status"];
   visibility: "hidden" | "visible";
 }
 
@@ -578,6 +580,7 @@ export function placementForThread(
     ) ?? firstWorkflowStage(config);
   const currentStage = stageForSectionId(config, thread.sectionId);
   const belongsInInbox =
+    thread.status !== "pending" &&
     !isRunningThread(thread) &&
     (isUnreadThread(thread) ||
       (!leaveInbox && currentStage?.role === "inbox"));

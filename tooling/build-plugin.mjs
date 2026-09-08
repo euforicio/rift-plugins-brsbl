@@ -5,8 +5,8 @@ import {
   buildPluginApp,
   buildPluginServer,
   resolvePluginBuildToolchain,
-} from "./vendor/bb-plugin-build-0.39.0.mjs";
-import { pluginBuildBbVersion } from "./plugin-build-provenance.mjs";
+} from "./vendor/rift-plugin-build-0.42.1.mjs";
+import { pluginBuildRiftVersion } from "./plugin-build-provenance.mjs";
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const arguments_ = process.argv.slice(2);
@@ -22,7 +22,7 @@ const files = [];
 if (!appOnly) {
   const server = await buildPluginServer(
     pluginPath,
-    pluginBuildBbVersion,
+    pluginBuildRiftVersion,
     toolchain,
   );
   files.push(server.jsPath, server.mapPath, server.metaPath);
@@ -30,11 +30,11 @@ if (!appOnly) {
 const manifest = JSON.parse(
   await readFile(resolve(pluginPath, "package.json"), "utf8"),
 );
-if (typeof manifest.bb?.app === "string") {
-  const app = await buildPluginApp(pluginPath, pluginBuildBbVersion, toolchain);
+if (typeof manifest.rift?.app === "string") {
+  const app = await buildPluginApp(pluginPath, pluginBuildRiftVersion, toolchain);
   files.push(app.jsPath, app.cssPath, app.metaPath);
 } else if (appOnly) {
-  throw new Error(`${manifest.name}: --app-only requires bb.app`);
+  throw new Error(`${manifest.name}: --app-only requires rift.app`);
 }
 
 for (const file of files) console.log(file);

@@ -1,7 +1,7 @@
 /*
  * ENDLESS — 10 years (August 19, 2016 → August 19, 2026)
  *
- * Frank Ocean's Endless as a bb palette. The album is a black-and-white
+ * Frank Ocean's Endless as a rift palette. The album is a black-and-white
  * visual record: a grainy near-black field, two silver-gelatin photographs,
  * printers' registration marks in the corners, a greyscale step wedge down
  * each edge, and a warehouse ceiling of fluorescent tubes.
@@ -30,8 +30,8 @@
  * — visible side by side, silent from across the room.
  *
  * CASCADE RULE — read before editing. `:root` and `.dark` have equal
- * specificity (0,1,0) and this stylesheet loads after bb's, so a `:root`
- * declaration here BEATS bb's own `.dark` default. Every token pinned in the
+ * specificity (0,1,0) and this stylesheet loads after rift's, so a `:root`
+ * declaration here BEATS rift's own `.dark` default. Every token pinned in the
  * light block is therefore also pinned in the dark block, or its light value
  * would leak into dark mode.
  *
@@ -52,7 +52,7 @@
  * directly, so every ratio below is unchanged and still measured against the
  * colour you actually see.
  *
- * The ANSI terminal palette is left at bb's defaults on purpose. A greyscale
+ * The ANSI terminal palette is left at rift's defaults on purpose. A greyscale
  * remap would erase the one place in the app where color is load-bearing
  * rather than decorative.
  */
@@ -75,7 +75,7 @@
   /* Typography — :root-only so it applies in both modes, and shared by every
    * theme in the family. The reference is the album's liner notes: song titles
    * in bold Helvetica, lyrics in typewriter caps. So the UI face is Helvetica
-   * Neue (falling back to bb's bundled Inter, which is cut from the same
+   * Neue (falling back to rift's bundled Inter, which is cut from the same
    * cloth), and the mono is a Courier — code, file paths and terminals read as
    * the typewriter. Both are system faces: no webfont, no @font-face, nothing
    * to embed. */
@@ -156,7 +156,7 @@
   /* Frosted top bars — the field at 92%. */
   --surface-scrim: rgba(244, 244, 244, 0.92);
 
-  /* Inset wells. bb uses --surface-recessed for USER MESSAGE BUBBLES, tables
+  /* Inset wells. rift uses --surface-recessed for USER MESSAGE BUBBLES, tables
    * and quote blocks as well as code, so this is the tint every prompt you
    * send picks up — kept light on purpose. */
   --surface-recessed: rgba(22, 22, 22, 0.05);
@@ -359,7 +359,7 @@
 
 /* TEXT TIERS AT FULL STRENGTH.
  *
- * bb dims the secondary tiers with Tailwind opacity modifiers (/45 - /90) on
+ * rift dims the secondary tiers with Tailwind opacity modifiers (/45 - /90) on
  * top of whatever the palette sets. Audited by walking every rendered text
  * node in the running app and computing its contrast against its composited
  * background, that drops real labels to 2.07:1 dark and 1.89:1 light — far
@@ -398,7 +398,7 @@
  * #0b0b0e -> #17171a; foreground #f4f2ed -> #cecbc4, landing at 11.05:1
  * instead of 16.29:1.
  *
- * No text-shadow to remove — neither bb nor this theme sets one (checked).
+ * No text-shadow to remove — neither rift nor this theme sets one (checked).
  * Font smoothing is pinned to `auto` so macOS uses subpixel antialiasing;
  * greyscale AA thins strokes on dark ground and worsens haloing. Font weight
  * is deliberately untouched: the brief says keep type as it is, and smoothing
@@ -415,7 +415,7 @@
 .dark .fixed.bg-sidebar {
   --sidebar: #1d1d1d;                       /* lifted off near-black — and
                                                matched to the flat #1d1d1d that
-                                               bb paints behind row lists, so
+                                               rift paints behind row lists, so
                                                the field and the rows read as
                                                ONE surface instead of banding */
   --sidebar-foreground: #c6c3bc;            /* 9.58:1 — stays one step under the canvas ramp */
@@ -439,7 +439,7 @@
 }
 .dark .fixed.bg-sidebar * { -webkit-font-smoothing: inherit; }
 
-/* QUEUED DRAWER DIVIDER. bb draws the drawer's header rule with
+/* QUEUED DRAWER DIVIDER. rift draws the drawer's header rule with
  * `border-b border-border/35` — that is --border multiplied by 35%, so it
  * lands at white 3.5% in dark and black 10.5% in light. The light one in
  * particular reads as a hard rule against near-white paper.
@@ -451,17 +451,17 @@
 
 /* SIDEBAR SECTION HEADINGS — no fill.
  *
- * bb gives the section header row its own opaque `bg-sidebar` fill. That is
+ * rift gives the section header row its own opaque `bg-sidebar` fill. That is
  * the SAME colour as the sidebar, so it is invisible on a flat theme — but
  * this sidebar carries noise, and an opaque repaint erases the texture on
  * those rows. The result reads as a flat band behind every heading.
  *
  * Dropping the fill lets the sidebar's own surface (and its noise) show
  * through. Scoped to elements carrying BOTH classes: of the 12
- * `.bb-sidebar-hover-actions-row` rows in the sidebar, exactly 3 also carry
+ * `.rift-sidebar-hover-actions-row` rows in the sidebar, exactly 3 also carry
  * `bg-sidebar`, and those 3 are the section headers. Hover and focus fills are
  * separate classes and are untouched. Verified against the running app. */
-.fixed.bg-sidebar .bb-sidebar-hover-actions-row.bg-sidebar {
+.fixed.bg-sidebar .rift-sidebar-hover-actions-row.bg-sidebar {
   background-color: transparent;
 }
 
@@ -482,10 +482,10 @@
  * Painted as an ::after OVERLAY on the sidebar, above every child. Two earlier
  * placements failed: on the container it was buried by the `h-full w-full`
  * child that repaints an opaque fill, and on that child it was interrupted by
- * the row and section surfaces bb paints on top — the brushing measurably
+ * the row and section surfaces rift paints on top — the brushing measurably
  * halved in amplitude under them (sd 0.42 between rows vs 0.19 beneath), which
  * reads as horizontal gaps chopping up the grain. An overlay paints last, so
- * the panel is one continuous brushed face no matter what bb fills underneath.
+ * the panel is one continuous brushed face no matter what rift fills underneath.
  * pointer-events:none keeps it non-interactive.
  *
  * The noise composites over the fill, so it shifts the sidebar a little: the
@@ -517,7 +517,7 @@
   box-shadow: inset -1px 0 0 0 rgba(255, 255, 255, 0.12);
 }
 
-/* Text selection — bb only styles ::selection inside the prompt editor
+/* Text selection — rift only styles ::selection inside the prompt editor
  * (.ProseMirror), so thread text would otherwise fall back to the macOS
  * default blue and put the one hue this theme refuses right in the middle of
  * it. Point both at the same token. */
@@ -535,7 +535,7 @@ code:not(pre code) {
   font-weight: 600;
 }
 
-/* MESSAGE NAVIGATOR (the "Agent messages / Your messages" popover, bb id
+/* MESSAGE NAVIGATOR (the "Agent messages / Your messages" popover, rift id
  * thread-toc-panel-*). It sits over the timeline like a hung sheet of the
  * sidebar's material: same fill as the sidebar, with a light source at the top
  * edge — a soft sheen falling off by a third of the panel, and a 1px inner

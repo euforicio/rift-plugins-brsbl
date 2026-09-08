@@ -16,7 +16,7 @@ import { promisify } from "node:util";
 import {
   createFakePluginHost,
   makeThreadResponse,
-} from "@get-bb/plugin-sdk/testing";
+} from "@riftlabs/plugin-sdk/testing";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -202,7 +202,7 @@ async function startPlugin(root: string, script: AgentScript) {
     sdk: { threads: { list: async () => [] } },
     agentSkillIds: ["design-doctrine"],
   });
-  const { bb, harness } = host;
+  const { rift, harness } = host;
 
   harness.sdk.stub("threads.spawn", (async (args: { prompt: string }) => {
     const prompt = args.prompt;
@@ -253,7 +253,7 @@ async function startPlugin(root: string, script: AgentScript) {
   }) as never);
   harness.sdk.stub("threads.wait", (async () => ({ matched: true })) as never);
 
-  await plugin(bb);
+  await plugin(rift);
   return host;
 }
 

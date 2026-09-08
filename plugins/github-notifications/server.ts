@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
 
-import { defineRpcContract, type BbPluginApi } from "@get-bb/plugin-sdk";
+import { defineRpcContract, type RiftPluginApi } from "@riftlabs/plugin-sdk";
 import { z } from "zod";
 
 import {
@@ -321,7 +321,7 @@ function legacyResolvedThroughKey(identity: GithubIdentity): string {
 }
 
 export function createGithubNotificationsPlugin(runGh: RunGh) {
-  return function githubNotificationsPlugin(bb: BbPluginApi): void {
+  return function githubNotificationsPlugin(rift: RiftPluginApi): void {
     let cache: {
       fetchedAtMs: number;
       identity: GithubIdentity;
@@ -336,10 +336,10 @@ export function createGithubNotificationsPlugin(runGh: RunGh) {
     async function loadResolvedIds(
       identity: GithubIdentity,
     ): Promise<Set<string>> {
-      const current = await bb.storage.kv.get<unknown>(resolvedIdsKey(identity));
+      const current = await rift.storage.kv.get<unknown>(resolvedIdsKey(identity));
       const stored =
         current === undefined
-          ? await bb.storage.kv.get<unknown>(legacyResolvedIdsKey(identity))
+          ? await rift.storage.kv.get<unknown>(legacyResolvedIdsKey(identity))
           : current;
       if (!Array.isArray(stored)) return new Set();
       return new Set(
@@ -354,12 +354,12 @@ export function createGithubNotificationsPlugin(runGh: RunGh) {
       needsMigration: boolean;
       pendingLegacyIds: Set<string>;
     }> {
-      const current = await bb.storage.kv.get<unknown>(
+      const current = await rift.storage.kv.get<unknown>(
         resolvedThroughKey(identity),
       );
       const legacy =
         current === undefined
-          ? await bb.storage.kv.get<unknown>(legacyResolvedThroughKey(identity))
+          ? await rift.storage.kv.get<unknown>(legacyResolvedThroughKey(identity))
           : undefined;
       const stored = current ?? legacy;
       if (stored === undefined) {
@@ -440,7 +440,7 @@ export function createGithubNotificationsPlugin(runGh: RunGh) {
       legacyCutoffAt: string | null,
       pendingLegacyIds: Set<string>,
     ): Promise<void> {
-      await bb.storage.kv.set(
+      await rift.storage.kv.set(
         resolvedThroughKey(identity),
         {
           cursors: Object.fromEntries(
@@ -630,7 +630,7 @@ export function createGithubNotificationsPlugin(runGh: RunGh) {
           } catch (error: unknown) {
             const message =
               error instanceof Error ? error.message : String(error);
-            bb.log.warn(
+            rift.log.warn(
               `Skipping unavailable GitHub comment for ${lookup.alias}: ${message}`,
             );
             return null;
@@ -759,7 +759,7 @@ export function createGithubNotificationsPlugin(runGh: RunGh) {
         .catch((error: unknown) => {
           const message =
             error instanceof Error ? error.message : String(error);
-          bb.log.warn(`GitHub notification refresh failed: ${message}`);
+          rift.log.warn(`GitHub notification refresh failed: ${message}`);
           throw new Error(message);
         })
         .finally(() => {
@@ -769,7 +769,7 @@ export function createGithubNotificationsPlugin(runGh: RunGh) {
       return promise;
     }
 
-    bb.rpc.register(rpcContract, {
+    rift.rpc.register(rpcContract, {
       async listNotifications({ force }) {
         return listNotifications(force);
       },
@@ -828,7 +828,7 @@ export function createGithubNotificationsPlugin(runGh: RunGh) {
         });
       },
     });
-    bb.log.info("GitHub Activity loaded");
+    rift.log.info("GitHub Activity loaded");
   };
 }
 

@@ -1,5 +1,5 @@
 {
-  "name": "bb-plugins",
+  "name": "rift-plugins-brsbl",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -22,7 +22,7 @@
     "typecheck": "npm run typecheck --workspaces --if-present"
   },
   "devDependencies": {
-    "@get-bb/plugin-sdk": "file:tooling/vendor/get-bb-plugin-sdk-0.4.8.tgz",
+    "@riftlabs/plugin-sdk": "0.4.48",
     "@tailwindcss/node": "4.3.0",
     "@tailwindcss/oxide": "4.3.0",
     "esbuild": "0.28.1",

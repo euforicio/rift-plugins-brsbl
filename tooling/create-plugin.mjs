@@ -52,7 +52,7 @@ function validateOptions(options) {
 }
 
 function filesFor(options) {
-  const packageName = `bb-plugin-${options.slug}`;
+  const packageName = `rift-plugin-${options.slug}`;
   const installRef = `plugin/${options.slug}`;
   const loadedMessage = JSON.stringify(`${options.name} loaded`);
   const testName = JSON.stringify(`${options.name} plugin`);
@@ -69,8 +69,8 @@ function filesFor(options) {
       test: "vitest run",
       typecheck: "tsc --noEmit",
     },
-    engines: { bb: ">=0.0.34", bbPluginSdk: `^${pluginSdkVersion}` },
-    bb: {
+    engines: { rift: ">=0.0.34", riftPluginSdk: `^${pluginSdkVersion}` },
+    rift: {
       name: options.name,
       description: options.description,
       branding: { icon: "Puzzle" },
@@ -78,7 +78,7 @@ function filesFor(options) {
       skills: [],
     },
     devDependencies: {
-      "@get-bb/plugin-sdk": `file:../../tooling/vendor/${pluginSdkArchive}`,
+      "@riftlabs/plugin-sdk": pluginSdkVersion,
       "@types/better-sqlite3": "^7.6.12",
       "@types/node": "^22.0.0",
       "better-sqlite3": "^12.10.0",
@@ -96,12 +96,12 @@ ${options.description}
 ## Install
 
 \`\`\`bash
-bb plugin install git:https://github.com/brsbl/bb-plugins.git@${installRef} --yes
+rift plugin install "path:$PWD/plugins/${options.slug}" --yes
 \`\`\`
 
 ## Use
 
-${options.when ?? `Use ${options.name} when its focused capability is useful in bb.`}
+${options.when ?? `Use ${options.name} when its focused capability is useful in rift.`}
 
 ## Develop
 
@@ -110,24 +110,24 @@ From the monorepo root:
 \`\`\`bash
 npm ci
 npm run check --workspace=${packageName}
-bb plugin install "path:$PWD/plugins/${options.slug}" --yes
+rift plugin install "path:$PWD/plugins/${options.slug}" --yes
 \`\`\`
 `;
-  const server = `import type { BbPluginApi } from "@get-bb/plugin-sdk";
+  const server = `import type { RiftPluginApi } from "@riftlabs/plugin-sdk";
 
-export default function plugin(bb: BbPluginApi): void {
-  bb.log.info(${loadedMessage});
+export default function plugin(rift: RiftPluginApi): void {
+  rift.log.info(${loadedMessage});
 }
 `;
-  const test = `import { createFakePluginHost } from "@get-bb/plugin-sdk/testing";
+  const test = `import { createFakePluginHost } from "@riftlabs/plugin-sdk/testing";
 import { describe, expect, it } from "vitest";
 
 import plugin from "./server";
 
 describe(${testName}, () => {
-  it("loads through the bb plugin harness", async () => {
-    const { bb, harness } = createFakePluginHost({ pluginId: "${options.slug}" });
-    plugin(bb);
+  it("loads through the rift plugin harness", async () => {
+    const { rift, harness } = createFakePluginHost({ pluginId: "${options.slug}" });
+    plugin(rift);
     expect(harness.inspection.logEntries.at(-1)?.message).toBe(${loadedMessage});
     await harness.lifecycle.dispose();
   });
@@ -174,11 +174,11 @@ export async function scaffoldPlugin(rawOptions) {
   if (!options.skipVerify) {
     command(
       "npm",
-      ["run", "check", `--workspace=bb-plugin-${options.slug}`],
+      ["run", "check", `--workspace=rift-plugin-${options.slug}`],
       repositoryRoot,
     );
   }
-  return { directory, packageName: `bb-plugin-${options.slug}` };
+  return { directory, packageName: `rift-plugin-${options.slug}` };
 }
 
 async function main() {

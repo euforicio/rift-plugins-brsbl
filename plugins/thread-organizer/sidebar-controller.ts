@@ -7,10 +7,10 @@ import {
 } from "./core.js";
 
 const SIDEBAR_SELECTOR = '[data-sidebar="sidebar"]';
-const MANUAL_SECTION_ORDER_STORAGE_KEY = "bb.sidebar.manualSectionOrder";
+const MANUAL_SECTION_ORDER_STORAGE_KEY = "rift.sidebar.manualSectionOrder";
 
 export const WORKFLOW_CACHE_STORAGE_KEY = "bb.thread-organizer.workflow-config";
-export const WORKFLOW_CONFIG_EVENT = "bb-thread-organizer-workflow-config";
+export const WORKFLOW_CONFIG_EVENT = "rift-thread-organizer-workflow-config";
 
 interface MountThreadOrganizerSidebarOptions {
   document?: Document;

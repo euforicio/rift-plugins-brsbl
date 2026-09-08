@@ -4,7 +4,7 @@ import {
   loadPluginApp,
   mountPluginContentScripts,
   renderSlot,
-} from "@get-bb/plugin-sdk/testing/app";
+} from "@riftlabs/plugin-sdk/testing/app";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -94,7 +94,7 @@ describe("Thread Organizer app registration", () => {
     }
     document.body.append(sidebar);
     window.localStorage.setItem(
-      "bb.sidebar.manualSectionOrder",
+      "rift.sidebar.manualSectionOrder",
       JSON.stringify(
         initial.stages.map((stage) => `section:${stage.sectionId}`),
       ),
@@ -129,7 +129,7 @@ describe("Thread Organizer app registration", () => {
     await vi.waitFor(() =>
       expect(
         JSON.parse(
-          window.localStorage.getItem("bb.sidebar.manualSectionOrder")!,
+          window.localStorage.getItem("rift.sidebar.manualSectionOrder")!,
         ).slice(0, 4),
       ).toEqual([
         "section:sec_inbox",

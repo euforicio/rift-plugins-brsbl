@@ -3,7 +3,7 @@
 import {
   loadPluginApp,
   mountPluginContentScripts,
-} from "@get-bb/plugin-sdk/testing/app";
+} from "@riftlabs/plugin-sdk/testing/app";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 afterEach(() => {
@@ -41,7 +41,7 @@ describe("Color Swatches content script", () => {
     });
 
     const proseSwatches = Array.from(
-      document.querySelectorAll<HTMLElement>("[data-bb-color-swatch-prose]"),
+      document.querySelectorAll<HTMLElement>("[data-rift-color-swatch-prose]"),
     );
     expect(proseSwatches.map((swatch) => swatch.textContent)).toEqual([
       "#3366ff",
@@ -49,12 +49,12 @@ describe("Color Swatches content script", () => {
     ]);
     expect(
       proseSwatches.every(
-        (swatch) => swatch.getAttribute("data-bb-color-swatch") === "",
+        (swatch) => swatch.getAttribute("data-rift-color-swatch") === "",
       ),
     ).toBe(true);
     expect(
       proseSwatches.map((swatch) =>
-        swatch.style.getPropertyValue("--bb-color-swatch"),
+        swatch.style.getPropertyValue("--rift-color-swatch"),
       ),
     ).toEqual(["#3366ff", "#3366ff80"]);
     expect(paragraph.textContent).toBe(
@@ -62,8 +62,8 @@ describe("Color Swatches content script", () => {
     );
     expect(paragraph.firstChild).toBe(originalTextNode);
     expect(
-      document.querySelector("style[data-bb-color-swatches]")?.textContent,
-    ).toContain("[data-bb-color-swatch]::before");
+      document.querySelector("style[data-rift-color-swatches]")?.textContent,
+    ).toContain("[data-rift-color-swatch]::before");
 
     // React retains and updates the Text node it created. Keep that node in
     // place so a later render replaces the literal without stale duplicate DOM.
@@ -73,10 +73,10 @@ describe("Color Swatches content script", () => {
     frames.shift()!(0);
 
     const updatedSwatch = document.querySelector<HTMLElement>(
-      "[data-bb-color-swatch-prose]",
+      "[data-rift-color-swatch-prose]",
     );
     expect(updatedSwatch?.textContent).toBe("#000000");
-    expect(updatedSwatch?.style.getPropertyValue("--bb-color-swatch")).toBe(
+    expect(updatedSwatch?.style.getPropertyValue("--rift-color-swatch")).toBe(
       "#000000",
     );
     expect(paragraph.textContent).toBe("updated message #000000");
@@ -90,7 +90,7 @@ describe("Color Swatches content script", () => {
     await mounted.lifecycle.dispose();
     expect(canceledFrames).toEqual([2]);
     staleFrame(0);
-    expect(document.querySelector("[data-bb-color-swatch-prose]")).toBeNull();
+    expect(document.querySelector("[data-rift-color-swatch-prose]")).toBeNull();
     expect(paragraph.textContent).toBe("final message #ff00ff");
     expect(paragraph.firstChild).toBe(originalTextNode);
   });
@@ -111,16 +111,16 @@ describe("Color Swatches content script", () => {
     const [prefix, value] = Array.from(
       line.querySelectorAll<HTMLElement>("span"),
     );
-    expect(prefix.getAttribute("data-bb-color-swatch")).toBe("");
-    expect(prefix.style.getPropertyValue("--bb-color-swatch")).toBe("#ffffff");
+    expect(prefix.getAttribute("data-rift-color-swatch")).toBe("");
+    expect(prefix.style.getPropertyValue("--rift-color-swatch")).toBe("#ffffff");
 
     value.textContent = "000000";
     await Promise.resolve(); // deliver MutationObserver records
     expect(frames).toHaveLength(1);
     frames.shift()!(0);
 
-    expect(prefix.getAttribute("data-bb-color-swatch")).toBe("");
-    expect(prefix.style.getPropertyValue("--bb-color-swatch")).toBe("#000000");
+    expect(prefix.getAttribute("data-rift-color-swatch")).toBe("");
+    expect(prefix.style.getPropertyValue("--rift-color-swatch")).toBe("#000000");
     await mounted.lifecycle.dispose();
   });
 });

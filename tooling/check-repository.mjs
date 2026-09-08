@@ -18,10 +18,10 @@ const nativeLoaderLockPaths = Object.freeze([
   "node_modules/lightningcss",
   "node_modules/@tailwindcss/node/node_modules/lightningcss",
 ]);
-const defaultBbEngine = ">=0.0.34";
+const defaultRiftEngine = ">=0.0.34";
 // Keep newer host requirements scoped to the plugin that consumes them
 // instead of raising the compatibility floor for every package.
-const pluginBbEngineOverrides = new Map([
+const pluginRiftEngineOverrides = new Map([
   ["theme-preview", ">=0.38.0"],
 ]);
 
@@ -110,19 +110,25 @@ export async function checkRepository(repositoryRoot = defaultRoot, options = {}
   const plugins = await readPluginWorkspaces(root);
   const bundledTypesDirectory = resolve(
     options.bundledTypesDirectory ??
-      resolve(root, "node_modules/@get-bb/plugin-sdk/bundled-types"),
+      resolve(root, "node_modules/@riftlabs/plugin-sdk/bundled-types"),
   );
 
   assert(rootManifest.workspaces.includes("plugins/*"), "plugins workspace missing");
   assert(rootManifest.workspaces.includes("packages/*"), "packages workspace missing");
   assert(
-    rootManifest.devDependencies?.["@get-bb/plugin-sdk"] ===
-      `file:tooling/vendor/${pluginSdkArchive}`,
+    rootManifest.devDependencies?.["@riftlabs/plugin-sdk"] ===
+      pluginSdkVersion,
     "root plugin SDK dependency drift",
   );
   assert(
-    rootManifest.devDependencies?.["@bb/plugin-sdk"] === undefined,
-    "legacy @bb/plugin-sdk root dependency remains",
+    rootLock.packages["node_modules/@riftlabs/plugin-sdk"]?.resolved ===
+      `file:tooling/vendor/${pluginSdkArchive}`,
+    "plugin SDK lock resolution must use the verified vendored archive",
+  );
+  assert(
+    rootManifest.devDependencies?.["@bb/plugin-sdk"] === undefined &&
+      rootManifest.devDependencies?.["@get-bb/plugin-sdk"] === undefined,
+    "legacy plugin SDK root dependency remains",
   );
   const bundledLockPaths = new Set();
   for (const [packagePath, lockEntry] of Object.entries(rootLock.packages)) {
@@ -189,7 +195,7 @@ export async function checkRepository(repositoryRoot = defaultRoot, options = {}
     assert(!pluginIds.has(pluginId), `duplicate plugin id ${pluginId}`);
     packageNames.add(packageName);
     pluginIds.add(pluginId);
-    const pluginIcon = manifest.bb?.branding?.icon;
+    const pluginIcon = manifest.rift?.branding?.icon;
     assert(
       typeof pluginIcon === "string" && pluginIcon.trim() !== "",
       `${slug}: branding icon missing`,
@@ -214,42 +220,21 @@ export async function checkRepository(repositoryRoot = defaultRoot, options = {}
       `${slug}: dist missing from package files`,
     );
     assert(manifest.files.includes("README.md"), `${slug}: README missing from package files`);
-    const expectedBbEngine = pluginBbEngineOverrides.get(slug) ?? defaultBbEngine;
-    assert(manifest.engines?.bb === expectedBbEngine, `${slug}: bb engine drift`);
+    const expectedRiftEngine = pluginRiftEngineOverrides.get(slug) ?? defaultRiftEngine;
+    assert(manifest.engines?.rift === expectedRiftEngine, `${slug}: rift engine drift`);
     assert(
-      sdkRangeIncludesVersion(manifest.engines?.bbPluginSdk, pluginSdkVersion),
+      sdkRangeIncludesVersion(manifest.engines?.riftPluginSdk, pluginSdkVersion),
       `${slug}: SDK floor is newer than vendored SDK ${pluginSdkVersion}`,
     );
     assert(
-      manifest.devDependencies?.["@bb/plugin-sdk"] === undefined,
-      `${slug}: legacy @bb/plugin-sdk dependency remains`,
+      manifest.devDependencies?.["@bb/plugin-sdk"] === undefined &&
+        manifest.devDependencies?.["@get-bb/plugin-sdk"] === undefined,
+      `${slug}: legacy plugin SDK dependency remains`,
     );
-    if (manifest.devDependencies?.["@get-bb/plugin-sdk"] !== undefined) {
-      // Plugins may vendor the SDK archive next to their sources so a
-      // pinned-commit install is standalone; that copy must stay byte-equal
-      // to the shared tooling archive.
-      const sdkDependency = manifest.devDependencies["@get-bb/plugin-sdk"];
-      const vendoredSpecifier = `file:./vendor/${pluginSdkArchive}`;
-      assert(
-        sdkDependency === `file:../../tooling/vendor/${pluginSdkArchive}` ||
-          sdkDependency === vendoredSpecifier,
-        `${slug}: plugin SDK dependency drift`,
-      );
-      if (sdkDependency === vendoredSpecifier) {
-        const shared = await readFile(
-          resolve(root, "tooling/vendor", pluginSdkArchive),
-        );
-        const vendored = await readFile(
-          resolve(directory, "vendor", pluginSdkArchive),
-        ).catch(() => null);
-        assert(vendored !== null, `${slug}: vendored SDK archive missing`);
-        assert(
-          createHash("sha256").update(shared).digest("hex") ===
-            createHash("sha256").update(vendored).digest("hex"),
-          `${slug}: vendored SDK archive drift`,
-        );
-      }
-    }
+    assert(
+      manifest.devDependencies?.["@riftlabs/plugin-sdk"] === pluginSdkVersion,
+      `${slug}: plugin SDK dependency drift`,
+    );
     assert(pluginReadme.startsWith(`# ${name}\n`), `${slug}: README title drift`);
     for (const heading of ["## Install", "## Use", "## Develop"]) {
       assert(pluginReadme.includes(heading), `${slug}: README missing ${heading}`);
@@ -259,7 +244,7 @@ export async function checkRepository(repositoryRoot = defaultRoot, options = {}
       readme.includes(`[README](${source}/README.md)`),
       `${slug}: root README link missing`,
     );
-    assert(readme.includes(`@${installRef}`), `${slug}: root install ref missing`);
+    assert(readme.includes(`path:$PWD/${source}`), `${slug}: root install path missing`);
 
     const screenshots = localImageTargets(pluginReadme).map((path) =>
       normalizeRelativePath(path, `${slug}: screenshot`),
@@ -287,10 +272,10 @@ export async function checkRepository(repositoryRoot = defaultRoot, options = {}
 
     const sdkTypePaths = tsconfig.compilerOptions?.paths ?? {};
     const usesLocalSdkTypes =
-      sdkTypePaths["@get-bb/plugin-sdk"] !== undefined ||
-      sdkTypePaths["@get-bb/plugin-sdk/app"] !== undefined;
+      sdkTypePaths["@riftlabs/plugin-sdk"] !== undefined ||
+      sdkTypePaths["@riftlabs/plugin-sdk/app"] !== undefined;
     if (usesLocalSdkTypes) {
-      for (const typeFile of ["bb-plugin-sdk.d.ts", "bb-plugin-sdk-app.d.ts"]) {
+      for (const typeFile of ["rift-plugin-sdk.d.ts", "rift-plugin-sdk-app.d.ts"]) {
         const local = await readFile(resolve(directory, "types", typeFile), "utf8");
         const authoritative = await readFile(
           resolve(bundledTypesDirectory, typeFile),
@@ -300,7 +285,7 @@ export async function checkRepository(repositoryRoot = defaultRoot, options = {}
       }
     } else {
       assert(
-        manifest.devDependencies?.["@get-bb/plugin-sdk"] !== undefined,
+        manifest.devDependencies?.["@riftlabs/plugin-sdk"] !== undefined,
         `${slug}: plugin SDK dependency missing`,
       );
     }

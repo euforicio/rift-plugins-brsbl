@@ -1,4 +1,4 @@
-import { definePluginApp, useBbNavigate, useRealtime, useRpc } from "@get-bb/plugin-sdk/app";
+import { definePluginApp, useRiftNavigate, useRealtime, useRpc } from "@riftlabs/plugin-sdk/app";
 import {
   useEffect,
   useLayoutEffect,
@@ -14,9 +14,9 @@ import { LatestRequest, contrastRatio } from "./theme-utils";
 
 // ---------------------------------------------------------------------------
 // Everything reads the theme's CSS custom properties directly, and the mock
-// mirrors what bb actually paints: surfaces, radii and borders were measured
+// mirrors what rift actually paints: surfaces, radii and borders were measured
 // off the running app rather than invented, so a palette fails here the same
-// way it fails there. Decoration bb's theme does not touch — icons, window
+// way it fails there. Decoration rift's theme does not touch — icons, window
 // chrome, nav lists — is left out on purpose.
 // ---------------------------------------------------------------------------
 
@@ -46,8 +46,8 @@ const VIEW_NOTE: Record<View, string> = {
   settings: "page header, cards, controls",
 };
 
-// The frame is laid out at bb's real size and scaled to fit, so row heights and
-// type sizes stay the sizes bb ships.
+// The frame is laid out at rift's real size and scaled to fit, so row heights and
+// type sizes stay the sizes rift ships.
 const FRAME_W = 1280;
 const FRAME_H = 780;
 const CLIENT_RPC_TIMEOUT_MS = 20_000;
@@ -102,8 +102,8 @@ function Badge({ children, tone = "outline" }: { children: ReactNode; tone?: Ton
   );
 }
 
-// bb's Button variants (shared-ui/button.tsx): the default button is
-// foreground-on-background — bb has no primary-filled button; --primary carries
+// rift's Button variants (shared-ui/button.tsx): the default button is
+// foreground-on-background — rift has no primary-filled button; --primary carries
 // links, focus and accents.
 type ButtonVariant = "default" | "secondary" | "outline" | "ghost" | "destructive";
 function Button({ children, variant = "default", size = "md", disabled = false }: { children: ReactNode; variant?: ButtonVariant; size?: "sm" | "md"; disabled?: boolean }) {
@@ -151,14 +151,14 @@ function TextInput({ focused = false, value, placeholder, width = 190 }: { focus
 }
 
 // ---------------------------------------------------------------------------
-// Sidebar. Carries bb's real `fixed bg-sidebar` classes so any theme block
+// Sidebar. Carries rift's real `fixed bg-sidebar` classes so any theme block
 // scoped to that selector (token overrides, the noise overlay) applies here
 // exactly as it does in the app.
 // ---------------------------------------------------------------------------
 
 const sidebarScope: CSSProperties = { position: "relative", inset: "auto", zIndex: "auto" };
 
-// From bb's sidebarRowClasses.ts: hover paints bg-sidebar-accent with
+// From rift's sidebarRowClasses.ts: hover paints bg-sidebar-accent with
 // sidebar-accent-foreground text; the open thread's row paints bg-state-active
 // (CONTEXT_SELECTION_SURFACE_CLASS); open-in-split resolves sidebar-accent 50%
 // against the sidebar unless the theme overrides the variable.
@@ -167,12 +167,12 @@ function rowStyle(state: RowState): CSSProperties {
   switch (state) {
     case "hover": return { background: v("sidebar-accent"), color: v("sidebar-accent-foreground") };
     case "selected": return { background: v("state-active") };
-    case "split": return { background: v("bb-sidebar-open-in-split-background", `color-mix(in oklch, ${v("sidebar-accent")} 50%, ${v("sidebar")})`) };
+    case "split": return { background: v("rift-sidebar-open-in-split-background", `color-mix(in oklch, ${v("sidebar-accent")} 50%, ${v("sidebar")})`) };
     default: return {};
   }
 }
 
-// The dots bb actually draws: a 5px foreground dot for unread, a muted dot for
+// The dots rift actually draws: a 5px foreground dot for unread, a muted dot for
 // working status (SIDEBAR_UNREAD_DOT_CLASS / SIDEBAR_SUCCESS_STATUS_DOT_CLASS).
 function Row({ label, state = "rest", dot }: { label: string; state?: RowState; dot?: "unread" | "status" }) {
   return (
@@ -189,13 +189,13 @@ function Sidebar({ selected, split, hover }: { selected?: boolean; split?: boole
       className="fixed bg-sidebar"
       style={{
         ...sidebarScope, width: 248, height: "100%", flex: "none", background: v("sidebar"), color: v("sidebar-foreground"),
-        // bb's sidebar divider is border-border-seam; a theme's scoped seam
+        // rift's sidebar divider is border-border-seam; a theme's scoped seam
         // (blacklight's orange line) still arrives via the element class.
         borderRight: `1px solid ${v("border-seam", v("border"))}`, display: "flex", flexDirection: "column", padding: "10px 8px", boxSizing: "border-box", fontFamily: SANS,
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", height: 30, padding: "0 10px", fontSize: 13, fontWeight: 600 }}>bb-plugins</div>
-      {/* bb renders New thread as a ghost row, not a filled button. */}
+      <div style={{ display: "flex", alignItems: "center", height: 30, padding: "0 10px", fontSize: 13, fontWeight: 600 }}>rift-plugins</div>
+      {/* rift renders New thread as a ghost row, not a filled button. */}
       <Row label="New thread" />
       <div style={{ fontSize: 11, color: v("muted-foreground"), padding: "6px 10px 4px" }}>Today</div>
       <Row label="Endless theme family — blacklight" state={selected ? "selected" : "rest"} dot="unread" />
@@ -257,7 +257,7 @@ function HoverCard({ style }: { style?: CSSProperties }) {
       <div style={{ fontSize: 12.5, color: v("muted-foreground"), lineHeight: "18px", marginBottom: 10 }}>
         Regenerating both sheets against the new ramp.
       </div>
-      <div style={{ display: "flex", gap: 6 }}><Badge tone="outline">bb/endless-theme</Badge><Badge tone="merged">#42</Badge></div>
+      <div style={{ display: "flex", gap: 6 }}><Badge tone="outline">rift/endless-theme</Badge><Badge tone="merged">#42</Badge></div>
     </div>
   );
 }
@@ -415,7 +415,7 @@ function Thread({ title = "Endless theme family — blacklight pass", active = t
             {marker && active ? <span style={{ position: "absolute", left: 0, right: 0, top: 0, height: 2, background: v("primary") }} /> : null}
             <span style={{ fontSize: 13.5, fontWeight: 600, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{title}</span>
             <Badge tone="success"><Dot color={v("success")} size={6} /> Running</Badge>
-            {narrow ? null : <Badge tone="outline">bb/endless-theme-plugin</Badge>}
+            {narrow ? null : <Badge tone="outline">rift/endless-theme-plugin</Badge>}
           </div>
           <div style={{ flex: 1, overflow: "hidden", padding: `22px ${toc ? 54 : pad}px 0 ${pad}px`, display: "flex", flexDirection: "column", justifyContent: "space-between", gap: 16, fontSize: 13.5, lineHeight: "21px" }}>
             <Bubble>make the blacklight variant feel like the reference — neon orange seam, blue selection, calm UV canvas.</Bubble>
@@ -477,7 +477,7 @@ function InfoPanel() {
         <div>
           {kv("Status", <Badge tone="success">Running</Badge>)}
           {kv("Agent", "Claude Fable 5")}
-          {kv("Branch", <span style={{ fontFamily: MONO, fontSize: 12 }}>bb/endless-theme</span>)}
+          {kv("Branch", <span style={{ fontFamily: MONO, fontSize: 12 }}>rift/endless-theme</span>)}
           {kv("Pull request", <Badge tone="merged">Merged #42</Badge>)}
         </div>
         <div>
@@ -500,7 +500,7 @@ function SettingsPage() {
       <div style={{ maxWidth: 720, margin: "0 auto", padding: "36px 32px" }}>
         <div style={{ borderRadius: 14, padding: "24px 26px", marginBottom: 22, background: `linear-gradient(135deg, ${v("secondary")} 0%, ${v("accent")} 100%)`, boxShadow: `inset 0 0 0 1px ${v("border-hairline", v("border"))}` }}>
           <div style={{ fontSize: 21, fontWeight: 600, letterSpacing: "-0.01em", marginBottom: 6 }}>Extensions</div>
-          <div style={{ fontSize: 13.5, color: v("muted-foreground"), maxWidth: 440, lineHeight: "20px" }}>Plugins add surfaces, agents and themes to bb.</div>
+          <div style={{ fontSize: 13.5, color: v("muted-foreground"), maxWidth: 440, lineHeight: "20px" }}>Plugins add surfaces, agents and themes to rift.</div>
         </div>
         <div style={{ display: "flex", gap: 18, borderBottom: `1px solid ${v("border")}`, marginBottom: 18, fontSize: 13 }}>
           {["Installed", "Marketplace", "Themes"].map((t, i) => (
@@ -532,7 +532,7 @@ function FrameView({ view }: { view: View }) {
     case "thread":
       // Overlays are anchored to the things that open them: the context menu
       // hangs off the open thread's row, the hover card off the row under it,
-      // the toast sits in bb's toast corner. No free-floating chrome.
+      // the toast sits in rift's toast corner. No free-floating chrome.
       return (
         <>
           <Sidebar selected />
@@ -540,7 +540,7 @@ function FrameView({ view }: { view: View }) {
           <InfoPanel />
           <Menu style={{ position: "absolute", left: 196, top: 118, zIndex: 5 }} />
           <HoverCard style={{ position: "absolute", left: 254, top: 292, zIndex: 5 }} />
-          {/* bb toasts land in the window's bottom-right corner. */}
+          {/* rift toasts land in the window's bottom-right corner. */}
           <Toast style={{ position: "absolute", right: 20, bottom: 20, zIndex: 5 }} />
         </>
       );
@@ -567,7 +567,7 @@ function Frame({ view, fitBoth = false }: { view: View; fitBoth?: boolean }) {
     const el = hostRef.current;
     if (!el) return;
     // Width sets the scale; the mock window then takes whatever height the pane
-    // gives it — a bb window is resizable, so a taller mock is still truthful
+    // gives it — a rift window is resizable, so a taller mock is still truthful
     // and the pane has no dead space.
     const measure = () => {
       if (fitBoth) {
@@ -1053,12 +1053,12 @@ function ThemePicker({
   );
 }
 
-// Light/dark is a per-client preference in bb, stored in localStorage under
-// `bb.theme` as "light" | "dark" | "system" and mirrored onto the document's
+// Light/dark is a per-client preference in rift, stored in localStorage under
+// `rift.theme` as "light" | "dark" | "system" and mirrored onto the document's
 // `.dark` class. Writing the key (not just the class) is what makes the choice
 // stick and what keeps Settings → Appearance showing the same thing; the
-// storage event tells bb's own control to re-read it.
-const MODE_KEY = "bb.theme";
+// storage event tells rift's own control to re-read it.
+const MODE_KEY = "rift.theme";
 
 function useColorMode(): [Mode, (next: Mode) => void] {
   const read = () => (document.documentElement.classList.contains("dark") ? "dark" : "light") as Mode;
@@ -1100,7 +1100,7 @@ function Toggle({ on, onChange, children }: { on: boolean; onChange: () => void;
 function PreviewPage({ subPath }: { subPath: string }) {
   const rpc = useRpc<typeof rpcContract>();
   const [mode, setMode] = useColorMode();
-  const navigate = useBbNavigate();
+  const navigate = useRiftNavigate();
   const rootRef = useRef<HTMLDivElement | null>(null);
   const [layout, setLayout] = useState({ compact: false, stageHeight: 620 });
   const [catalog, setCatalog] = useState<Catalog>({ activeThemeId: null, themes: [], revision: 0 });

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act, fireEvent, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { PluginRpcClient } from "@get-bb/plugin-sdk/app";
+import type { PluginRpcClient } from "@riftlabs/plugin-sdk/app";
 import type {
   TimelineCommentThreadDetail,
   timelineCommentsRpcContract,
@@ -65,8 +65,8 @@ function mountWithRpc(
   host: HTMLElement,
   call: ReturnType<typeof vi.fn> = vi.fn(),
 ) {
-  host.dataset.bbPluginDecoration = "timeline-comments";
-  host.classList.add("bb-comments-thread");
+  host.dataset.riftPluginDecoration = "timeline-comments";
+  host.classList.add("rift-comments-thread");
   return mountMossCommentPopover(host, {
     rpc: { call } as unknown as PluginRpcClient<
       typeof timelineCommentsRpcContract
@@ -106,7 +106,7 @@ describe("Moss comment component port", () => {
     expect(host.querySelector("[data-comment-reply-region]")).not.toBeNull();
     expect(host.querySelector("[data-comment-reply-composer]")).not.toBeNull();
     expect(
-      host.querySelector(".bb-comments-inline-composer[data-comment-reply-composer]"),
+      host.querySelector(".rift-comments-inline-composer[data-comment-reply-composer]"),
     ).not.toBeNull();
     unmount();
   });
@@ -130,7 +130,7 @@ describe("Moss comment component port", () => {
     await waitFor(() =>
       expect(
         host
-          .querySelector(".bb-comments-mention-input")
+          .querySelector(".rift-comments-mention-input")
           ?.getAttribute("data-mention-input-expanded"),
       ).toBe("true"),
     );
@@ -154,7 +154,7 @@ describe("Moss comment component port", () => {
 
   it("moves the last comment's edit footer into the stable reply region", async () => {
     const host = document.body.appendChild(document.createElement("section"));
-    host.dataset.bbPluginDecoration = "timeline-comments";
+    host.dataset.riftPluginDecoration = "timeline-comments";
     const unmount = mountMossCommentPopover(host, {
       rpc: { call: vi.fn() } as unknown as PluginRpcClient<
         typeof timelineCommentsRpcContract
@@ -236,8 +236,8 @@ describe("Moss comment component port", () => {
     host.remove();
 
     host = document.body.appendChild(document.createElement("section"));
-    host.dataset.bbPluginDecoration = "timeline-comments";
-    host.classList.add("bb-comments-thread");
+    host.dataset.riftPluginDecoration = "timeline-comments";
+    host.classList.add("rift-comments-thread");
     unmount = mountMossCommentPopover(host, {
       rpc: { call: vi.fn() } as unknown as PluginRpcClient<
         typeof timelineCommentsRpcContract
@@ -558,8 +558,8 @@ describe("Moss comment component port", () => {
       () => [{ width: 1, height: 1 }] as unknown as DOMRectList,
     );
     const host = document.body.appendChild(document.createElement("section"));
-    host.dataset.bbPluginDecoration = "timeline-comments";
-    host.classList.add("bb-comments-thread");
+    host.dataset.riftPluginDecoration = "timeline-comments";
+    host.classList.add("rift-comments-thread");
     const unmount = mountMossCommentPopover(host, {
       rpc: { call: vi.fn() } as unknown as PluginRpcClient<
         typeof timelineCommentsRpcContract

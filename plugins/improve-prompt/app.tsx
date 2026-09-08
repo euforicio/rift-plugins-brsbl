@@ -7,14 +7,13 @@ import {
 } from "react";
 import {
   definePluginApp,
-  type PluginAppComposer,
-  type PluginAppContentScripts,
-  useBbContext,
+  type PluginAppBuilder,
+  useRiftContext,
   useComposer,
   useComposerView,
   useRealtime,
   useRpc,
-} from "@get-bb/plugin-sdk/app";
+} from "@riftlabs/plugin-sdk/app";
 import "./app.css";
 import { toast } from "sonner";
 
@@ -93,21 +92,8 @@ const STARTUP_GRACE_MS = 30_000;
 const DETACHED_CANCEL_ATTEMPTS = 3;
 const locallyStartingRequestIds = new Set<string>();
 const PROMPT_SHIMMER_EFFECT = {
-  className: "bb-improve-prompt-shimmer",
+  className: "rift-improve-prompt-shimmer",
 } as const;
-
-interface ContentScriptCompatibleApp {
-  readonly composer: PluginAppComposer;
-  readonly contentScripts?: PluginAppContentScripts;
-  readonly experimental_contentScripts?: PluginAppContentScripts;
-  readonly slots?: {
-    settingsSection(registration: {
-      id: string;
-      description: string;
-      component: () => ReactElement;
-    }): void;
-  };
-}
 
 export function resetLocallyStartingRequestsForTest(): void {
   locallyStartingRequestIds.clear();
@@ -249,7 +235,7 @@ async function cancelDetachedRequest(
 function PromptShaperAction() {
   const composer = useComposer();
   const view = useComposerView();
-  const context = useBbContext();
+  const context = useRiftContext();
   const composerScopeKey = scopeKey(view.scope);
   const projectId =
     view.scope.kind === "side-chat" || view.scope.kind === "new-thread"
@@ -1206,10 +1192,8 @@ function HelperExecutionSettings(): ReactElement {
   );
 }
 
-export function registerPromptPluginApp(app: ContentScriptCompatibleApp): void {
-  const contentScripts =
-    app.contentScripts ?? app.experimental_contentScripts;
-  contentScripts?.register({
+export function registerPromptPluginApp(app: PluginAppBuilder): void {
+  app.contentScripts.register({
     id: "thread-status",
     mount({ experimental_setThreadRowStatus }) {
       if (experimental_setThreadRowStatus === undefined) return;
@@ -1222,7 +1206,7 @@ export function registerPromptPluginApp(app: ContentScriptCompatibleApp): void {
     id: "improve-prompt",
     actions: [{ id: "improve", component: PromptShaperAction }],
   });
-  app.slots?.settingsSection({
+  app.slots.settingsSection({
     id: "improve-prompt",
     description: "Model for the hidden prompt-improvement helper.",
     component: HelperExecutionSettings,

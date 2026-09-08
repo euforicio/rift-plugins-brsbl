@@ -1,6 +1,6 @@
 ---
 name: design-doctrine
-description: Mandatory personal-judgment companion for product, UX, UI, visual-design, design-system, and AI-interaction work. Load it with architect, design, crit, product-design audit, prototype, and implementation skills—even when the user does not mention doctrine—so work follows active rules derived from concrete user feedback. Also use for preference questions, taste checks, reviews against prior feedback, and whenever the user asks to learn, maintain, or update Design Doctrine from bb thread history; this skill owns that maintenance workflow.
+description: Mandatory personal-judgment companion for product, UX, UI, visual-design, design-system, and AI-interaction work. Load it with architect, design, crit, product-design audit, prototype, and implementation skills—even when the user does not mention doctrine—so work follows active rules derived from concrete user feedback. Also use for preference questions, taste checks, reviews against prior feedback, and whenever the user asks to learn, maintain, or update Design Doctrine from rift thread history; this skill owns that maintenance workflow.
 ---
 
 # Design Doctrine
@@ -9,31 +9,31 @@ Rules learned from the user's design feedback. Use them as a judgment layer on
 normal design work — they don't replace product requirements, accessibility,
 platform conventions, or what the user just told you.
 
-## Maintain from bb feedback
+## Maintain from rift feedback
 
 When the user asks to learn, maintain, or update doctrine from thread history,
-this skill is authoritative; do not substitute the generic bb-usage skill's
+this skill is authoritative; do not substitute the generic rift-usage skill's
 cross-thread inventory workflow. Skip the normal retrieval flow and follow
 `maintenance/automation-prompt.md`.
-Maintenance runs in the worktree bb provisions for it and publishes its rules
+Maintenance runs in the worktree rift provisions for it and publishes its rules
 as a pull request that merges itself once required checks pass, so no checkout
 has to be configured or kept clean by hand.
 Begin one bounded API-backed pass with:
 
 ```bash
-bb doctrine history scan --limit 400 --max-bytes 1048576 --max-message-bytes 8192
+rift doctrine history scan --limit 400 --max-bytes 1048576 --max-message-bytes 8192
 ```
 
 The plugin queues visible user threads when they become idle and this command
 returns only timeline rows after each thread's own checkpoint. Do not query
-`bb.db`, reopen whole thread logs, call `bb thread history` as a transcript
+`rift.db`, reopen whole thread logs, call `rift thread history` as a transcript
 substitute, or treat inherited agent context as the maintenance history source.
 Retain the returned lease exactly; the maintenance prompt owns advance and
 release.
 
 ## Retrieve
 
-BB may provide a few rule candidates inferred from the thread title. Treat that
+Rift may provide a few rule candidates inferred from the thread title. Treat that
 as a bounded shortlist, not proof that every rule applies. Check each rule's
 scope against the exact current request.
 
@@ -42,14 +42,14 @@ description of the work and surface. It returns ranked active rules with their
 applicability, exceptions, and checks. If the tool is unavailable, use the CLI:
 
 ```bash
-bb doctrine search "<task and surface>"
-bb doctrine show ddr_001
+rift doctrine search "<task and surface>"
+rift doctrine show ddr_001
 ```
 
 Each rule is a Markdown file under `rules/<domain>/`. Frontmatter carries `kind`,
 `strength`, `confidence`, `status`, `domain`, and the applicability lists; the
 body carries Why, Prefer, Avoid, Use when, Do not use when, Evidence, and Check.
-The **Design Doctrine** panel in bb's sidebar browses the same files.
+The **Design Doctrine** panel in rift's sidebar browses the same files.
 
 Only `status: active` rules are instructions. `conflicted` and `retired` ones are
 history, and `--all` is the only way to see them.

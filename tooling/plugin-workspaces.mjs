@@ -19,8 +19,8 @@ export async function readPluginWorkspaces(repositoryRoot = defaultRoot) {
     const manifest = JSON.parse(
       await readFile(resolve(directory, "package.json"), "utf8"),
     );
-    if (!manifest.name?.startsWith("bb-plugin-") || !manifest.bb?.name) {
-      throw new Error(`${source}/package.json is not a bb plugin manifest`);
+    if (!manifest.name?.startsWith("rift-plugin-") || !manifest.rift?.name) {
+      throw new Error(`${source}/package.json is not a rift plugin manifest`);
     }
     plugins.push({
       slug,
@@ -28,8 +28,8 @@ export async function readPluginWorkspaces(repositoryRoot = defaultRoot) {
       directory,
       installRef: `plugin/${slug}`,
       packageName: manifest.name,
-      pluginId: manifest.name.slice("bb-plugin-".length),
-      name: manifest.bb.name,
+      pluginId: manifest.name.slice("rift-plugin-".length),
+      name: manifest.rift.name,
       manifest,
     });
   }

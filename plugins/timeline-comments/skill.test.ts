@@ -16,13 +16,13 @@ describe("timeline comments skill", () => {
     );
 
     expect(manifest.files).toContain("skills");
-    expect(manifest.bb.skills).toEqual(["skills"]);
+    expect(manifest.rift.skills).toEqual(["skills"]);
     expect(skill).toMatch(/^---\nname: timeline-comments\n/u);
-    expect(skill).toContain("bb comments list --state open --json");
-    expect(skill).toContain("bb comments get <comment-thread-id> --json");
-    expect(skill).toContain("bb comments reply <comment-thread-id>");
-    expect(skill).toContain("bb comments resolve <comment-thread-id>");
-    expect(skill).toContain("bb comments reopen <comment-thread-id>");
+    expect(skill).toContain("rift comments list --state open --json");
+    expect(skill).toContain("rift comments get <comment-thread-id> --json");
+    expect(skill).toContain("rift comments reply <comment-thread-id>");
+    expect(skill).toContain("rift comments resolve <comment-thread-id>");
+    expect(skill).toContain("rift comments reopen <comment-thread-id>");
     expect(skill).toContain(
       "Do not mark feedback resolved merely because you read it",
     );

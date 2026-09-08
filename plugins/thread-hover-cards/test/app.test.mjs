@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { JSDOM } from "jsdom";
+import { loadPluginApp } from "@riftlabs/plugin-sdk/testing/app";
 
 const dom = new JSDOM(
   `<head></head>
@@ -441,7 +442,7 @@ globalThis.fetch = async (url, init) => {
               branch: null,
               isGitRepository: false,
               name: "Personal",
-              path: "/Users/test/.bb/personal-workspaces/env_pmgnprh2j6",
+              path: "/Users/test/.rift-app/personal-workspaces/env_pmgnprh2j6",
             }
           : {
               branch: isBranchIdentity
@@ -481,24 +482,10 @@ globalThis.fetch = async (url, init) => {
   return response;
 };
 
-let contentScriptRegistration = null;
-
-globalThis.__bbPluginRuntime = {
-  pluginSdkApp: {
-    definePluginApp(setup) {
-      setup({
-        contentScripts: {
-          register(registration) {
-            contentScriptRegistration = registration;
-          },
-        },
-      });
-      return { __bbPluginApp: true, setup };
-    },
-  },
-};
-
-await import("../dist/app.js");
+const app = await loadPluginApp(() => import("../dist/app.js"));
+const contentScriptRegistration = app.contentScripts.find(
+  ({ id }) => id === "thread-hover-cards",
+);
 assert.ok(
   contentScriptRegistration,
   "registers hover behavior as a lifecycle-managed content script",
@@ -517,9 +504,9 @@ const threadRowSuccessor = window.document.getElementById(
 );
 assert.ok(threadRowSuccessor);
 
-const style = window.document.getElementById("bb-thread-hover-card-styles");
+const style = window.document.getElementById("rift-thread-hover-card-styles");
 assert.ok(style);
-assert.match(style.textContent, /\.bb-thread-hover-card \{/);
+assert.match(style.textContent, /\.rift-thread-hover-card \{/);
 assert.match(
   style.textContent,
   /background: color-mix\(in srgb, var\(--popover\) 82%, transparent\)/,
@@ -529,94 +516,94 @@ assert.match(style.textContent, /var\(--foreground\) 4%, transparent/);
 assert.match(style.textContent, /font-weight: 400/);
 assert.match(
   style.textContent,
-  /\.bb-thread-hover-card__message[\s\S]*?font-weight: 350/,
+  /\.rift-thread-hover-card__message[\s\S]*?font-weight: 350/,
 );
 assert.match(
   style.textContent,
-  /\.bb-thread-hover-card__message[\s\S]*?-webkit-line-clamp: 2/,
+  /\.rift-thread-hover-card__message[\s\S]*?-webkit-line-clamp: 2/,
 );
 assert.match(
   style.textContent,
-  /\.bb-thread-hover-card__summary \{[\s\S]*?padding-block: 0\.1875rem/,
+  /\.rift-thread-hover-card__summary \{[\s\S]*?padding-block: 0\.1875rem/,
 );
 assert.match(
   style.textContent,
-  /\.bb-thread-hover-card__summary\[data-working="true"\][\s\S]*?\.bb-thread-hover-card__message \{[\s\S]*?background-clip: text;[\s\S]*?-webkit-text-fill-color: transparent;[\s\S]*?bb-thread-hover-card-message-shimmer/,
+  /\.rift-thread-hover-card__summary\[data-working="true"\][\s\S]*?\.rift-thread-hover-card__message \{[\s\S]*?background-clip: text;[\s\S]*?-webkit-text-fill-color: transparent;[\s\S]*?rift-thread-hover-card-message-shimmer/,
 );
 assert.doesNotMatch(
   style.textContent,
-  /\.bb-thread-hover-card__summary\[data-working="true"\]::after/,
+  /\.rift-thread-hover-card__summary\[data-working="true"\]::after/,
 );
 assert.match(
   style.textContent,
-  /\.bb-thread-hover-card__time-icon\[data-tone="success"\][\s\S]*?var\(--success\)/,
+  /\.rift-thread-hover-card__time-icon\[data-tone="success"\][\s\S]*?var\(--success\)/,
 );
 assert.match(
   style.textContent,
-  /\.bb-thread-hover-card__provider-identity \{[\s\S]*?justify-content: flex-start;[\s\S]*?gap: 0.25rem/,
+  /\.rift-thread-hover-card__provider-identity \{[\s\S]*?justify-content: flex-start;[\s\S]*?gap: 0.25rem/,
 );
 assert.match(
   style.textContent,
-  /\.bb-thread-hover-card__provider-model\.bb-thread-hover-card__truncate \{[\s\S]*?flex: 0 1 auto/,
+  /\.rift-thread-hover-card__provider-model\.rift-thread-hover-card__truncate \{[\s\S]*?flex: 0 1 auto/,
 );
 assert.match(
   style.textContent,
-  /\.bb-thread-hover-card__provider-model,[\s\S]*?\.bb-thread-hover-card__reasoning,[\s\S]*?\.bb-thread-hover-card__access \{[\s\S]*?font-size: 0\.75rem;[\s\S]*?line-height: 1\.25/,
+  /\.rift-thread-hover-card__provider-model,[\s\S]*?\.rift-thread-hover-card__reasoning,[\s\S]*?\.rift-thread-hover-card__access \{[\s\S]*?font-size: 0\.75rem;[\s\S]*?line-height: 1\.25/,
 );
 assert.match(
   style.textContent,
-  /\.bb-thread-hover-card__reasoning,[\s\S]*?\.bb-thread-hover-card__access \{[\s\S]*?--subtle-foreground/,
+  /\.rift-thread-hover-card__reasoning,[\s\S]*?\.rift-thread-hover-card__access \{[\s\S]*?--subtle-foreground/,
 );
 assert.match(
   style.textContent,
-  /\.bb-thread-hover-card__provider-icon \{[\s\S]*?width: 1rem;[\s\S]*?height: 1rem;[\s\S]*?color: var\(--muted-foreground\)/,
+  /\.rift-thread-hover-card__provider-icon \{[\s\S]*?width: 1rem;[\s\S]*?height: 1rem;[\s\S]*?color: var\(--muted-foreground\)/,
 );
 assert.doesNotMatch(style.textContent, /--font-mono/);
-assert.match(style.textContent, /\.bb-thread-hover-card__context/);
+assert.match(style.textContent, /\.rift-thread-hover-card__context/);
 assert.match(
   style.textContent,
-  /\.bb-thread-hover-card__context \{[\s\S]*?width: 100%;[\s\S]*?flex-wrap: nowrap;/,
+  /\.rift-thread-hover-card__context \{[\s\S]*?width: 100%;[\s\S]*?flex-wrap: nowrap;/,
 );
 assert.match(
   style.textContent,
-  /\.bb-thread-hover-card__project[\s\S]*?max-width: 38%;[\s\S]*?flex: 0 1 auto/,
+  /\.rift-thread-hover-card__project[\s\S]*?max-width: 38%;[\s\S]*?flex: 0 1 auto/,
 );
 assert.match(
   style.textContent,
-  /\.bb-thread-hover-card__host \{[\s\S]*?flex: 1 1 4rem;/,
+  /\.rift-thread-hover-card__host \{[\s\S]*?flex: 1 1 4rem;/,
 );
 assert.match(
   style.textContent,
-  /\.bb-thread-hover-card__host \{[\s\S]*?min-width: 0;/,
+  /\.rift-thread-hover-card__host \{[\s\S]*?min-width: 0;/,
 );
 assert.match(
   style.textContent,
-  /\.bb-thread-hover-card__host-name,[\s\S]*?text-overflow: ellipsis/,
+  /\.rift-thread-hover-card__host-name,[\s\S]*?text-overflow: ellipsis/,
 );
-assert.match(style.textContent, /\.bb-thread-hover-card__pr-status/);
+assert.match(style.textContent, /\.rift-thread-hover-card__pr-status/);
 assert.match(
   style.textContent,
-  /\.bb-thread-hover-card__reasoning,[\s\S]*?\.bb-thread-hover-card__access \{[\s\S]*?flex: none;[\s\S]*?--subtle-foreground,[\s\S]*?white-space: nowrap/,
-);
-assert.match(
-  style.textContent,
-  /\.bb-thread-hover-card__access \{[\s\S]*?gap: 0\.1875rem;[\s\S]*?margin-left: 0\.25rem/,
+  /\.rift-thread-hover-card__reasoning,[\s\S]*?\.rift-thread-hover-card__access \{[\s\S]*?flex: none;[\s\S]*?--subtle-foreground,[\s\S]*?white-space: nowrap/,
 );
 assert.match(
   style.textContent,
-  /\.bb-thread-hover-card__permission-icon \{[\s\S]*?width: 0\.75rem;[\s\S]*?height: 0\.75rem/,
+  /\.rift-thread-hover-card__access \{[\s\S]*?gap: 0\.1875rem;[\s\S]*?margin-left: 0\.25rem/,
 );
 assert.match(
   style.textContent,
-  /\.bb-thread-hover-card__access\[data-permission-mode="accept-edits"\],[\s\S]*?\.bb-thread-hover-card__access\[data-permission-mode="auto"\] \{[\s\S]*?var\(--muted-foreground\) 72%, transparent/,
+  /\.rift-thread-hover-card__permission-icon \{[\s\S]*?width: 0\.75rem;[\s\S]*?height: 0\.75rem/,
 );
 assert.match(
   style.textContent,
-  /\.bb-thread-hover-card__access\[data-permission-mode="full"\][\s\S]*?var\(--warning-text, var\(--warning\)\)/,
+  /\.rift-thread-hover-card__access\[data-permission-mode="accept-edits"\],[\s\S]*?\.rift-thread-hover-card__access\[data-permission-mode="auto"\] \{[\s\S]*?var\(--muted-foreground\) 72%, transparent/,
 );
 assert.match(
   style.textContent,
-  /\.bb-thread-hover-card__pr \{[\s\S]*?flex: none;[\s\S]*?overflow: visible/,
+  /\.rift-thread-hover-card__access\[data-permission-mode="full"\][\s\S]*?var\(--warning-text, var\(--warning\)\)/,
+);
+assert.match(
+  style.textContent,
+  /\.rift-thread-hover-card__pr \{[\s\S]*?flex: none;[\s\S]*?overflow: visible/,
 );
 assert.match(style.textContent, /var\(--success\) 9%, transparent/);
 assert.match(style.textContent, /var\(--pr-merged\) 9%, transparent/);
@@ -628,10 +615,10 @@ Object.defineProperties(pointerOver, {
   relatedTarget: { value: null },
 });
 trigger.dispatchEvent(pointerOver);
-const card = window.document.getElementById("bb-thread-hover-card");
+const card = window.document.getElementById("rift-thread-hover-card");
 assert.ok(card, "opens the hover card in the pointer event turn");
 assert.equal(card.hidden, false);
-assert.equal(card.dataset.bbHoverCardRenderState, "loading");
+assert.equal(card.dataset.riftHoverCardRenderState, "loading");
 assert.equal(card.getAttribute("aria-busy"), "true");
 assert.deepEqual(
   requestBodies,
@@ -649,44 +636,44 @@ assert.match(card.textContent, /Loading thread summary/);
 await new Promise((resolve) => setTimeout(resolve, 20));
 
 assert.equal(card.hidden, false);
-assert.equal(card.dataset.bbHoverCardRenderState, "complete");
+assert.equal(card.dataset.riftHoverCardRenderState, "complete");
 assert.equal(card.hasAttribute("aria-busy"), false);
-assert.equal(card.dataset.bbPlugin, "thread-hover-cards");
-assert.equal(card.hasAttribute("data-bb-portaled-overlay"), true);
-assert.equal(trigger.getAttribute("aria-describedby"), "bb-thread-hover-card");
+assert.equal(card.dataset.riftPlugin, "thread-hover-cards");
+assert.equal(card.hasAttribute("data-rift-portaled-overlay"), true);
+assert.equal(trigger.getAttribute("aria-describedby"), "rift-thread-hover-card");
 assert.deepEqual(requestBodies, [{ threadId: "thr_1" }]);
 assert.deepEqual(pullRequestBodies, [{ threadId: "thr_1" }]);
 assert.doesNotMatch(card.textContent, /Agent working/);
 assert.equal(
-  card.querySelector(".bb-thread-hover-card__runtime [data-time-value]")
+  card.querySelector(".rift-thread-hover-card__runtime [data-time-value]")
     ?.textContent,
   "1m",
 );
 assert.equal(
-  card.querySelector(".bb-thread-hover-card__runtime .bb-thread-hover-card__sr-only")
+  card.querySelector(".rift-thread-hover-card__runtime .rift-thread-hover-card__sr-only")
     ?.textContent,
   "Run time ",
 );
 assert.equal(
-  card.querySelector(".bb-thread-hover-card__times")?.children.length,
+  card.querySelector(".rift-thread-hover-card__times")?.children.length,
   1,
 );
-assert.equal(card.querySelector(".bb-thread-hover-card__updated"), null);
+assert.equal(card.querySelector(".rift-thread-hover-card__updated"), null);
 assert.equal(
-  card.querySelector(".bb-thread-hover-card__provider .bb-thread-hover-card__sr-only")
+  card.querySelector(".rift-thread-hover-card__provider .rift-thread-hover-card__sr-only")
     ?.textContent,
   "Codex, ",
 );
 assert.equal(
   card
-    .querySelector(".bb-thread-hover-card__runtime")
+    .querySelector(".rift-thread-hover-card__runtime")
     ?.querySelector('[data-icon="Loading03Icon"]')
     ?.getAttribute("data-animated"),
   "true",
 );
 assert.equal(
   card
-    .querySelector(".bb-thread-hover-card__runtime")
+    .querySelector(".rift-thread-hover-card__runtime")
     ?.querySelector('[data-icon="AlarmClockIcon"]'),
   null,
 );
@@ -695,8 +682,8 @@ assert.match(
   card.textContent,
   /Agent update—implementing concise hover cards for foo_bar_baz and _literal_/,
 );
-assert.ok(card.querySelector(".bb-thread-hover-card__inline-strong"));
-assert.equal(card.querySelector(".bb-thread-hover-card__inline-emphasis"), null);
+assert.ok(card.querySelector(".rift-thread-hover-card__inline-strong"));
+assert.equal(card.querySelector(".rift-thread-hover-card__inline-emphasis"), null);
 assert.match(card.textContent, /5\.6-Sol/);
 assert.match(card.textContent, /Extra High/);
 assert.doesNotMatch(card.textContent, /gpt-5\.6-sol/);
@@ -708,14 +695,14 @@ assert.doesNotMatch(card.textContent, /Latest request/i);
 assert.ok(card.querySelector('[data-icon="Loading03Icon"]'));
 assert.ok(
   card
-    .querySelector(".bb-thread-hover-card__times")
+    .querySelector(".rift-thread-hover-card__times")
     ?.querySelector('[data-icon="Loading03Icon"]'),
 );
-assert.equal(card.querySelector(".bb-thread-hover-card__status-icon"), null);
+assert.equal(card.querySelector(".rift-thread-hover-card__status-icon"), null);
 assert.ok(card.querySelector('[data-icon="OpenAiIcon"]'));
 assert.ok(
   card
-    .querySelector(".bb-thread-hover-card__header")
+    .querySelector(".rift-thread-hover-card__header")
     ?.querySelector('[data-icon="OpenAiIcon"]'),
 );
 assert.ok(card.querySelector('[data-icon="Folder01Icon"]'));
@@ -723,125 +710,125 @@ assert.ok(card.querySelector('[data-icon="LaptopIcon"]'));
 assert.doesNotMatch(card.textContent, /feature\/hover-cards/);
 assert.ok(card.querySelector('[data-icon="LinkSquare01Icon"]'));
 assert.equal(
-  card.querySelector(".bb-thread-hover-card__provider")?.parentElement,
-  card.querySelector(".bb-thread-hover-card__header"),
+  card.querySelector(".rift-thread-hover-card__provider")?.parentElement,
+  card.querySelector(".rift-thread-hover-card__header"),
 );
 assert.equal(
-  card.querySelector(".bb-thread-hover-card__reasoning")?.textContent,
+  card.querySelector(".rift-thread-hover-card__reasoning")?.textContent,
   "Extra High",
 );
 assert.equal(
-  card.querySelector(".bb-thread-hover-card__provider")?.title,
+  card.querySelector(".rift-thread-hover-card__provider")?.title,
   "Codex: 5.6-Sol · Extra High reasoning",
 );
 assert.equal(
-  card.querySelector(".bb-thread-hover-card__provider-model")?.parentElement,
-  card.querySelector(".bb-thread-hover-card__provider-identity"),
+  card.querySelector(".rift-thread-hover-card__provider-model")?.parentElement,
+  card.querySelector(".rift-thread-hover-card__provider-identity"),
 );
 assert.equal(
-  card.querySelector(".bb-thread-hover-card__reasoning")?.parentElement,
-  card.querySelector(".bb-thread-hover-card__provider-identity"),
+  card.querySelector(".rift-thread-hover-card__reasoning")?.parentElement,
+  card.querySelector(".rift-thread-hover-card__provider-identity"),
 );
 assert.equal(
-  card.querySelector(".bb-thread-hover-card__provider-model")?.nextElementSibling,
-  card.querySelector(".bb-thread-hover-card__reasoning"),
+  card.querySelector(".rift-thread-hover-card__provider-model")?.nextElementSibling,
+  card.querySelector(".rift-thread-hover-card__reasoning"),
 );
 assert.deepEqual(
   Array.from(card.children).map((child) => child.className),
   [
-    "bb-thread-hover-card__header",
-    "bb-thread-hover-card__summary",
-    "bb-thread-hover-card__context",
+    "rift-thread-hover-card__header",
+    "rift-thread-hover-card__summary",
+    "rift-thread-hover-card__context",
   ],
 );
 assert.equal(
-  card.querySelector(".bb-thread-hover-card__summary")?.dataset.working,
+  card.querySelector(".rift-thread-hover-card__summary")?.dataset.working,
   "true",
 );
 
-const pullRequestLink = card.querySelector(".bb-thread-hover-card__pr-link");
+const pullRequestLink = card.querySelector(".rift-thread-hover-card__pr-link");
 assert.ok(pullRequestLink);
 assert.equal(
   pullRequestLink.firstElementChild?.getAttribute("data-icon"),
   "LinkSquare01Icon",
 );
 assert.equal(
-  card.querySelector(".bb-thread-hover-card__pr")?.parentElement,
-  card.querySelector(".bb-thread-hover-card__context"),
+  card.querySelector(".rift-thread-hover-card__pr")?.parentElement,
+  card.querySelector(".rift-thread-hover-card__context"),
 );
 assert.equal(
-  card.querySelector(".bb-thread-hover-card__project")?.parentElement,
-  card.querySelector(".bb-thread-hover-card__context"),
+  card.querySelector(".rift-thread-hover-card__project")?.parentElement,
+  card.querySelector(".rift-thread-hover-card__context"),
 );
 assert.equal(
-  card.querySelector(".bb-thread-hover-card__host")?.parentElement,
-  card.querySelector(".bb-thread-hover-card__context"),
+  card.querySelector(".rift-thread-hover-card__host")?.parentElement,
+  card.querySelector(".rift-thread-hover-card__context"),
 );
 assert.deepEqual(
   Array.from(
-    card.querySelector(".bb-thread-hover-card__context")?.children ?? [],
+    card.querySelector(".rift-thread-hover-card__context")?.children ?? [],
   ).map((child) => child.className),
   [
-    "bb-thread-hover-card__project",
-    "bb-thread-hover-card__host",
-    "bb-thread-hover-card__pr",
+    "rift-thread-hover-card__project",
+    "rift-thread-hover-card__host",
+    "rift-thread-hover-card__pr",
   ],
 );
 assert.equal(
-  card.querySelector(".bb-thread-hover-card__access")?.dataset.permissionMode,
+  card.querySelector(".rift-thread-hover-card__access")?.dataset.permissionMode,
   "full",
 );
 assert.ok(
   card
-    .querySelector(".bb-thread-hover-card__access")
+    .querySelector(".rift-thread-hover-card__access")
     ?.querySelector('[data-icon="SquareUnlock02Icon"]'),
 );
 assert.equal(
-  card.querySelector(".bb-thread-hover-card__access")?.getAttribute("aria-label"),
+  card.querySelector(".rift-thread-hover-card__access")?.getAttribute("aria-label"),
   "Permission: Full access",
 );
 assert.equal(
-  card.querySelector(".bb-thread-hover-card__access")?.dataset.location,
+  card.querySelector(".rift-thread-hover-card__access")?.dataset.location,
   "header",
 );
 assert.equal(
-  card.querySelector(".bb-thread-hover-card__access")?.parentElement,
-  card.querySelector(".bb-thread-hover-card__provider-identity"),
+  card.querySelector(".rift-thread-hover-card__access")?.parentElement,
+  card.querySelector(".rift-thread-hover-card__provider-identity"),
 );
 assert.equal(
-  card.querySelector(".bb-thread-hover-card__reasoning")?.nextElementSibling,
-  card.querySelector(".bb-thread-hover-card__access"),
+  card.querySelector(".rift-thread-hover-card__reasoning")?.nextElementSibling,
+  card.querySelector(".rift-thread-hover-card__access"),
 );
 assert.equal(
   card
-    .querySelector(".bb-thread-hover-card__host")
+    .querySelector(".rift-thread-hover-card__host")
     ?.firstElementChild?.getAttribute("data-icon"),
   "LaptopIcon",
 );
 assert.equal(
-  card.querySelector(".bb-thread-hover-card__project-name")?.title,
+  card.querySelector(".rift-thread-hover-card__project-name")?.title,
   "acme/bb",
 );
 assert.equal(
-  card.querySelector(".bb-thread-hover-card__host-name")?.title,
+  card.querySelector(".rift-thread-hover-card__host-name")?.title,
   "Brsbl Mac",
 );
 assert.equal(
-  card.querySelector(".bb-thread-hover-card__pr .bb-thread-hover-card__meta-label"),
+  card.querySelector(".rift-thread-hover-card__pr .rift-thread-hover-card__meta-label"),
   null,
 );
 assert.equal(pullRequestLink.href, "https://github.com/acme/bb/pull/42");
 assert.equal(pullRequestLink.target, "_blank");
 assert.equal(
-  card.querySelector(".bb-thread-hover-card__pr-status")?.dataset.tone,
+  card.querySelector(".rift-thread-hover-card__pr-status")?.dataset.tone,
   "success",
 );
 assert.equal(
-  card.querySelector(".bb-thread-hover-card__pr-status")?.dataset.state,
+  card.querySelector(".rift-thread-hover-card__pr-status")?.dataset.state,
   "open",
 );
 
-const initialTimingRecords = globalThis.__bbThreadHoverCardTimings;
+const initialTimingRecords = globalThis.__riftThreadHoverCardTimings;
 assert.ok(initialTimingRecords);
 for (const operation of [
   "firstContent",
@@ -912,7 +899,7 @@ assert.equal(window.document.activeElement, threadRowSuccessor);
 trigger.focus();
 await new Promise((resolve) => setTimeout(resolve, 20));
 let rerenderedPullRequestLink = card.querySelector(
-  ".bb-thread-hover-card__pr-link",
+  ".rift-thread-hover-card__pr-link",
 );
 assert.ok(rerenderedPullRequestLink);
 trigger.dispatchEvent(
@@ -956,7 +943,7 @@ threadRowSuccessor.focus();
 trigger.focus();
 await new Promise((resolve) => setTimeout(resolve, 20));
 rerenderedPullRequestLink = card.querySelector(
-  ".bb-thread-hover-card__pr-link",
+  ".rift-thread-hover-card__pr-link",
 );
 assert.ok(rerenderedPullRequestLink);
 trigger.dispatchEvent(
@@ -984,7 +971,7 @@ triggerRow.append(trigger);
 trigger.focus();
 await new Promise((resolve) => setTimeout(resolve, 20));
 const reopenedPullRequestLink = card.querySelector(
-  ".bb-thread-hover-card__pr-link",
+  ".rift-thread-hover-card__pr-link",
 );
 assert.ok(reopenedPullRequestLink);
 trigger.dispatchEvent(
@@ -1008,7 +995,7 @@ await new Promise((resolve) => setTimeout(resolve, 20));
 
 assert.equal(card.hidden, false);
 const stalePullRequestLink = card.querySelector(
-  ".bb-thread-hover-card__pr-link",
+  ".rift-thread-hover-card__pr-link",
 );
 assert.ok(stalePullRequestLink);
 trigger.dispatchEvent(
@@ -1020,7 +1007,7 @@ delayedRefresh();
 await new Promise((resolve) => setTimeout(resolve, 20));
 
 const refreshedPullRequestLink = card.querySelector(
-  ".bb-thread-hover-card__pr-link",
+  ".rift-thread-hover-card__pr-link",
 );
 assert.ok(refreshedPullRequestLink);
 assert.notEqual(refreshedPullRequestLink, stalePullRequestLink);
@@ -1063,64 +1050,64 @@ trigger.focus();
 await new Promise((resolve) => setTimeout(resolve, 20));
 
 assert.equal(card.hidden, false);
-assert.match(card.textContent, /~\/\.bb\/…\/env_pmgnprh2j6/);
+assert.match(card.textContent, /~\/\.rift-app\/…\/env_pmgnprh2j6/);
 assert.equal(
-  card.querySelector(".bb-thread-hover-card__runtime [data-time-value]")
+  card.querySelector(".rift-thread-hover-card__runtime [data-time-value]")
     ?.textContent,
   "2m",
 );
 assert.equal(
-  card.querySelector(".bb-thread-hover-card__runtime")?.title,
+  card.querySelector(".rift-thread-hover-card__runtime")?.title,
   "Total agent time 2m",
 );
 assert.equal(
-  card.querySelector(".bb-thread-hover-card__runtime .bb-thread-hover-card__sr-only")
+  card.querySelector(".rift-thread-hover-card__runtime .rift-thread-hover-card__sr-only")
     ?.textContent,
   "Total agent time ",
 );
 assert.equal(
-  card.querySelector(".bb-thread-hover-card__runtime")?.parentElement,
-  card.querySelector(".bb-thread-hover-card__times"),
+  card.querySelector(".rift-thread-hover-card__runtime")?.parentElement,
+  card.querySelector(".rift-thread-hover-card__times"),
 );
 assert.equal(
-  card.querySelector(".bb-thread-hover-card__times")?.parentElement,
-  card.querySelector(".bb-thread-hover-card__header"),
+  card.querySelector(".rift-thread-hover-card__times")?.parentElement,
+  card.querySelector(".rift-thread-hover-card__header"),
 );
 assert.equal(
   card
-    .querySelector(".bb-thread-hover-card__runtime")
+    .querySelector(".rift-thread-hover-card__runtime")
     ?.querySelector('[data-icon="CheckmarkCircle02Icon"]')
     ?.getAttribute("data-tone"),
   "success",
 );
 assert.equal(
   card
-    .querySelector(".bb-thread-hover-card__runtime")
+    .querySelector(".rift-thread-hover-card__runtime")
     ?.querySelector('[data-icon="CheckmarkCircle02Icon"]')
     ?.hasAttribute("data-animated"),
   false,
 );
 assert.equal(
   card
-    .querySelector(".bb-thread-hover-card__runtime")
+    .querySelector(".rift-thread-hover-card__runtime")
     ?.querySelector('[data-icon="AlarmClockIcon"]'),
   null,
 );
 assert.equal(
-  card.querySelector(".bb-thread-hover-card__local")?.getAttribute("aria-label"),
-  "Local workspace: /Users/test/.bb/personal-workspaces/env_pmgnprh2j6",
+  card.querySelector(".rift-thread-hover-card__local")?.getAttribute("aria-label"),
+  "Local workspace: /Users/test/.rift-app/personal-workspaces/env_pmgnprh2j6",
 );
 assert.equal(
-  card.querySelector(".bb-thread-hover-card__local-path")?.title,
-  "/Users/test/.bb/personal-workspaces/env_pmgnprh2j6",
+  card.querySelector(".rift-thread-hover-card__local-path")?.title,
+  "/Users/test/.rift-app/personal-workspaces/env_pmgnprh2j6",
 );
 assert.deepEqual(
   Array.from(card.children).map((child) => child.className),
   [
-    "bb-thread-hover-card__header",
-    "bb-thread-hover-card__summary",
-    "bb-thread-hover-card__context",
-    "bb-thread-hover-card__local",
+    "rift-thread-hover-card__header",
+    "rift-thread-hover-card__summary",
+    "rift-thread-hover-card__context",
+    "rift-thread-hover-card__local",
   ],
 );
 assert.match(
@@ -1131,30 +1118,30 @@ assert.doesNotMatch(card.textContent, /Agent update—implementing/);
 assert.doesNotMatch(card.textContent, /##|\|\s*Work\s*\||---|Canary/);
 assert.doesNotMatch(card.textContent, /No Git repository/);
 assert.equal(
-  card.querySelector(".bb-thread-hover-card__summary")?.dataset.working,
+  card.querySelector(".rift-thread-hover-card__summary")?.dataset.working,
   undefined,
 );
-assert.ok(card.querySelector(".bb-thread-hover-card__inline-strong"));
-assert.ok(card.querySelector(".bb-thread-hover-card__inline-emphasis"));
-assert.ok(card.querySelector(".bb-thread-hover-card__inline-code"));
+assert.ok(card.querySelector(".rift-thread-hover-card__inline-strong"));
+assert.ok(card.querySelector(".rift-thread-hover-card__inline-emphasis"));
+assert.ok(card.querySelector(".rift-thread-hover-card__inline-code"));
 assert.ok(card.querySelector('[data-icon="LaptopIcon"]'));
 assert.ok(card.querySelector('[data-icon="CheckmarkCircle02Icon"]'));
 assert.equal(
-  card.querySelector(".bb-thread-hover-card__access")?.textContent,
+  card.querySelector(".rift-thread-hover-card__access")?.textContent,
   "Auto",
 );
 assert.equal(
   card
-    .querySelector(".bb-thread-hover-card__access")
+    .querySelector(".rift-thread-hover-card__access")
     ?.querySelector("[data-icon]")
     ?.getAttribute("data-icon"),
   "SecurityCheckIcon",
 );
 assert.equal(
-  card.querySelector(".bb-thread-hover-card__access")?.parentElement,
-  card.querySelector(".bb-thread-hover-card__provider-identity"),
+  card.querySelector(".rift-thread-hover-card__access")?.parentElement,
+  card.querySelector(".rift-thread-hover-card__provider-identity"),
 );
-assert.equal(card.querySelector(".bb-thread-hover-card__status-icon"), null);
+assert.equal(card.querySelector(".rift-thread-hover-card__status-icon"), null);
 assert.deepEqual(requestBodies, [
   { threadId: "thr_1" },
   { threadId: "thr_1" },
@@ -1172,18 +1159,18 @@ assert.equal(card.hidden, false);
 assert.match(card.textContent, /acme\/bb/);
 assert.ok(
   card
-    .querySelector(".bb-thread-hover-card__times")
+    .querySelector(".rift-thread-hover-card__times")
     ?.querySelector('[data-icon="Loading03Icon"]'),
 );
-assert.equal(card.querySelector(".bb-thread-hover-card__runtime"), null);
+assert.equal(card.querySelector(".rift-thread-hover-card__runtime"), null);
 assert.doesNotMatch(card.textContent, /No PR/);
-assert.equal(card.querySelector(".bb-thread-hover-card__summary"), null);
-assert.equal(card.querySelector(".bb-thread-hover-card__pr"), null);
+assert.equal(card.querySelector(".rift-thread-hover-card__summary"), null);
+assert.equal(card.querySelector(".rift-thread-hover-card__pr"), null);
 assert.deepEqual(
   Array.from(card.children).map((child) => child.className),
   [
-    "bb-thread-hover-card__header",
-    "bb-thread-hover-card__context",
+    "rift-thread-hover-card__header",
+    "rift-thread-hover-card__context",
   ],
 );
 assert.deepEqual(requestBodies, [
@@ -1201,7 +1188,7 @@ trigger.focus();
 await new Promise((resolve) => setTimeout(resolve, 20));
 
 assert.equal(card.hidden, false);
-assert.equal(card.querySelector(".bb-thread-hover-card__pr"), null);
+assert.equal(card.querySelector(".rift-thread-hover-card__pr"), null);
 assert.doesNotMatch(card.textContent, /PR unavailable/);
 assert.deepEqual(requestBodies, [
   { threadId: "thr_1" },
@@ -1221,20 +1208,20 @@ await new Promise((resolve) => setTimeout(resolve, 20));
 assert.equal(card.hidden, false);
 assert.match(card.textContent, /#42Draft/);
 assert.equal(
-  card.querySelector(".bb-thread-hover-card__pr-status")?.dataset.tone,
+  card.querySelector(".rift-thread-hover-card__pr-status")?.dataset.tone,
   "muted",
 );
 assert.equal(
-  card.querySelector(".bb-thread-hover-card__pr-status")?.dataset.state,
+  card.querySelector(".rift-thread-hover-card__pr-status")?.dataset.state,
   "draft",
 );
 assert.equal(
-  card.querySelector(".bb-thread-hover-card__access")?.textContent,
+  card.querySelector(".rift-thread-hover-card__access")?.textContent,
   "Accept edits",
 );
 assert.ok(
   card
-    .querySelector(".bb-thread-hover-card__access")
+    .querySelector(".rift-thread-hover-card__access")
     ?.querySelector('[data-icon="FolderEditIcon"]'),
 );
 assert.deepEqual(requestBodies, [
@@ -1251,7 +1238,7 @@ contentScriptController.abort();
 disposeContentScript?.();
 
 assert.equal(card.isConnected, false);
-assert.equal(window.document.getElementById("bb-thread-hover-card-styles"), null);
+assert.equal(window.document.getElementById("rift-thread-hover-card-styles"), null);
 
 const replacementContentScriptController = new AbortController();
 disposeContentScript = await contentScriptRegistration.mount({
@@ -1260,7 +1247,7 @@ disposeContentScript = await contentScriptRegistration.mount({
   signal: replacementContentScriptController.signal,
 });
 
-assert.ok(window.document.getElementById("bb-thread-hover-card-styles"));
+assert.ok(window.document.getElementById("rift-thread-hover-card-styles"));
 
 trigger.blur();
 trigger.dataset.sidebarThreadId = "thr_reload";
@@ -1271,12 +1258,12 @@ Object.defineProperties(reloadPointerOver, {
 });
 trigger.dispatchEvent(reloadPointerOver);
 assert.ok(
-  window.document.getElementById("bb-thread-hover-card"),
+  window.document.getElementById("rift-thread-hover-card"),
   "keeps immediate opening after the plugin lifecycle reloads",
 );
 await new Promise((resolve) => setTimeout(resolve, 20));
 
-const reloadedCard = window.document.getElementById("bb-thread-hover-card");
+const reloadedCard = window.document.getElementById("rift-thread-hover-card");
 assert.ok(reloadedCard);
 assert.equal(reloadedCard.hidden, false);
 assert.deepEqual(requestBodies, [
@@ -1291,7 +1278,7 @@ assert.deepEqual(requestBodies, [
 ]);
 trigger.focus();
 const reloadedPullRequestLink = reloadedCard.querySelector(
-  ".bb-thread-hover-card__pr-link",
+  ".rift-thread-hover-card__pr-link",
 );
 assert.ok(reloadedPullRequestLink);
 trigger.dispatchEvent(
@@ -1306,17 +1293,17 @@ trigger.focus();
 await new Promise((resolve) => setTimeout(resolve, 80));
 
 assert.equal(
-  reloadedCard.querySelector(".bb-thread-hover-card__runtime [data-time-value]")
+  reloadedCard.querySelector(".rift-thread-hover-card__runtime [data-time-value]")
     ?.textContent,
   "1m",
 );
 assert.equal(
-  reloadedCard.querySelector(".bb-thread-hover-card__runtime")?.title,
+  reloadedCard.querySelector(".rift-thread-hover-card__runtime")?.title,
   "Total agent time 1m",
 );
 assert.ok(
   reloadedCard
-    .querySelector(".bb-thread-hover-card__runtime")
+    .querySelector(".rift-thread-hover-card__runtime")
     ?.querySelector('[data-icon="CheckmarkCircle02Icon"]'),
 );
 assert.deepEqual(requestBodies.at(-1), {
@@ -1330,16 +1317,16 @@ trigger.focus();
 await new Promise((resolve) => setTimeout(resolve, 80));
 
 assert.equal(
-  reloadedCard.querySelector(".bb-thread-hover-card__runtime")?.title,
+  reloadedCard.querySelector(".rift-thread-hover-card__runtime")?.title,
   "Total agent time 1m",
 );
 assert.ok(
   reloadedCard
-    .querySelector(".bb-thread-hover-card__runtime")
+    .querySelector(".rift-thread-hover-card__runtime")
     ?.querySelector('[data-icon="CheckmarkCircle02Icon"]'),
 );
 assert.equal(
-  reloadedCard.querySelector(".bb-thread-hover-card__summary")?.dataset.working,
+  reloadedCard.querySelector(".rift-thread-hover-card__summary")?.dataset.working,
   undefined,
   "timing hydration updates status with its timestamps",
 );
@@ -1361,14 +1348,14 @@ async function closeAndOpenThread(threadId, settleMs = 20) {
 
 delayNextSummaryFor.add("thr_first_content");
 const firstContentRecordCount =
-  globalThis.__bbThreadHoverCardTimings?.filter(
+  globalThis.__riftThreadHoverCardTimings?.filter(
     ({ operation, threadId }) =>
       operation === "firstContent" && threadId === "thr_first_content",
   ).length ?? 0;
 await closeAndOpenThread("thr_first_content", 0);
 assert.match(reloadedCard.textContent, /Loading thread summary/);
 assert.equal(
-  globalThis.__bbThreadHoverCardTimings?.filter(
+  globalThis.__riftThreadHoverCardTimings?.filter(
     ({ operation, threadId }) =>
       operation === "firstContent" && threadId === "thr_first_content",
   ).length ?? 0,
@@ -1379,7 +1366,7 @@ await new Promise((resolve) => setTimeout(resolve, 25));
 testMonotonicNow += 25;
 delayedSummaryResponses.get("thr_first_content")?.();
 await new Promise((resolve) => setTimeout(resolve, 20));
-const coldFirstContent = globalThis.__bbThreadHoverCardTimings
+const coldFirstContent = globalThis.__riftThreadHoverCardTimings
   ?.filter(
     ({ operation, threadId }) =>
       operation === "firstContent" && threadId === "thr_first_content",
@@ -1392,7 +1379,7 @@ assert.ok(
   "measures hover-to-content latency across the delayed cold request",
 );
 await closeAndOpenThread("thr_first_content", 0);
-const cachedFirstContent = globalThis.__bbThreadHoverCardTimings
+const cachedFirstContent = globalThis.__riftThreadHoverCardTimings
   ?.filter(
     ({ operation, threadId }) =>
       operation === "firstContent" && threadId === "thr_first_content",
@@ -1456,7 +1443,7 @@ const summaryFirstTimingCount = timingRequestBodies.filter(
   ({ threadId }) => threadId === "thr_summary_before_timing",
 ).length;
 const summaryFirstRuntime = reloadedCard.querySelector(
-  ".bb-thread-hover-card__runtime",
+  ".rift-thread-hover-card__runtime",
 );
 assert.ok(summaryFirstRuntime);
 testNow += 2_100;
@@ -1464,20 +1451,20 @@ delayNextTimingFor.add("thr_summary_before_timing");
 await closeAndOpenThread("thr_summary_before_timing", 10);
 assert.ok(delayedTimingResponses.has("thr_summary_before_timing"));
 assert.equal(
-  reloadedCard.dataset.bbHoverCardRenderState,
+  reloadedCard.dataset.riftHoverCardRenderState,
   "summary",
   "does not advertise screenshot readiness while timing is still pending",
 );
 assert.equal(reloadedCard.getAttribute("aria-busy"), "true");
 assert.ok(
-  reloadedCard.querySelector(".bb-thread-hover-card__runtime"),
+  reloadedCard.querySelector(".rift-thread-hover-card__runtime"),
   "keeps hydrated runtime while summary resolves before timing",
 );
 delayedTimingResponses.get("thr_summary_before_timing")?.();
 await new Promise((resolve) => setTimeout(resolve, 20));
-assert.equal(reloadedCard.dataset.bbHoverCardRenderState, "complete");
+assert.equal(reloadedCard.dataset.riftHoverCardRenderState, "complete");
 assert.equal(reloadedCard.hasAttribute("aria-busy"), false);
-assert.ok(reloadedCard.querySelector(".bb-thread-hover-card__runtime"));
+assert.ok(reloadedCard.querySelector(".rift-thread-hover-card__runtime"));
 assert.equal(
   timingRequestBodies.filter(
     ({ threadId }) => threadId === "thr_summary_before_timing",
@@ -1505,13 +1492,13 @@ assert.ok(delayedSummaryResponses.has("thr_timing_before_summary"));
 delayedTimingResponses.get("thr_timing_before_summary")?.();
 await new Promise((resolve) => setTimeout(resolve, 0));
 assert.ok(
-  reloadedCard.querySelector(".bb-thread-hover-card__runtime"),
+  reloadedCard.querySelector(".rift-thread-hover-card__runtime"),
   "renders newer timing before the delayed summary settles",
 );
 delayedSummaryResponses.get("thr_timing_before_summary")?.();
 await new Promise((resolve) => setTimeout(resolve, 20));
 assert.ok(
-  reloadedCard.querySelector(".bb-thread-hover-card__runtime"),
+  reloadedCard.querySelector(".rift-thread-hover-card__runtime"),
   "does not erase newer timing when the summary arrives later",
 );
 assert.equal(
@@ -1548,7 +1535,7 @@ delayedSummaryResponses.get("thr_idle_restart")?.();
 await new Promise((resolve) => setTimeout(resolve, 20));
 assert.match(reloadedCard.textContent, /Restarted agent update/);
 assert.equal(
-  reloadedCard.querySelector(".bb-thread-hover-card__summary")?.dataset.working,
+  reloadedCard.querySelector(".rift-thread-hover-card__summary")?.dataset.working,
   "true",
 );
 
@@ -1580,13 +1567,13 @@ delayNextPullRequestFor.add("thr_slow_pr");
 await closeAndOpenThread("thr_slow_pr", 20);
 assert.ok(delayedPullRequestResponses.has("thr_slow_pr"));
 assert.equal(
-  reloadedCard.dataset.bbHoverCardRenderState,
+  reloadedCard.dataset.riftHoverCardRenderState,
   "summary",
   "does not advertise screenshot readiness while PR content is still pending",
 );
 delayedPullRequestResponses.get("thr_slow_pr")?.();
 await new Promise((resolve) => setTimeout(resolve, 20));
-assert.equal(reloadedCard.dataset.bbHoverCardRenderState, "complete");
+assert.equal(reloadedCard.dataset.riftHoverCardRenderState, "complete");
 
 for (const expected of [
   {
@@ -1633,7 +1620,7 @@ for (const expected of [
   await new Promise((resolve) => setTimeout(resolve, 80));
 
   const status = reloadedCard.querySelector(
-    ".bb-thread-hover-card__pr-status",
+    ".rift-thread-hover-card__pr-status",
   );
   assert.equal(status?.textContent, expected.signal);
   assert.equal(status?.dataset.state, expected.state);
@@ -1707,7 +1694,7 @@ assert.equal(
 );
 
 assert.ok(
-  (globalThis.__bbThreadHoverCardTimings?.length ?? 0) <= 200,
+  (globalThis.__riftThreadHoverCardTimings?.length ?? 0) <= 200,
   "bounds the client timing history",
 );
 
@@ -1736,12 +1723,12 @@ function hoverOver(node) {
 }
 
 const sectionStyle = window.document.getElementById(
-  "bb-section-hover-card-styles",
+  "rift-section-hover-card-styles",
 );
 assert.ok(sectionStyle, "installs the section card stylesheet");
 assert.match(
   sectionStyle.textContent,
-  /\.bb-thread-hover-card\[data-bb-card="section"\]/,
+  /\.rift-thread-hover-card\[data-rift-card="section"\]/,
 );
 
 const sectionGroup = window.document.createElement("div");
@@ -1758,13 +1745,13 @@ assert.equal(
 hoverOver(designHeader.title);
 await new Promise((resolve) => setTimeout(resolve, 20));
 
-const sectionCard = window.document.getElementById("bb-section-hover-card");
+const sectionCard = window.document.getElementById("rift-section-hover-card");
 assert.ok(sectionCard, "opens a card from the section header row");
 assert.equal(sectionCard.hidden, false);
-assert.equal(sectionCard.dataset.bbHoverCardRenderState, "complete");
+assert.equal(sectionCard.dataset.riftHoverCardRenderState, "complete");
 assert.equal(
   designHeader.toggle.getAttribute("aria-describedby"),
-  "bb-section-hover-card",
+  "rift-section-hover-card",
   "describes the keyboard-focusable section toggle",
 );
 assert.equal(designHeader.row.hasAttribute("aria-describedby"), false);
@@ -1775,36 +1762,36 @@ assert.deepEqual(sectionRequestBodies.at(-1), {
 });
 // Band 1: the projects the section spans, two names then +N.
 assert.deepEqual(
-  [...sectionCard.querySelectorAll(".bb-section-hover-card__project")].map(
+  [...sectionCard.querySelectorAll(".rift-section-hover-card__project")].map(
     (node) => node.textContent,
   ),
   ["bb", "moss"],
 );
 assert.equal(
-  sectionCard.querySelector(".bb-section-hover-card__more").textContent,
+  sectionCard.querySelector(".rift-section-hover-card__more").textContent,
   "+2",
 );
 
 // Band 2: questions and failures read as separate states.
 assert.equal(
-  sectionCard.querySelector(".bb-section-hover-card__chip--question")
+  sectionCard.querySelector(".rift-section-hover-card__chip--question")
     .textContent,
   "2 questions",
 );
 assert.equal(
-  sectionCard.querySelector(".bb-section-hover-card__chip--failed").textContent,
+  sectionCard.querySelector(".rift-section-hover-card__chip--failed").textContent,
   "1 failed",
 );
 assert.equal(
   sectionCard
-    .querySelector(".bb-section-hover-card__chip--question [data-icon]")
+    .querySelector(".rift-section-hover-card__chip--question [data-icon]")
     .getAttribute("data-icon"),
   "HelpCircleIcon",
   "a question uses bb's own pending glyph",
 );
 assert.equal(
   sectionCard
-    .querySelector(".bb-section-hover-card__chip--question [data-icon]")
+    .querySelector(".rift-section-hover-card__chip--question [data-icon]")
     .getAttribute("aria-hidden"),
   "true",
   "the decorative glyph does not repeat the adjacent count for assistive technology",
@@ -1812,7 +1799,7 @@ assert.equal(
 
 // Band 3: counts in fixed order.
 assert.deepEqual(
-  [...sectionCard.querySelectorAll(".bb-section-hover-card__count")].map(
+  [...sectionCard.querySelectorAll(".rift-section-hover-card__count")].map(
     (node) => node.textContent,
   ),
   ["13 threads", "3 working", "4 unread"],
@@ -1820,7 +1807,7 @@ assert.deepEqual(
 
 // Nothing the sidebar already gives away for free.
 assert.equal(
-  sectionCard.querySelector(".bb-section-hover-card__thread-title"),
+  sectionCard.querySelector(".rift-section-hover-card__thread-title"),
   null,
   "no thread titles: expanding the section already lists them",
 );
@@ -1836,11 +1823,11 @@ assert.match(sectionCard.textContent, /2 threads/);
 delayNextSectionFor.add("Delayed A");
 hoverOver(delayedAHeader.title);
 await new Promise((resolve) => setTimeout(resolve, 0));
-assert.equal(sectionCard.dataset.bbHoverCardRenderState, "loading");
+assert.equal(sectionCard.dataset.riftHoverCardRenderState, "loading");
 assert.equal(sectionCard.getAttribute("aria-busy"), "true");
 delayedSectionResponses.get("Delayed A")?.();
 await new Promise((resolve) => setTimeout(resolve, 20));
-assert.equal(sectionCard.dataset.bbHoverCardRenderState, "complete");
+assert.equal(sectionCard.dataset.riftHoverCardRenderState, "complete");
 assert.equal(sectionCard.hasAttribute("aria-busy"), false);
 
 hoverOver(delayedBHeader.title);
@@ -1872,7 +1859,7 @@ await new Promise((resolve) => setTimeout(resolve, 140));
 assert.equal(sectionCard.hidden, false);
 assert.equal(
   designHeader.toggle.getAttribute("aria-describedby"),
-  "bb-section-hover-card",
+  "rift-section-hover-card",
   "keeps the focused toggle associated with its card after pointer leave",
 );
 threadRowSuccessor.focus();
@@ -1881,7 +1868,7 @@ assert.equal(sectionCard.hidden, true);
 assert.equal(designHeader.toggle.hasAttribute("aria-describedby"), false);
 
 // The thread card and the section card are never open at the same time.
-assert.equal(window.document.getElementById("bb-thread-hover-card").hidden, true);
+assert.equal(window.document.getElementById("rift-thread-hover-card").hidden, true);
 
 // An empty section states the absence instead of rendering an empty shell.
 const writingHeader = sectionHeaderRow("Writing");
@@ -1889,11 +1876,11 @@ sectionGroup.append(writingHeader.row);
 hoverOver(writingHeader.title);
 await new Promise((resolve) => setTimeout(resolve, 20));
 assert.equal(
-  sectionCard.querySelector(".bb-section-hover-card__empty").textContent,
+  sectionCard.querySelector(".rift-section-hover-card__empty").textContent,
   "No threads yet",
 );
 assert.equal(
-  sectionCard.querySelector(".bb-section-hover-card__headline"),
+  sectionCard.querySelector(".rift-section-hover-card__headline"),
   null,
   "no headline when nothing wants action — absent, not a reassurance line",
 );
@@ -1906,7 +1893,7 @@ await new Promise((resolve) => setTimeout(resolve, 0));
 assert.equal(writingHeader.toggle.hasAttribute("aria-describedby"), false);
 assert.equal(
   writingReplacement.toggle.getAttribute("aria-describedby"),
-  "bb-section-hover-card",
+  "rift-section-hover-card",
 );
 assert.equal(sectionCard.hidden, false);
 writingReplacement.row.remove();
@@ -1976,19 +1963,19 @@ sectionGroup.append(quietHeader.row);
 hoverOver(quietHeader.title);
 await new Promise((resolve) => setTimeout(resolve, 20));
 assert.equal(
-  sectionCard.querySelector(".bb-section-hover-card__headline"),
+  sectionCard.querySelector(".rift-section-hover-card__headline"),
   null,
   "the headline is absent, not an empty reassurance line",
 );
 assert.deepEqual(
-  [...sectionCard.querySelectorAll(".bb-section-hover-card__count")].map(
+  [...sectionCard.querySelectorAll(".rift-section-hover-card__count")].map(
     (node) => node.textContent,
   ),
   ["6 threads", "0 working", "0 unread"],
   "zero counts keep their positions",
 );
 assert.deepEqual(
-  [...sectionCard.querySelectorAll(".bb-section-hover-card__count")].map(
+  [...sectionCard.querySelectorAll(".rift-section-hover-card__count")].map(
     (node) => node.dataset.zero ?? null,
   ),
   [null, "true", "true"],
@@ -2042,7 +2029,7 @@ assert.equal(
   "opening a thread card closes the section card",
 );
 assert.equal(
-  window.document.getElementById("bb-thread-hover-card").hidden,
+  window.document.getElementById("rift-thread-hover-card").hidden,
   false,
 );
 
@@ -2058,21 +2045,21 @@ nestedThread.dataset.sidebarThreadId = "thr_claude";
 hoverOver(nestedThread);
 await new Promise((resolve) => setTimeout(resolve, 20));
 assert.equal(
-  window.document.querySelector(".bb-thread-hover-card__provider-model")
+  window.document.querySelector(".rift-thread-hover-card__provider-model")
     ?.textContent,
   "Sonnet 5",
 );
 assert.equal(
-  window.document.querySelector(".bb-thread-hover-card__reasoning")?.textContent,
+  window.document.querySelector(".rift-thread-hover-card__reasoning")?.textContent,
   "Medium",
 );
 assert.equal(
-  window.document.querySelector(".bb-thread-hover-card__access")?.textContent,
+  window.document.querySelector(".rift-thread-hover-card__access")?.textContent,
   "Auto",
 );
 assert.equal(
   window.document
-    .querySelector(".bb-thread-hover-card__access")
+    .querySelector(".rift-thread-hover-card__access")
     ?.querySelector("[data-icon]")
     ?.getAttribute("data-icon"),
   "SecurityCheckIcon",
@@ -2090,7 +2077,7 @@ nestedThread.dataset.sidebarThreadId = "thr_claude_version";
 hoverOver(nestedThread);
 await new Promise((resolve) => setTimeout(resolve, 20));
 assert.equal(
-  window.document.querySelector(".bb-thread-hover-card__provider-model")
+  window.document.querySelector(".rift-thread-hover-card__provider-model")
     ?.textContent,
   "Opus 4.8 (1M)",
 );
@@ -2098,24 +2085,24 @@ assert.equal(
 // Touch devices — mobile web, tablets — have no hover, so the plugin must not
 // install anything and must not intercept taps on a thread row.
 setHoverCapablePointer(false);
-assert.equal(window.document.getElementById("bb-thread-hover-card-styles"), null);
-assert.equal(window.document.getElementById("bb-thread-hover-card"), null);
+assert.equal(window.document.getElementById("rift-thread-hover-card-styles"), null);
+assert.equal(window.document.getElementById("rift-thread-hover-card"), null);
 
 const requestsBeforeTouch = requestBodies.length;
 hoverOver(trigger);
 await new Promise((resolve) => setTimeout(resolve, 140));
-assert.equal(window.document.getElementById("bb-thread-hover-card"), null);
+assert.equal(window.document.getElementById("rift-thread-hover-card"), null);
 assert.equal(requestBodies.length, requestsBeforeTouch);
 
 // A pointer arriving later — an iPad gaining a trackpad — reinstalls it.
 setHoverCapablePointer(true);
-assert.ok(window.document.getElementById("bb-thread-hover-card-styles"));
+assert.ok(window.document.getElementById("rift-thread-hover-card-styles"));
 
 replacementContentScriptController.abort();
 disposeContentScript?.();
-assert.equal(window.document.getElementById("bb-thread-hover-card-styles"), null);
-assert.equal(window.document.getElementById("bb-section-hover-card-styles"), null);
-assert.equal(window.document.getElementById("bb-section-hover-card"), null);
+assert.equal(window.document.getElementById("rift-thread-hover-card-styles"), null);
+assert.equal(window.document.getElementById("rift-section-hover-card-styles"), null);
+assert.equal(window.document.getElementById("rift-section-hover-card"), null);
 Date.now = realDateNow;
 globalThis.performance = realPerformance;
 dom.window.close();

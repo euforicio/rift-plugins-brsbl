@@ -1,4 +1,4 @@
-import { createFakePluginHost } from "@get-bb/plugin-sdk/testing";
+import { createFakePluginHost } from "@riftlabs/plugin-sdk/testing";
 import { describe, expect, it } from "vitest";
 
 import { generateMeshGradient, toCss } from "./gradient.js";
@@ -16,7 +16,7 @@ async function loadPlugin(settings?: {
     pluginId: "mesh-gradient",
     ...(settings ? { settings } : {}),
   });
-  plugin(host.bb);
+  plugin(host.rift);
   return host;
 }
 
@@ -79,7 +79,7 @@ describe("mesh gradient backend", () => {
 
   it("migrates pre-editor records by regenerating their points", async () => {
     const host = await loadPlugin();
-    await host.bb.storage.kv.set("saved/legacy-1", {
+    await host.rift.storage.kv.set("saved/legacy-1", {
       id: "legacy-1",
       name: "old record",
       seed: 5,
@@ -95,7 +95,7 @@ describe("mesh gradient backend", () => {
     expect(migrated.points).toEqual(
       generateMeshGradient({ seed: 5, pointCount: 4, style: "ocean" }).points,
     );
-    expect(savedGradientSchema.parse(await host.bb.storage.kv.get("saved/legacy-1")))
+    expect(savedGradientSchema.parse(await host.rift.storage.kv.get("saved/legacy-1")))
       .toEqual(migrated);
     await host.harness.lifecycle.dispose();
   });
@@ -145,7 +145,7 @@ describe("mesh gradient backend", () => {
     const resolved = await provider!.resolve(gradient.id);
     expect(resolved.context).toContain("use them verbatim");
     expect(resolved.context).toContain("background-image: radial-gradient(");
-    expect(resolved.context).toContain(`bb mesh-gradient show ${gradient.id}`);
+    expect(resolved.context).toContain(`rift mesh-gradient show ${gradient.id}`);
 
     await expect(provider!.resolve("missing-id")).rejects.toThrow(/deleted/);
     await host.harness.lifecycle.dispose();
@@ -235,7 +235,7 @@ describe("mesh gradient backend", () => {
     expect(badStyle.stderr).toContain("--style must be one of");
     const badCommand = await host.harness.behavior.runCli(["paint"]);
     expect(badCommand.exitCode).toBe(1);
-    expect(badCommand.stderr).toContain("usage: bb mesh-gradient");
+    expect(badCommand.stderr).toContain("usage: rift mesh-gradient");
     await host.harness.lifecycle.dispose();
   });
 
@@ -310,7 +310,7 @@ describe("mesh gradient backend", () => {
     const host = await loadPlugin();
     const newer = generateMeshGradient({ seed: 41, style: "ocean" });
     const older = generateMeshGradient({ seed: 42, style: "candy" });
-    await host.bb.storage.kv.set("saved/newer", {
+    await host.rift.storage.kv.set("saved/newer", {
       id: "newer",
       name: "Hero Background",
       seed: newer.seed,
@@ -319,7 +319,7 @@ describe("mesh gradient backend", () => {
       points: newer.points,
       createdAt: 2,
     });
-    await host.bb.storage.kv.set("saved/older", {
+    await host.rift.storage.kv.set("saved/older", {
       id: "older",
       name: "Hero Background",
       seed: older.seed,
@@ -336,10 +336,10 @@ describe("mesh gradient backend", () => {
       { id: "newer", tokenSlug: "hero-background" },
       { id: "older", tokenSlug: "hero-background-2" },
     ]);
-    expect(await host.bb.storage.kv.get("saved/newer")).toMatchObject({
+    expect(await host.rift.storage.kv.get("saved/newer")).toMatchObject({
       tokenSlug: "hero-background",
     });
-    expect(await host.bb.storage.kv.get("saved/older")).toMatchObject({
+    expect(await host.rift.storage.kv.get("saved/older")).toMatchObject({
       tokenSlug: "hero-background-2",
     });
     await host.harness.lifecycle.dispose();

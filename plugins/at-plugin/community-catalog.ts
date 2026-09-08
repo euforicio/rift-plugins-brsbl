@@ -1,4 +1,4 @@
-import type { BbPluginApi, PluginMentionItem } from "@get-bb/plugin-sdk";
+import type { RiftPluginApi, PluginMentionItem } from "@riftlabs/plugin-sdk";
 
 import {
   MAX_ITEM_SUBTITLE_BYTES,
@@ -10,8 +10,8 @@ import {
 } from "./mention-context";
 
 export type CommunityCatalogRecord = Awaited<
-  ReturnType<BbPluginApi["sdk"]["plugins"]["catalog"]["search"]>
->[number];
+  ReturnType<RiftPluginApi["sdk"]["plugins"]["catalog"]["search"]>
+>["results"][number];
 
 interface CommunityCandidate {
   entry: CommunityCatalogRecord;
@@ -26,7 +26,7 @@ interface CommunityCandidate {
   tier: number;
 }
 
-export const COMMUNITY_MARKETPLACE = "bb-community";
+export const COMMUNITY_MARKETPLACE = "rift-community";
 const RESULT_LIMIT = 6;
 
 function folded(value: string): string {

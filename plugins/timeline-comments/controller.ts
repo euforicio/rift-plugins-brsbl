@@ -2,7 +2,7 @@ import type {
   PluginContentScriptContext,
   PluginMessageActionContext,
   PluginRpcClient,
-} from "@get-bb/plugin-sdk/app";
+} from "@riftlabs/plugin-sdk/app";
 import {
   CheckCheck,
   Command,
@@ -103,11 +103,11 @@ function renderedContentBounds(
   return { left, right };
 }
 
-const OWNED = "data-bb-timeline-comments-owned";
-const NORMAL_HIGHLIGHT = "bb-timeline-comments";
-const ACTIVE_HIGHLIGHT = "bb-timeline-comments-active";
+const OWNED = "data-rift-timeline-comments-owned";
+const NORMAL_HIGHLIGHT = "rift-timeline-comments";
+const ACTIVE_HIGHLIGHT = "rift-timeline-comments-active";
 const DRAFT_TTL = 24 * 60 * 60 * 1_000;
-const PLUGIN_DECORATION = "data-bb-plugin-decoration";
+const PLUGIN_DECORATION = "data-rift-plugin-decoration";
 const MARKER_SIZE = 24;
 const MARKER_TEXT_GAP = 8;
 const COMPOSER_WIDTH = 216;
@@ -160,7 +160,7 @@ function element<K extends keyof HTMLElementTagNameMap>(
   return node;
 }
 
-/** BB scopes plugin CSS to descendants of this ownership boundary. */
+/** Rift scopes plugin CSS to descendants of this ownership boundary. */
 function decorateRoot<T extends HTMLElement>(node: T): T {
   node.setAttribute(PLUGIN_DECORATION, "timeline-comments");
   return node;
@@ -235,7 +235,7 @@ function runMeasuredModeTransition(
   update: () => void,
 ): void {
   const scrollRegion = element.closest<HTMLElement>(
-    ".bb-comments-thread-comments",
+    ".rift-comments-thread-comments",
   );
   const scrollTop = scrollRegion?.scrollTop;
   const running = modeTransitionAnimations.get(element);
@@ -400,8 +400,8 @@ function isThreadWindowRendered(windowNode: HTMLElement): boolean {
 
 class TimelineCommentsController {
   readonly #rpc: Rpc;
-  readonly #portal = decorateRoot(element("div", "bb-comments-portal"));
-  readonly #overlay = element("div", "bb-comments-overlay");
+  readonly #portal = decorateRoot(element("div", "rift-comments-portal"));
+  readonly #overlay = element("div", "rift-comments-overlay");
   readonly #highlightStyle = element("style");
   readonly #anchors = new Map<string, TimelineCommentThreadSummary>();
   readonly #restored = new Map<string, RestoredThread>();
@@ -541,7 +541,7 @@ class TimelineCommentsController {
     this.rebuildHighlights();
 
     const key = `bb.timeline-comments.draft:${context.threadId}:${context.message.id}:${captured.selector.start}:${captured.selector.end}`;
-    const shell = element("form", "bb-comments-composer");
+    const shell = element("form", "rift-comments-composer");
     shell.setAttribute("role", "dialog");
     shell.setAttribute("aria-label", "Add comment");
     const initialValue = readDraft(key) ?? "";
@@ -602,7 +602,7 @@ class TimelineCommentsController {
     }
     this.rememberThreadWindow(threadId, windowNode);
     return () => {
-      // A thread window can contain multiple composer-action mounts, and BB
+      // A thread window can contain multiple composer-action mounts, and Rift
       // temporarily removes all composer actions for pending interactions.
       // Keep the last known association for the lifetime of the connected
       // window; a later registration reassigns a reused window, while refresh
@@ -1015,10 +1015,10 @@ class TimelineCommentsController {
         if (side === null || side === undefined) continue;
         const marker = element(
           "button",
-          "bb-comments-marker",
+          "rift-comments-marker",
         ) as HTMLButtonElement;
         marker.type = "button";
-        marker.dataset.bbCommentGutter = side;
+        marker.dataset.riftCommentGutter = side;
         marker.style.top = `${placement.y}px`;
         const contentBounds = threads.map(({ prose }) =>
           renderedContentBounds(prose),
@@ -1042,11 +1042,11 @@ class TimelineCommentsController {
         );
         marker.append(icon(StickyNote));
         if (threads.length > 1) {
-          marker.classList.add("bb-comments-marker-cluster");
+          marker.classList.add("rift-comments-marker-cluster");
           marker.append(
             element(
               "span",
-              "bb-comments-marker-count",
+              "rift-comments-marker-count",
               String(threads.length),
             ),
           );
@@ -1083,14 +1083,14 @@ class TimelineCommentsController {
     threads: RestoredThread[],
   ): void {
     this.closePopover();
-    const menu = element("div", "bb-comments-popover bb-comments-cluster");
+    const menu = element("div", "rift-comments-popover rift-comments-cluster");
     menu.setAttribute("role", "dialog");
     menu.setAttribute("aria-label", "Comment threads");
     let first: HTMLButtonElement | null = null;
     for (const thread of threads) {
       const button = element(
         "button",
-        "bb-comments-cluster-row",
+        "rift-comments-cluster-row",
       ) as HTMLButtonElement;
       button.type = "button";
       button.textContent = sourceExcerpt(thread.anchor.selector.exact);
@@ -1129,12 +1129,12 @@ class TimelineCommentsController {
     this.setActive([commentThreadId]);
     const popover = element(
       "section",
-      "bb-comments-popover bb-comments-thread",
+      "rift-comments-popover rift-comments-thread",
     );
     popover.setAttribute("role", "dialog");
     popover.setAttribute("aria-label", "Comment thread");
     popover.tabIndex = -1;
-    popover.append(element("div", "bb-comments-loading", "Loading…"));
+    popover.append(element("div", "rift-comments-loading", "Loading…"));
     this.#popover = popover;
     this.#popoverThreadIds = new Set([anchor.bbThreadId]);
     const restoredWindow = restored?.window ?? parentWindow;
@@ -1155,7 +1155,7 @@ class TimelineCommentsController {
       this.positionPopover();
     } catch (caught) {
       popover.replaceChildren(
-        element("div", "bb-comments-error", errorMessage(caught)),
+        element("div", "rift-comments-error", errorMessage(caught)),
       );
     }
   }
@@ -1214,13 +1214,13 @@ class TimelineCommentsController {
     this.closeActionsMenu();
     delete popover.dataset.editing;
     popover.replaceChildren();
-    const header = element("header", "bb-comments-thread-header");
-    const source = element("div", "bb-comments-thread-source");
+    const header = element("header", "rift-comments-thread-header");
+    const source = element("div", "rift-comments-thread-source");
     source.append(icon(StickyNote), document.createTextNode("Comment"));
-    const headerActions = element("div", "bb-comments-header-actions");
+    const headerActions = element("div", "rift-comments-header-actions");
     const resolve = element(
       "button",
-      "bb-comments-icon-control",
+      "rift-comments-icon-control",
     ) as HTMLButtonElement;
     resolve.type = "button";
     resolve.setAttribute(
@@ -1254,7 +1254,7 @@ class TimelineCommentsController {
     });
     const removeThread = element(
       "button",
-      "bb-comments-icon-control bb-comments-destructive",
+      "rift-comments-icon-control rift-comments-destructive",
     ) as HTMLButtonElement;
     removeThread.type = "button";
     removeThread.setAttribute("aria-label", "Delete thread");
@@ -1285,40 +1285,40 @@ class TimelineCommentsController {
     header.append(source, headerActions);
     popover.append(header);
 
-    const comments = element("div", "bb-comments-thread-comments");
+    const comments = element("div", "rift-comments-thread-comments");
     for (const comment of detail.comments)
       comments.append(this.renderComment(detail, comment, popover));
     popover.append(comments);
 
     if (detail.thread.resolvedAt === null) {
-      const reply = element("form", "bb-comments-reply");
+      const reply = element("form", "rift-comments-reply");
       reply.dataset.editing = "false";
       reply.dataset.lastEditing = "false";
-      const replyInner = element("div", "bb-comments-reply-inner");
-      const replyComposer = element("div", "bb-comments-inline-composer");
-      replyComposer.dataset.bbCommentReplyComposer = "true";
+      const replyInner = element("div", "rift-comments-reply-inner");
+      const replyComposer = element("div", "rift-comments-inline-composer");
+      replyComposer.dataset.riftCommentReplyComposer = "true";
       const editFooterHost = element(
         "div",
-        "bb-comments-edit-footer-host",
+        "rift-comments-edit-footer-host",
       );
-      editFooterHost.dataset.bbCommentEditFooterHost = "true";
+      editFooterHost.dataset.riftCommentEditFooterHost = "true";
       const draftKey = `bb.timeline-comments.reply:${detail.thread.id}`;
       const textarea = element(
         "textarea",
-        "bb-comments-reply-input",
+        "rift-comments-reply-input",
       ) as HTMLTextAreaElement;
       textarea.placeholder = "Reply...";
       textarea.maxLength = 20_000;
       textarea.value = readDraft(draftKey) ?? "";
       const send = element(
         "button",
-        "bb-comments-submit-shortcut",
+        "rift-comments-submit-shortcut",
       ) as HTMLButtonElement;
       send.type = "submit";
       send.setAttribute("aria-label", "Reply");
       send.title = "Reply · ⌘/Ctrl Enter";
       send.append(icon(Command), icon(CornerDownLeft));
-      const error = element("div", "bb-comments-error");
+      const error = element("div", "rift-comments-error");
       error.setAttribute("role", "status");
       const validate = () => {
         const message = commentBodyError(textarea.value);
@@ -1388,11 +1388,11 @@ class TimelineCommentsController {
     comment: TimelineComment,
     popover: HTMLElement,
   ): HTMLElement {
-    const row = element("article", "bb-comments-comment");
-    row.dataset.bbCommentId = comment.id;
+    const row = element("article", "rift-comments-comment");
+    row.dataset.riftCommentId = comment.id;
     let currentComment = comment;
     const buildHeader = (action: HTMLElement): HTMLElement => {
-      const header = element("header", "bb-comments-message-header");
+      const header = element("header", "rift-comments-message-header");
       const byline = element("div");
       byline.append(element("strong", undefined, "Me"));
       const timestamp = element(
@@ -1406,11 +1406,11 @@ class TimelineCommentsController {
       header.append(byline, action);
       return header;
     };
-    const body = element("p", "bb-comments-comment-body", currentComment.body);
-    const actions = element("div", "bb-comments-actions-menu");
+    const body = element("p", "rift-comments-comment-body", currentComment.body);
+    const actions = element("div", "rift-comments-actions-menu");
     const actionsTrigger = element(
       "button",
-      "bb-comments-icon-control",
+      "rift-comments-icon-control",
     ) as HTMLButtonElement;
     actionsTrigger.type = "button";
     actionsTrigger.setAttribute("aria-label", "Comment actions");
@@ -1420,13 +1420,13 @@ class TimelineCommentsController {
     actionsTrigger.append(icon(EllipsisVertical));
     const cancel = element(
       "button",
-      "bb-comments-icon-control bb-comments-edit-cancel",
+      "rift-comments-icon-control rift-comments-edit-cancel",
     ) as HTMLButtonElement;
     cancel.type = "button";
     cancel.setAttribute("aria-label", "Cancel comment edit");
     cancel.title = "Cancel edit";
     cancel.append(icon(X));
-    const actionsMenu = element("div", "bb-comments-actions-popover");
+    const actionsMenu = element("div", "rift-comments-actions-popover");
     actionsMenu.setAttribute("role", "menu");
     const menuItems = () =>
       [...actionsMenu.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')]
@@ -1476,19 +1476,19 @@ class TimelineCommentsController {
     const draftKey = `bb.timeline-comments.edit:${comment.id}`;
     const textarea = element(
       "textarea",
-      "bb-comments-edit-input",
+      "rift-comments-edit-input",
     ) as HTMLTextAreaElement;
     textarea.setAttribute("aria-label", "Edit comment");
     textarea.maxLength = 20_000;
-    const editComposer = element("div", "bb-comments-edit-composer");
+    const editComposer = element("div", "rift-comments-edit-composer");
     const localFooterHost = element(
       "div",
-      "bb-comments-local-edit-footer-host",
+      "rift-comments-local-edit-footer-host",
     );
-    const editFooter = element("div", "bb-comments-edit-footer");
+    const editFooter = element("div", "rift-comments-edit-footer");
     const save = element(
       "button",
-      "bb-comments-edit-submit",
+      "rift-comments-edit-submit",
     ) as HTMLButtonElement;
     save.type = "button";
     save.append(icon(Command), icon(CornerDownLeft));
@@ -1496,7 +1496,7 @@ class TimelineCommentsController {
     save.title = "Save comment · ⌘/Ctrl Enter";
     editFooter.append(save);
     localFooterHost.append(editFooter);
-    const error = element("div", "bb-comments-error");
+    const error = element("div", "rift-comments-error");
     error.setAttribute("role", "status");
     editComposer.append(textarea, error, localFooterHost);
     const validate = () => {
@@ -1507,14 +1507,14 @@ class TimelineCommentsController {
       return message;
     };
     const resetReplyRegion = () => {
-      const reply = popover.querySelector<HTMLElement>(".bb-comments-reply");
+      const reply = popover.querySelector<HTMLElement>(".rift-comments-reply");
       if (reply === null) return;
       reply.dataset.editing = "false";
       reply.dataset.lastEditing = "false";
       reply.removeAttribute("aria-hidden");
       reply.removeAttribute("inert");
       const replyComposer = reply.querySelector<HTMLElement>(
-        "[data-bb-comment-reply-composer]",
+        "[data-rift-comment-reply-composer]",
       );
       replyComposer?.removeAttribute("aria-hidden");
       replyComposer?.removeAttribute("inert");
@@ -1585,7 +1585,7 @@ class TimelineCommentsController {
       this.closeActionsMenu();
       textarea.value = readDraft(draftKey) ?? currentComment.body;
       const isLastComment = detail.comments.at(-1)?.id === currentComment.id;
-      const reply = popover.querySelector<HTMLElement>(".bb-comments-reply");
+      const reply = popover.querySelector<HTMLElement>(".rift-comments-reply");
       runMeasuredModeTransition(row, () => {
         popover.dataset.editing = currentComment.id;
         row.dataset.editing = "true";
@@ -1593,12 +1593,12 @@ class TimelineCommentsController {
           if (isLastComment) {
             reply.dataset.lastEditing = "true";
             const replyComposer = reply.querySelector<HTMLElement>(
-              "[data-bb-comment-reply-composer]",
+              "[data-rift-comment-reply-composer]",
             );
             replyComposer?.setAttribute("aria-hidden", "true");
             replyComposer?.setAttribute("inert", "");
             reply
-              .querySelector<HTMLElement>("[data-bb-comment-edit-footer-host]")
+              .querySelector<HTMLElement>("[data-rift-comment-edit-footer-host]")
               ?.append(editFooter);
           } else {
             reply.dataset.editing = "true";
@@ -1612,7 +1612,7 @@ class TimelineCommentsController {
     });
     const remove = element(
       "button",
-      "bb-comments-destructive",
+      "rift-comments-destructive",
     ) as HTMLButtonElement;
     remove.type = "button";
     remove.tabIndex = -1;
@@ -1664,7 +1664,7 @@ class TimelineCommentsController {
     trigger: HTMLButtonElement,
     backwards: boolean,
   ): void {
-    const popover = trigger.closest(".bb-comments-thread");
+    const popover = trigger.closest(".rift-comments-thread");
     if (popover === null) {
       trigger.focus({ preventScroll: true });
       return;
@@ -1716,7 +1716,7 @@ class TimelineCommentsController {
     }
     const triggerRect = trigger.getBoundingClientRect();
     const scrollViewport = trigger.closest<HTMLElement>(
-      ".bb-comments-thread-comments",
+      ".rift-comments-thread-comments",
     );
     if (scrollViewport !== null) {
       const viewportRect = scrollViewport.getBoundingClientRect();
@@ -1768,8 +1768,8 @@ class TimelineCommentsController {
   }
 
   private showPopoverError(popover: HTMLElement, error: unknown): void {
-    const existing = popover.querySelector(".bb-comments-error");
-    const node = existing ?? element("div", "bb-comments-error");
+    const existing = popover.querySelector(".rift-comments-error");
+    const node = existing ?? element("div", "rift-comments-error");
     node.textContent = errorMessage(error);
     if (existing === null) popover.append(node);
   }
@@ -1800,7 +1800,7 @@ class TimelineCommentsController {
           this.#popoverInvoker?.contains(event.target) === true ||
           this.#actionsMenu?.contains(event.target) === true ||
           this.#portal
-            .querySelector(".bb-comments-actions-popover")
+            .querySelector(".rift-comments-actions-popover")
             ?.contains(event.target) === true)
       ) {
         return;
@@ -1810,7 +1810,7 @@ class TimelineCommentsController {
     this.#popoverKeydown = (event) => {
       if (event.key !== "Escape") return;
       const componentMenu = this.#portal.querySelector(
-        ".bb-comments-actions-popover",
+        ".rift-comments-actions-popover",
       );
       if (componentMenu !== null) {
         event.preventDefault();
@@ -1872,7 +1872,7 @@ class TimelineCommentsController {
     const rightOption = rect.right + 8;
     const fitsLeft = leftOption >= 8;
     const fitsRight = rightOption + width <= window.innerWidth - 8;
-    const gutter = anchor.dataset.bbCommentGutter;
+    const gutter = anchor.dataset.riftCommentGutter;
     const left =
       gutter === "left" && fitsLeft
         ? leftOption

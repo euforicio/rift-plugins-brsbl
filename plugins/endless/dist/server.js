@@ -6,8 +6,8 @@ var __filename = __fileURLToPath(import.meta.url);
 var __dirname = __pathDirname(__filename);
 
 // server.ts
-function plugin(bb) {
-  bb.log.info("Endless loaded");
+function plugin(rift) {
+  rift.log.info("Endless loaded");
 }
 export {
   plugin as default

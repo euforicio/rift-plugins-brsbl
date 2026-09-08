@@ -116,8 +116,8 @@ function errorResponse(context, error) {
   }
 }
 function createOpenInMossPlugin(dependencies = systemDependencies) {
-  return async function plugin(bb) {
-    bb.http.route(
+  return async function plugin(rift) {
+    rift.http.route(
       "POST",
       "/open",
       async (context) => {
@@ -154,7 +154,7 @@ function createOpenInMossPlugin(dependencies = systemDependencies) {
           return context.json({ ok: true, opened: true, path: openedPath });
         } catch (error) {
           if (error instanceof OpenInMossError) {
-            bb.log.warn(`Open in Moss failed (${error.code}): ${error.message}`);
+            rift.log.warn(`Open in Moss failed (${error.code}): ${error.message}`);
             return errorResponse(context, error);
           }
           throw error;
@@ -162,7 +162,7 @@ function createOpenInMossPlugin(dependencies = systemDependencies) {
       },
       { auth: "local" }
     );
-    bb.log.info("Markdown file links will open in Moss");
+    rift.log.info("Markdown file links will open in Moss");
   };
 }
 var server_default = createOpenInMossPlugin();

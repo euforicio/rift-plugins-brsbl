@@ -14,7 +14,7 @@ var __export = (target, all) => {
 import { watch } from "node:fs";
 import { readFile, stat } from "node:fs/promises";
 import { resolve } from "node:path";
-import { defineRpcContract } from "@get-bb/plugin-sdk";
+import { defineRpcContract } from "@riftlabs/plugin-sdk";
 
 // ../../node_modules/zod/v4/classic/external.js
 var external_exports = {};
@@ -14817,7 +14817,7 @@ async function buildCatalog(result, readCss) {
   );
   return { activeThemeId, themes, revision: 0 };
 }
-async function readPluginThemeCss(bb, themeId, rootDirs, signal) {
+async function readPluginThemeCss(rift, themeId, rootDirs, signal) {
   const m = /^plugin:([^:]+):(.+)$/.exec(themeId);
   if (!m) return null;
   const [, pluginId, localId] = m;
@@ -14825,12 +14825,12 @@ async function readPluginThemeCss(bb, themeId, rootDirs, signal) {
   if (!rootDir) return null;
   try {
     const manifest = JSON.parse(await readFile(resolve(rootDir, "package.json"), { encoding: "utf8", signal }));
-    const entry = manifest.bb?.themes?.find((theme) => theme.id === localId);
+    const entry = manifest.rift?.themes?.find((theme) => theme.id === localId);
     if (!entry?.css) return null;
     return await readFile(resolve(rootDir, entry.css), { encoding: "utf8", signal });
   } catch (error51) {
     signal?.throwIfAborted();
-    bb.log.warn(`theme-preview: could not read ${themeId}: ${String(error51)}`);
+    rift.log.warn(`theme-preview: could not read ${themeId}: ${String(error51)}`);
     return null;
   }
 }
@@ -14841,7 +14841,7 @@ async function activeThemePath(themeId, dir, rootDirs, signal) {
     if (!rootDir) return null;
     try {
       const manifest = JSON.parse(await readFile(resolve(rootDir, "package.json"), { encoding: "utf8", signal }));
-      const entry = manifest.bb?.themes?.find((theme) => theme.id === pluginMatch[2]);
+      const entry = manifest.rift?.themes?.find((theme) => theme.id === pluginMatch[2]);
       return entry?.css ? resolve(rootDir, entry.css) : null;
     } catch {
       signal?.throwIfAborted();
@@ -14861,7 +14861,7 @@ async function activeThemePath(themeId, dir, rootDirs, signal) {
   }
   return null;
 }
-function createCatalogLoader(bb) {
+function createCatalogLoader(rift) {
   const slowWarningMs = 5e3;
   const catalogOperationTimeoutMs = 15e3;
   const stamps = /* @__PURE__ */ new Map();
@@ -14872,7 +14872,7 @@ function createCatalogLoader(bb) {
   let catalogInFlight = null;
   const warnIfSlow = async (label, operation) => {
     const warning = setTimeout(() => {
-      bb.log.warn(`theme-preview: ${label} still pending after ${slowWarningMs}ms`);
+      rift.log.warn(`theme-preview: ${label} still pending after ${slowWarningMs}ms`);
     }, slowWarningMs);
     try {
       return await operation();
@@ -14883,7 +14883,7 @@ function createCatalogLoader(bb) {
   const observeCatalogOperation = async (label, operation) => {
     const controller = new AbortController();
     const warning = setTimeout(() => {
-      bb.log.warn(`theme-preview: ${label} still pending after ${slowWarningMs}ms`);
+      rift.log.warn(`theme-preview: ${label} still pending after ${slowWarningMs}ms`);
     }, slowWarningMs);
     let timeout;
     const deadline = new Promise((_resolve, reject) => {
@@ -14901,22 +14901,22 @@ function createCatalogLoader(bb) {
     }
   };
   const loadCatalog = async (selectionAtStart) => {
-    const raw = await observeCatalogOperation("theme catalog", (signal) => bb.sdk.theme.catalog({ signal }));
+    const raw = await observeCatalogOperation("theme catalog", (signal) => rift.sdk.theme.catalog({ signal }));
     const dir = typeof raw?.dir === "string" ? raw.dir : null;
     const rootDirs = /* @__PURE__ */ new Map();
     try {
-      const listed = await observeCatalogOperation("plugin list", (signal) => bb.sdk.plugins.list({ signal }));
+      const listed = await observeCatalogOperation("plugin list", (signal) => rift.sdk.plugins.list({ signal }));
       for (const entry of listed.plugins ?? []) {
         if (typeof entry.id === "string" && typeof entry.rootDir === "string") rootDirs.set(entry.id, entry.rootDir);
       }
     } catch (error51) {
-      bb.log.warn(`theme-preview: plugin list unavailable: ${String(error51)}`);
+      rift.log.warn(`theme-preview: plugin list unavailable: ${String(error51)}`);
     }
     const built = await observeCatalogOperation(
       "catalog enrichment",
       (signal) => buildCatalog(
         raw,
-        async (id) => id.startsWith("plugin:") ? readPluginThemeCss(bb, id, rootDirs, signal) : dir ? readCustomThemeCss(dir, id, signal) : null
+        async (id) => id.startsWith("plugin:") ? readPluginThemeCss(rift, id, rootDirs, signal) : dir ? readCustomThemeCss(dir, id, signal) : null
       )
     );
     if (built.activeThemeId) {
@@ -14937,17 +14937,17 @@ function createCatalogLoader(bb) {
           if (previousStamp !== void 0 && stamp !== previousStamp) {
             const current = await observeCatalogOperation(
               "active theme confirmation",
-              (signal) => bb.sdk.theme.catalog({ signal })
+              (signal) => rift.sdk.theme.catalog({ signal })
             );
             const currentThemeId = typeof current.active?.themeId === "string" ? current.active.themeId : null;
             if (selectionGeneration === selectionAtStart && currentThemeId === built.activeThemeId) {
               revision += 1;
-              await warnIfSlow(`theme re-apply (${built.activeThemeId})`, () => bb.sdk.theme.set(built.activeThemeId));
-              bb.log.info(`theme-preview: ${built.activeThemeId} changed on disk \u2014 re-applied (rev ${revision})`);
+              await warnIfSlow(`theme re-apply (${built.activeThemeId})`, () => rift.sdk.theme.set(built.activeThemeId));
+              rift.log.info(`theme-preview: ${built.activeThemeId} changed on disk \u2014 re-applied (rev ${revision})`);
             }
           }
         } catch (error51) {
-          bb.log.warn(`theme-preview: could not stat ${path}: ${String(error51)}`);
+          rift.log.warn(`theme-preview: could not stat ${path}: ${String(error51)}`);
         }
       }
     }
@@ -14970,7 +14970,7 @@ function createCatalogLoader(bb) {
       selectionGeneration += 1;
       const generation = selectionGeneration;
       const apply = selectionQueue.then(async () => {
-        await warnIfSlow(`theme apply (${themeId})`, () => bb.sdk.theme.set(themeId));
+        await warnIfSlow(`theme apply (${themeId})`, () => rift.sdk.theme.set(themeId));
       });
       selectionQueue = apply.catch(() => void 0);
       await apply;
@@ -14981,15 +14981,15 @@ function createCatalogLoader(bb) {
     }
   };
 }
-async function plugin(bb) {
-  const catalogLoader = createCatalogLoader(bb);
+async function plugin(rift) {
+  const catalogLoader = createCatalogLoader(rift);
   const catalog = catalogLoader.catalog;
-  bb.background.service("theme-watch", {
+  rift.background.service("theme-watch", {
     async start(signal) {
       let watcher = null;
       let timer = null;
       try {
-        const raw = await bb.sdk.theme.catalog({ signal });
+        const raw = await rift.sdk.theme.catalog({ signal });
         if (signal.aborted) return;
         const dir = typeof raw?.dir === "string" ? raw.dir : null;
         if (!dir) return;
@@ -14998,18 +14998,18 @@ async function plugin(bb) {
           timer = setTimeout(async () => {
             try {
               const next = await catalog();
-              bb.realtime.publish("theme-preview:changed", { revision: next.revision, at: Date.now() });
+              rift.realtime.publish("theme-preview:changed", { revision: next.revision, at: Date.now() });
             } catch (error51) {
-              bb.log.warn(`theme-preview: watch refresh failed: ${String(error51)}`);
+              rift.log.warn(`theme-preview: watch refresh failed: ${String(error51)}`);
             }
           }, 120);
         };
         try {
           watcher = watch(dir, { recursive: true }, onChange);
-          watcher.on("error", (error51) => bb.log.warn(`theme-preview: watcher error: ${String(error51)}`));
-          bb.log.info(`theme-preview: watching ${dir}`);
+          watcher.on("error", (error51) => rift.log.warn(`theme-preview: watcher error: ${String(error51)}`));
+          rift.log.info(`theme-preview: watching ${dir}`);
         } catch (error51) {
-          bb.log.warn(`theme-preview: cannot watch ${dir}: ${String(error51)}`);
+          rift.log.warn(`theme-preview: cannot watch ${dir}: ${String(error51)}`);
           return;
         }
         await new Promise((resolve2) => {
@@ -15024,7 +15024,7 @@ async function plugin(bb) {
       }
     }
   });
-  bb.rpc.register(rpcContract, {
+  rift.rpc.register(rpcContract, {
     async themeCatalog() {
       return catalog();
     },
@@ -15032,7 +15032,7 @@ async function plugin(bb) {
       return catalogLoader.setTheme(themeId);
     }
   });
-  bb.log.info("theme-preview ready");
+  rift.log.info("theme-preview ready");
 }
 export {
   BUILTIN_SWATCHES,

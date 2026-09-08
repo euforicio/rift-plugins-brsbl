@@ -1,4 +1,4 @@
-import type { BbPluginApi } from "@get-bb/plugin-sdk";
+import type { RiftPluginApi } from "@riftlabs/plugin-sdk";
 import Database from "better-sqlite3";
 import { describe, expect, it, vi } from "vitest";
 
@@ -107,7 +107,7 @@ async function createHarness(options?: {
       error: vi.fn(),
     },
     onDispose: vi.fn(),
-  } as unknown as BbPluginApi;
+  } as unknown as RiftPluginApi;
 
   await promptShaper(bb);
   if (rpcHandlers === null) throw new Error("RPC handlers were not registered");

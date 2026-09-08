@@ -52,7 +52,7 @@ const backgroundServices = new Map<
 >();
 const logMessages: string[] = [];
 const debugMessages: string[] = [];
-let displayStatus: "active" | "idle" = "active";
+let displayStatus: "active" | "idle" | "pending" = "active";
 let projectId = "proj_1";
 let assistantOutput = "  **Finished**   the hover card \n- polish.  ";
 let latestSegmentHasAssistant = true;
@@ -566,6 +566,18 @@ assert.equal(missingTurnStartSummary.currentTurnStartedAt, null);
 const missingTurnStartTiming = await timingHandler({ threadId: "thr_1" });
 assert.equal(missingTurnStartTiming.currentTurnStartedAt, null);
 assert.equal(missingTurnStartTiming.status, "active");
+
+displayStatus = "pending";
+eventWaitInputs.length = 0;
+const pendingSummary = await summaryHandler({ threadId: "thr_1" });
+assert.equal(pendingSummary.status, "pending");
+const pendingTiming = await timingHandler({ threadId: "thr_1" });
+assert.deepEqual(withoutDiagnostics(pendingTiming), {
+  currentTurnCompletedAt: null,
+  currentTurnStartedAt: null,
+  status: "pending",
+});
+assert.deepEqual(eventWaitInputs, []);
 
 displayStatus = "idle";
 turnStartedAt = 100;

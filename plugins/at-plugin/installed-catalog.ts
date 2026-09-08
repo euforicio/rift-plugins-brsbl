@@ -1,4 +1,4 @@
-import type { BbPluginApi, PluginMentionItem } from "@get-bb/plugin-sdk";
+import type { RiftPluginApi, PluginMentionItem } from "@riftlabs/plugin-sdk";
 
 import {
   MAX_ITEM_SUBTITLE_BYTES,
@@ -10,7 +10,7 @@ import {
 } from "./mention-context";
 
 export type InstalledPluginRecord = Awaited<
-  ReturnType<BbPluginApi["sdk"]["plugins"]["list"]>
+  ReturnType<RiftPluginApi["sdk"]["plugins"]["list"]>
 >["plugins"][number];
 
 interface InstalledCandidate {

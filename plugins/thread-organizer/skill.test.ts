@@ -54,10 +54,10 @@ describe("thread phase organizer guidance", () => {
       "That remembered value is storage state, not a semantic decision",
     );
     expect(skill).toContain(
-      "update_plan and other internal task plans do not move the bb workflow stage.",
+      "update_plan and other internal task plans do not move the rift workflow stage.",
     );
     expect(skill).toContain(
-      "Only bb organizer phase performs an agent-driven stage update.",
+      "Only rift organizer phase performs an agent-driven stage update.",
     );
   });
 });

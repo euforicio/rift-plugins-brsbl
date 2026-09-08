@@ -1,6 +1,6 @@
 ---
 name: thread-phase-organizer
-description: Keep the current root bb thread in the workflow stage defined by the user’s live Thread Organizer settings. Use at substantive task starts, after scope changes, and at genuine workflow-stage transitions. Classify the thread itself, never subjects merely mentioned inside it.
+description: Keep the current root rift thread in the workflow stage defined by the user’s live Thread Organizer settings. Use at substantive task starts, after scope changes, and at genuine workflow-stage transitions. Classify the thread itself, never subjects merely mentioned inside it.
 ---
 
 # Thread Phase Organizer
@@ -19,8 +19,8 @@ mechanically remembers the first configured non-Inbox workflow stage. That
 remembered value is storage state, not a semantic decision about the work.
 
 The remembered stage changes when the user moves the thread or when you run
-`bb organizer phase <stage-key>`. `update_plan` and other internal task plans do
-not move the bb workflow stage. Only `bb organizer phase` performs an
+`rift organizer phase <stage-key>`. `update_plan` and other internal task plans do
+not move the rift workflow stage. Only `rift organizer phase` performs an
 agent-driven stage update.
 
 ## Choose the subject correctly
@@ -59,7 +59,7 @@ When the root thread genuinely changes to a different configured stage, run the
 matching command before starting that work:
 
 ```bash
-bb organizer phase <stage-key>
+rift organizer phase <stage-key>
 ```
 
 This is routine agent bookkeeping. Run it autonomously when the live rule

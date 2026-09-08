@@ -1,5 +1,5 @@
 // Hugeicons definitions from @hugeicons/core-free-icons 4.1.3, the version
-// currently resolved by BB. Keeping the data local lets managed git installs
+// currently resolved by Rift. Keeping the data local lets managed git installs
 // bundle the same glyphs without requiring an install-time frontend dependency.
 export const AlarmClockIcon = [
   [
@@ -460,7 +460,7 @@ export const SourceCodeIcon = [
   ],
 ] as const;
 
-// BB's built-in provider marks, kept local for managed git installs.
+// Rift's built-in provider marks, kept local for managed git installs.
 export const OpenAiIcon = [
   [
     "path",

@@ -184,7 +184,7 @@ export function buildCommunityPluginContext(reference: CommunityPluginReference)
         `Plugin id: ${JSON.stringify(pluginId)}`,
         `Marketplace: ${JSON.stringify(marketplace)}`,
         `Catalog entry: ${JSON.stringify(entryId)}`,
-        "None of this plugin's capabilities are available. Do not claim or attempt to use them. Explain that the user must install it through bb's Plugins flow before use. The mention itself is not installation consent.",
+        "None of this plugin's capabilities are available. Do not claim or attempt to use them. Explain that the user must install it through rift's Plugins flow before use. The mention itself is not installation consent.",
         "This mention is a peer of any other plugin mentions in the message and does not establish execution order.",
       ].join("\n"),
   );

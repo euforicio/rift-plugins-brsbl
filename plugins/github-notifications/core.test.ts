@@ -13,13 +13,13 @@ const rows = parseNotificationRows([
     reason: "author",
     unread: true,
     updated_at: "2026-08-12T12:00:00Z",
-    repository: { full_name: "get-bb/bb" },
+    repository: { full_name: "euforicio/rift-app" },
     subject: {
       latest_comment_url:
-        "https://api.github.com/repos/get-bb/bb/issues/comments/101",
+        "https://api.github.com/repos/euforicio/rift-app/issues/comments/101",
       title: "Scannable activity",
       type: "PullRequest",
-      url: "https://api.github.com/repos/get-bb/bb/pulls/42",
+      url: "https://api.github.com/repos/euforicio/rift-app/pulls/42",
     },
   },
   {
@@ -68,7 +68,7 @@ describe("GitHub notification projection", () => {
             author: { login: "brsbl" },
             number: 42,
             title: "Scannable activity",
-            url: "https://github.com/get-bb/bb/pull/42",
+            url: "https://github.com/euforicio/rift-app/pull/42",
             comments: {
               nodes: [
                 {
@@ -118,7 +118,7 @@ describe("GitHub notification projection", () => {
         activity: "New comment",
         activityKind: "comment",
         actor: "alice",
-        repo: "get-bb/bb",
+        repo: "euforicio/rift-app",
         resourceKind: "pr",
       }),
     ]);
@@ -131,13 +131,13 @@ describe("GitHub notification projection", () => {
         reason: "author",
         unread: true,
         updated_at: "2026-08-12T12:00:00Z",
-        repository: { full_name: "get-bb/bb" },
+        repository: { full_name: "euforicio/rift-app" },
         subject: {
           latest_comment_url:
-            "https://api.github.com/repos/get-bb/bb/pulls/42",
+            "https://api.github.com/repos/euforicio/rift-app/pulls/42",
           title: "Review-only activity",
           type: "PullRequest",
-          url: "https://api.github.com/repos/get-bb/bb/pulls/42",
+          url: "https://api.github.com/repos/euforicio/rift-app/pulls/42",
         },
       },
     ]);
@@ -152,13 +152,13 @@ describe("GitHub notification projection", () => {
         reason: "mention",
         unread: true,
         updated_at: "2026-08-12T12:00:00Z",
-        repository: { full_name: "get-bb/bb" },
+        repository: { full_name: "euforicio/rift-app" },
         subject: {
           latest_comment_url:
-            "https://api.github.com/repos/get-bb/bb/pulls/42/reviews/9",
+            "https://api.github.com/repos/euforicio/rift-app/pulls/42/reviews/9",
           title: "Old mention, new review",
           type: "PullRequest",
-          url: "https://api.github.com/repos/get-bb/bb/pulls/42",
+          url: "https://api.github.com/repos/euforicio/rift-app/pulls/42",
         },
       },
     ]);
@@ -173,13 +173,13 @@ describe("GitHub notification projection", () => {
         reason: "mention",
         unread: true,
         updated_at: "2026-08-12T12:00:00Z",
-        repository: { full_name: "get-bb/bb" },
+        repository: { full_name: "euforicio/rift-app" },
         subject: {
           latest_comment_url:
-            "https://api.github.com/repos/get-bb/bb/issues/comments/101",
+            "https://api.github.com/repos/euforicio/rift-app/issues/comments/101",
           title: "Correct mention actor",
           type: "Issue",
-          url: "https://api.github.com/repos/get-bb/bb/issues/42",
+          url: "https://api.github.com/repos/euforicio/rift-app/issues/42",
         },
       },
     ]);
@@ -194,7 +194,7 @@ describe("GitHub notification projection", () => {
             author: { login: "brsbl" },
             number: 42,
             title: "Correct mention actor",
-            url: "https://github.com/get-bb/bb/issues/42",
+            url: "https://github.com/euforicio/rift-app/issues/42",
             comments: {
               nodes: [
                 {
@@ -238,13 +238,13 @@ describe("GitHub notification projection", () => {
       reason: "author",
     },
     {
-      body: "Could @get-bb/reviewers check this?",
+      body: "Could @get-rift/reviewers check this?",
       expected: "mention",
       name: "a team mention notification",
       reason: "team_mention",
     },
     {
-      body: "Could @get-bb/reviewers check this?",
+      body: "Could @get-rift/reviewers check this?",
       expected: "comment",
       name: "an unrelated team reference",
       reason: "author",
@@ -310,13 +310,13 @@ describe("GitHub notification projection", () => {
         reason,
         unread: true,
         updated_at: "2026-08-12T12:00:00Z",
-        repository: { full_name: "get-bb/bb" },
+        repository: { full_name: "euforicio/rift-app" },
         subject: {
           latest_comment_url:
-            "https://api.github.com/repos/get-bb/bb/issues/comments/101",
+            "https://api.github.com/repos/euforicio/rift-app/issues/comments/101",
           title: "Mention boundaries",
           type: "Issue",
-          url: "https://api.github.com/repos/get-bb/bb/issues/42",
+          url: "https://api.github.com/repos/euforicio/rift-app/issues/42",
         },
       },
     ]);
@@ -332,7 +332,7 @@ describe("GitHub notification projection", () => {
             author: { login: "brsbl" },
             number: 42,
             title: "Mention boundaries",
-            url: "https://github.com/get-bb/bb/issues/42",
+            url: "https://github.com/euforicio/rift-app/issues/42",
             comments: {
               nodes: [
                 {
@@ -358,13 +358,13 @@ describe("GitHub notification projection", () => {
         reason: "mention",
         unread: true,
         updated_at: "2026-08-12T12:00:00Z",
-        repository: { full_name: "get-bb/bb" },
+        repository: { full_name: "euforicio/rift-app" },
         subject: {
           latest_comment_url:
-            "https://api.github.com/repos/get-bb/bb/issues/comments/102",
+            "https://api.github.com/repos/euforicio/rift-app/issues/comments/102",
           title: "Persistent reason",
           type: "Issue",
-          url: "https://api.github.com/repos/get-bb/bb/issues/42",
+          url: "https://api.github.com/repos/euforicio/rift-app/issues/42",
         },
       },
     ]);
@@ -379,7 +379,7 @@ describe("GitHub notification projection", () => {
             author: { login: "brsbl" },
             number: 42,
             title: "Persistent reason",
-            url: "https://github.com/get-bb/bb/issues/42",
+            url: "https://github.com/euforicio/rift-app/issues/42",
             comments: {
               nodes: [
                 {
@@ -410,13 +410,13 @@ describe("GitHub notification projection", () => {
         reason: "comment",
         unread: true,
         updated_at: "2026-08-12T12:00:00Z",
-        repository: { full_name: "get-bb/bb" },
+        repository: { full_name: "euforicio/rift-app" },
         subject: {
           latest_comment_url:
-            "https://api.github.com/repos/get-bb/bb/pulls/comments/501",
+            "https://api.github.com/repos/euforicio/rift-app/pulls/comments/501",
           title: "Inline feedback",
           type: "PullRequest",
-          url: "https://api.github.com/repos/get-bb/bb/pulls/42",
+          url: "https://api.github.com/repos/euforicio/rift-app/pulls/42",
         },
       },
     ]);
@@ -432,7 +432,7 @@ describe("GitHub notification projection", () => {
             author: { login: "brsbl" },
             number: 42,
             title: "Inline feedback",
-            url: "https://github.com/get-bb/bb/pull/42",
+            url: "https://github.com/euforicio/rift-app/pull/42",
             comments: { nodes: [] },
             reviews: { nodes: [] },
             reviewThreads: {

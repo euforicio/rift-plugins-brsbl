@@ -1,4 +1,4 @@
-import type { BbPluginApi } from "@get-bb/plugin-sdk";
+import type { RiftPluginApi } from "@riftlabs/plugin-sdk";
 
 import {
   COMMUNITY_MARKETPLACE,
@@ -86,19 +86,19 @@ function inventoryVerificationError(target: string): Error {
 
 function communityMissingError(target: string): Error {
   return new Error(
-    `${target} is no longer available in bb Community. Remove @${target} or choose a current result, then retry.`,
+    `${target} is no longer available in rift Community. Remove @${target} or choose a current result, then retry.`,
   );
 }
 
 function communityIncompatibleError(target: string): Error {
   return new Error(
-    `${target} is no longer listed for this version of bb. Remove @${target} or choose a current result, then retry.`,
+    `${target} is no longer listed for this version of rift. Remove @${target} or choose a current result, then retry.`,
   );
 }
 
 function communityVerificationError(target: string): Error {
   return new Error(
-    `${target} could not be verified in bb Community right now. Retry, or remove @${target} to send without it.`,
+    `${target} could not be verified in rift Community right now. Retry, or remove @${target} to send without it.`,
   );
 }
 
@@ -143,14 +143,14 @@ function exactCommunityEntry(
   );
 }
 
-export default async function plugin(bb: BbPluginApi) {
-  bb.ui.registerMentionProvider({
+export default async function plugin(rift: RiftPluginApi) {
+  rift.ui.registerMentionProvider({
     id: "installed",
     label: "Installed",
     async search({ query }) {
       try {
-        const inventory = await boundedSdkRead((signal) => bb.sdk.plugins.list({ signal }));
-        return searchInstalledPlugins(inventory.plugins, query, bb.pluginId);
+        const inventory = await boundedSdkRead((signal) => rift.sdk.plugins.list({ signal }));
+        return searchInstalledPlugins(inventory.plugins, query, rift.pluginId);
       } catch {
         return [];
       }
@@ -164,9 +164,9 @@ export default async function plugin(bb: BbPluginApi) {
       }
 
       const fallback = fallbackTarget(pluginId);
-      let inventory: Awaited<ReturnType<BbPluginApi["sdk"]["plugins"]["list"]>>;
+      let inventory: Awaited<ReturnType<RiftPluginApi["sdk"]["plugins"]["list"]>>;
       try {
-        inventory = await boundedSdkRead((signal) => bb.sdk.plugins.list({ signal }));
+        inventory = await boundedSdkRead((signal) => rift.sdk.plugins.list({ signal }));
       } catch {
         throw inventoryVerificationError(fallback);
       }
@@ -177,15 +177,15 @@ export default async function plugin(bb: BbPluginApi) {
     },
   });
 
-  bb.ui.registerMentionProvider({
+  rift.ui.registerMentionProvider({
     id: "community",
     label: "Community",
     async search({ query }) {
       try {
         const entries = await boundedSdkRead((signal) =>
-          bb.sdk.plugins.catalog.search({ query, signal }),
+          rift.sdk.plugins.catalog.search({ query, signal }),
         );
-        return searchCommunityPlugins(entries, query);
+        return searchCommunityPlugins(entries.results, query);
       } catch {
         return [];
       }
@@ -202,9 +202,9 @@ export default async function plugin(bb: BbPluginApi) {
       }
 
       const fallback = fallbackTarget(identity.pluginId);
-      let inventory: Awaited<ReturnType<BbPluginApi["sdk"]["plugins"]["list"]>>;
+      let inventory: Awaited<ReturnType<RiftPluginApi["sdk"]["plugins"]["list"]>>;
       try {
-        inventory = await boundedSdkRead((signal) => bb.sdk.plugins.list({ signal }));
+        inventory = await boundedSdkRead((signal) => rift.sdk.plugins.list({ signal }));
       } catch {
         throw inventoryVerificationError(fallback);
       }
@@ -213,17 +213,17 @@ export default async function plugin(bb: BbPluginApi) {
       if (installed !== undefined) return resolveInstalledRecord(installed);
 
       let entries: Awaited<
-        ReturnType<BbPluginApi["sdk"]["plugins"]["catalog"]["search"]>
+        ReturnType<RiftPluginApi["sdk"]["plugins"]["catalog"]["search"]>
       >;
       try {
         entries = await boundedSdkRead((signal) =>
-          bb.sdk.plugins.catalog.search({ query: identity.pluginId, signal }),
+          rift.sdk.plugins.catalog.search({ query: identity.pluginId, signal }),
         );
       } catch {
         throw communityVerificationError(fallback);
       }
 
-      const entry = exactCommunityEntry(entries, identity);
+      const entry = exactCommunityEntry(entries.results, identity);
       if (entry === undefined) throw communityMissingError(fallback);
 
       const liveTarget = boundUntrustedText(entry.displayName, MAX_ITEM_TITLE_BYTES);

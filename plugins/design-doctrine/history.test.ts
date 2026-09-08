@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
 
-import { createFakePluginHost } from "@get-bb/plugin-sdk/testing";
+import { createFakePluginHost } from "@riftlabs/plugin-sdk/testing";
 import { describe, expect, it } from "vitest";
 
 import { commitNewRuleFiles, createHistoryMaintenance } from "./history";
@@ -85,11 +85,11 @@ describe("Design Doctrine legacy history migration", () => {
     // Reading episodes writes nothing, so it must not depend on a checkout —
     // gating it on one is what used to strand maintenance entirely.
     const root = await mkdtemp(join(tmpdir(), "doctrine-history-plain-"));
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "design-doctrine",
       sdk: { threads: { list: async () => [] } },
     });
-    const history = createHistoryMaintenance(bb, root);
+    const history = createHistoryMaintenance(rift, root);
 
     try {
       await expect(history.scan(scanOptions())).resolves.toMatchObject({
@@ -114,7 +114,7 @@ describe("Design Doctrine legacy history migration", () => {
         lease: null,
       })}\n`,
     );
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "design-doctrine",
       sdk: {
         threads: {
@@ -125,12 +125,12 @@ describe("Design Doctrine legacy history migration", () => {
         },
       },
     });
-    const history = createHistoryMaintenance(bb, root);
+    const history = createHistoryMaintenance(rift, root);
 
     try {
       await expect(history.prepare()).rejects.toThrow("inventory unavailable");
       await expect(readFile(statePath, "utf8")).resolves.toContain("seg_1");
-      await expect(bb.storage.kv.get(LEGACY_KEY)).resolves.toBeDefined();
+      await expect(rift.storage.kv.get(LEGACY_KEY)).resolves.toBeDefined();
 
       inventoryAvailable = true;
       await expect(history.prepare()).resolves.toEqual({
@@ -139,7 +139,7 @@ describe("Design Doctrine legacy history migration", () => {
       await expect(readFile(statePath, "utf8")).rejects.toMatchObject({
         code: "ENOENT",
       });
-      await expect(bb.storage.kv.get(LEGACY_KEY)).resolves.toBeUndefined();
+      await expect(rift.storage.kv.get(LEGACY_KEY)).resolves.toBeUndefined();
     } finally {
       await harness.lifecycle.dispose();
       await rm(root, { recursive: true, force: true });
@@ -167,11 +167,11 @@ describe("Design Doctrine legacy history migration", () => {
         },
       })}\n`,
     );
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "design-doctrine",
       sdk: { threads: { list: async () => [] } },
     });
-    const history = createHistoryMaintenance(bb, root);
+    const history = createHistoryMaintenance(rift, root);
 
     try {
       await expect(history.prepare()).rejects.toThrow(
@@ -183,7 +183,7 @@ describe("Design Doctrine legacy history migration", () => {
       await expect(readFile(statePath, "utf8")).resolves.toContain(
         "legacy-lease",
       );
-      await expect(bb.storage.kv.get(LEGACY_KEY)).resolves.toMatchObject({
+      await expect(rift.storage.kv.get(LEGACY_KEY)).resolves.toMatchObject({
         lease: { expires_at: expiresAtSeconds * 1_000 },
       });
     } finally {
@@ -207,11 +207,11 @@ describe("Design Doctrine legacy history migration", () => {
         lease: null,
       })}\n`,
     );
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "design-doctrine",
       sdk: { threads: { list: async () => [] } },
     });
-    const history = createHistoryMaintenance(bb, installedPluginRoot);
+    const history = createHistoryMaintenance(rift, installedPluginRoot);
 
     try {
       await expect(history.prepare()).resolves.toEqual({
@@ -220,7 +220,7 @@ describe("Design Doctrine legacy history migration", () => {
       await expect(readFile(statePath, "utf8")).rejects.toMatchObject({
         code: "ENOENT",
       });
-      await expect(bb.storage.kv.get(LEGACY_KEY)).resolves.toBeUndefined();
+      await expect(rift.storage.kv.get(LEGACY_KEY)).resolves.toBeUndefined();
     } finally {
       await harness.lifecycle.dispose();
       await rm(installedPluginRoot, { recursive: true, force: true });

@@ -1,4 +1,4 @@
-import type { BbPluginApi } from "@get-bb/plugin-sdk";
+import type { RiftPluginApi } from "@riftlabs/plugin-sdk";
 import { z } from "zod";
 
 import {
@@ -149,7 +149,7 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-export default async function plugin(bb: BbPluginApi) {
+export default async function plugin(rift: RiftPluginApi) {
   const reconciliationRequests = new Map<string, Promise<void>>();
   const emptyOutputChecks = new Map<
     string,
@@ -172,7 +172,7 @@ export default async function plugin(bb: BbPluginApi) {
   }
 
   async function readHelperExecution(): Promise<HelperExecution> {
-    const value = await bb.storage.kv.get<unknown>(HELPER_EXECUTION_KEY);
+    const value = await rift.storage.kv.get<unknown>(HELPER_EXECUTION_KEY);
     if (value === undefined) return UNSET_HELPER_EXECUTION;
     const parsed = helperExecutionSchema.safeParse(value);
     return parsed.success ? parsed.data : UNSET_HELPER_EXECUTION;
@@ -181,23 +181,23 @@ export default async function plugin(bb: BbPluginApi) {
   async function readRecord(
     requestId: string,
   ): Promise<EnhancementRecord | null> {
-    const value = await bb.storage.kv.get<unknown>(requestKey(requestId));
+    const value = await rift.storage.kv.get<unknown>(requestKey(requestId));
     if (value === undefined) return null;
     const parsed = enhancementRecordSchema.safeParse(value);
     if (!parsed.success) {
-      bb.log.warn(`discarding invalid enhancement record ${requestId}`);
-      await bb.storage.kv.delete(requestKey(requestId));
+      rift.log.warn(`discarding invalid enhancement record ${requestId}`);
+      await rift.storage.kv.delete(requestKey(requestId));
       return null;
     }
     return parsed.data;
   }
 
   async function writeRecord(record: EnhancementRecord): Promise<void> {
-    await bb.storage.kv.set(requestKey(record.requestId), record);
+    await rift.storage.kv.set(requestKey(record.requestId), record);
   }
 
   async function cancellationRequested(requestId: string): Promise<boolean> {
-    return (await bb.storage.kv.get(cancellationKey(requestId))) !== undefined;
+    return (await rift.storage.kv.get(cancellationKey(requestId))) !== undefined;
   }
 
   async function clearRequest(
@@ -205,15 +205,15 @@ export default async function plugin(bb: BbPluginApi) {
     helperThreadId: string,
   ): Promise<void> {
     clearEmptyOutputCheck(helperThreadId);
-    await bb.storage.kv.delete(requestKey(requestId));
-    await bb.storage.kv.delete(threadKey(helperThreadId));
+    await rift.storage.kv.delete(requestKey(requestId));
+    await rift.storage.kv.delete(threadKey(helperThreadId));
   }
 
   async function archiveHelper(threadId: string): Promise<void> {
     try {
-      await bb.sdk.threads.archive({ threadId });
+      await rift.sdk.threads.archive({ threadId });
     } catch (error) {
-      bb.log.warn(
+      rift.log.warn(
         `could not archive Improve Prompt helper ${threadId}: ${errorMessage(error)}`,
       );
     }
@@ -221,9 +221,9 @@ export default async function plugin(bb: BbPluginApi) {
 
   async function cancelHelper(threadId: string): Promise<void> {
     try {
-      await bb.sdk.threads.stop({ threadId });
+      await rift.sdk.threads.stop({ threadId });
     } catch (error) {
-      bb.log.warn(
+      rift.log.warn(
         `could not stop Improve Prompt helper ${threadId}: ${errorMessage(error)}`,
       );
     }
@@ -235,7 +235,7 @@ export default async function plugin(bb: BbPluginApi) {
     result: ParsedShaperOutput | { error: string },
   ): Promise<void> {
     clearEmptyOutputCheck(threadId);
-    const requestId = await bb.storage.kv.get<string>(threadKey(threadId));
+    const requestId = await rift.storage.kv.get<string>(threadKey(threadId));
     if (requestId === undefined) return;
     const current = await readRecord(requestId);
     if (current === null || current.status !== "running") return;
@@ -263,8 +263,8 @@ export default async function plugin(bb: BbPluginApi) {
       await clearRequest(requestId, threadId);
       return;
     }
-    bb.realtime.publish("enhancement-changed", { requestId });
-    await bb.storage.kv.delete(threadKey(threadId));
+    rift.realtime.publish("enhancement-changed", { requestId });
+    await rift.storage.kv.delete(threadKey(threadId));
     await archiveHelper(threadId);
   }
 
@@ -295,14 +295,14 @@ export default async function plugin(bb: BbPluginApi) {
     const pending = setTimeout(() => {
       if (emptyOutputChecks.get(threadId) !== pending) return;
       void (async () => {
-        const requestId = await bb.storage.kv.get<string>(threadKey(threadId));
+        const requestId = await rift.storage.kv.get<string>(threadKey(threadId));
         if (emptyOutputChecks.get(threadId) !== pending) return;
         if (requestId === undefined) return;
         const current = await readRecord(requestId);
         if (emptyOutputChecks.get(threadId) !== pending) return;
         if (current === null || current.status !== "running") return;
 
-        const thread = await bb.sdk.threads.get({ threadId });
+        const thread = await rift.sdk.threads.get({ threadId });
         if (emptyOutputChecks.get(threadId) !== pending) return;
         if (thread.status === "error") {
           if (emptyOutputChecks.get(threadId) !== pending) return;
@@ -311,7 +311,7 @@ export default async function plugin(bb: BbPluginApi) {
         }
         if (thread.status !== "idle") return;
 
-        const { output } = await bb.sdk.threads.output({ threadId });
+        const { output } = await rift.sdk.threads.output({ threadId });
         if (emptyOutputChecks.get(threadId) !== pending) return;
         if ((output ?? "").trim().length > 0) {
           if (emptyOutputChecks.get(threadId) !== pending) return;
@@ -325,7 +325,7 @@ export default async function plugin(bb: BbPluginApi) {
         });
       })()
         .catch((error) => {
-          bb.log.warn(
+          rift.log.warn(
             `could not confirm Improve Prompt helper ${threadId} output: ${errorMessage(error)}`,
           );
         })
@@ -337,9 +337,9 @@ export default async function plugin(bb: BbPluginApi) {
   }
 
   async function reconcileHelperOnce(threadId: string): Promise<void> {
-    const thread = await bb.sdk.threads.get({ threadId });
+    const thread = await rift.sdk.threads.get({ threadId });
     if (thread.status === "idle") {
-      const { output } = await bb.sdk.threads.output({ threadId });
+      const { output } = await rift.sdk.threads.output({ threadId });
       await finishFromOutput(threadId, output);
     } else if (thread.status === "error") {
       await finish(threadId, { error: "The shaping agent failed." });
@@ -387,7 +387,7 @@ export default async function plugin(bb: BbPluginApi) {
           };
 
     if (input.sourceThreadId === null) {
-      return bb.sdk.threads.spawn({
+      return rift.sdk.threads.spawn({
         projectId: input.projectId,
         prompt: buildWorkerPrompt({ draft: input.draft }),
         environment: { type: "project-default" },
@@ -398,7 +398,7 @@ export default async function plugin(bb: BbPluginApi) {
       });
     }
 
-    const source = await bb.sdk.threads.get({
+    const source = await rift.sdk.threads.get({
       threadId: input.sourceThreadId,
     });
     if (source.projectId !== input.projectId) {
@@ -409,7 +409,7 @@ export default async function plugin(bb: BbPluginApi) {
         ? ({ type: "project-default" } as const)
         : ({ type: "reuse", environmentId: source.environmentId } as const);
     if (configuredExecution !== null) {
-      return bb.sdk.threads.spawn({
+      return rift.sdk.threads.spawn({
         projectId: input.projectId,
         prompt: buildWorkerPrompt({ draft: input.draft }),
         environment,
@@ -419,10 +419,10 @@ export default async function plugin(bb: BbPluginApi) {
         title: "Improve Prompt",
       });
     }
-    const execution = await bb.sdk.threads.defaultExecutionOptions({
+    const execution = await rift.sdk.threads.defaultExecutionOptions({
       threadId: input.sourceThreadId,
     });
-    return bb.sdk.threads.spawn({
+    return rift.sdk.threads.spawn({
       projectId: input.projectId,
       prompt: buildWorkerPrompt({ draft: input.draft }),
       environment,
@@ -440,20 +440,20 @@ export default async function plugin(bb: BbPluginApi) {
     });
   }
 
-  bb.rpc.register(rpcContract, {
+  rift.rpc.register(rpcContract, {
     async getHelperExecution() {
       return readHelperExecution();
     },
     async setHelperExecution(input) {
       if (input.mode === "default") {
-        await bb.storage.kv.delete(HELPER_EXECUTION_KEY);
+        await rift.storage.kv.delete(HELPER_EXECUTION_KEY);
       } else {
-        await bb.storage.kv.set(HELPER_EXECUTION_KEY, input);
+        await rift.storage.kv.set(HELPER_EXECUTION_KEY, input);
       }
       return { saved: true as const };
     },
     async listHelperProviders() {
-      const providers = await bb.sdk.providers.list();
+      const providers = await rift.sdk.providers.list();
       return {
         providers: providers.map((provider) => ({
           id: provider.id,
@@ -463,7 +463,7 @@ export default async function plugin(bb: BbPluginApi) {
       };
     },
     async listHelperModels(input) {
-      const options = await bb.sdk.providers.models({
+      const options = await rift.sdk.providers.models({
         providerId: input.providerId,
       });
       return {
@@ -499,7 +499,7 @@ export default async function plugin(bb: BbPluginApi) {
           createdAt: Date.now(),
         };
         await writeRecord(record);
-        await bb.storage.kv.set(threadKey(helperThreadId), input.requestId);
+        await rift.storage.kv.set(threadKey(helperThreadId), input.requestId);
         if (await cancellationRequested(input.requestId)) {
           await clearRequest(input.requestId, helperThreadId);
           await cancelHelper(helperThreadId);
@@ -513,7 +513,7 @@ export default async function plugin(bb: BbPluginApi) {
           try {
             await clearRequest(input.requestId, helperThreadId);
           } catch (cleanupError) {
-            bb.log.warn(
+            rift.log.warn(
               `could not clear failed Improve Prompt request ${input.requestId}: ${errorMessage(cleanupError)}`,
             );
           }
@@ -521,7 +521,7 @@ export default async function plugin(bb: BbPluginApi) {
         }
         throw error;
       } finally {
-        await bb.storage.kv.delete(cancellationKey(input.requestId));
+        await rift.storage.kv.delete(cancellationKey(input.requestId));
       }
     },
     async getEnhancement({ requestId }) {
@@ -530,7 +530,7 @@ export default async function plugin(bb: BbPluginApi) {
         try {
           await reconcileHelper(record.helperThreadId);
         } catch (error) {
-          bb.log.warn(
+          rift.log.warn(
             `could not reconcile Improve Prompt helper ${record.helperThreadId}: ${errorMessage(error)}`,
           );
         }
@@ -538,7 +538,7 @@ export default async function plugin(bb: BbPluginApi) {
       return readRecord(requestId);
     },
     async cancelEnhancement({ requestId }) {
-      await bb.storage.kv.set(cancellationKey(requestId), {
+      await rift.storage.kv.set(cancellationKey(requestId), {
         createdAt: Date.now(),
       });
       const record = await readRecord(requestId);
@@ -546,25 +546,25 @@ export default async function plugin(bb: BbPluginApi) {
         await clearRequest(requestId, record.helperThreadId);
         await cancelHelper(record.helperThreadId);
       }
-      bb.realtime.publish("enhancement-changed", { requestId });
+      rift.realtime.publish("enhancement-changed", { requestId });
       return { cancelled: true as const };
     },
   });
 
-  bb.events.on("thread.idle", ({ thread, lastAssistantText }) =>
+  rift.events.on("thread.idle", ({ thread, lastAssistantText }) =>
     finishFromOutput(thread.id, lastAssistantText),
   );
-  bb.events.on("thread.active", ({ thread }) => {
+  rift.events.on("thread.active", ({ thread }) => {
     clearEmptyOutputCheck(thread.id);
   });
-  bb.events.on("thread.failed", ({ thread, error }) =>
+  rift.events.on("thread.failed", ({ thread, error }) =>
     finish(thread.id, {
       error: error?.trim() || "The shaping agent failed.",
     }),
   );
 
   const now = Date.now();
-  for (const key of await bb.storage.kv.list(REQUEST_PREFIX)) {
+  for (const key of await rift.storage.kv.list(REQUEST_PREFIX)) {
     const requestId = key.slice(REQUEST_PREFIX.length);
     const record = await readRecord(requestId);
     if (record !== null && now - record.createdAt > REQUEST_TTL_MS) {
@@ -574,18 +574,18 @@ export default async function plugin(bb: BbPluginApi) {
       }
     }
   }
-  for (const key of await bb.storage.kv.list(CANCELLATION_PREFIX)) {
-    const value = await bb.storage.kv.get<unknown>(key);
+  for (const key of await rift.storage.kv.list(CANCELLATION_PREFIX)) {
+    const value = await rift.storage.kv.get<unknown>(key);
     const parsed = cancellationRecordSchema.safeParse(value);
     if (!parsed.success || now - parsed.data.createdAt > REQUEST_TTL_MS) {
-      await bb.storage.kv.delete(key);
+      await rift.storage.kv.delete(key);
     }
   }
 
-  bb.onDispose(() => {
+  rift.onDispose(() => {
     for (const pending of emptyOutputChecks.values()) clearTimeout(pending);
     emptyOutputChecks.clear();
   });
 
-  bb.log.info("loaded composer enhancement action");
+  rift.log.info("loaded composer enhancement action");
 }

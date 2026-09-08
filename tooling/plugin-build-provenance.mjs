@@ -6,12 +6,12 @@ const provenance = JSON.parse(
     "utf8",
   ),
 );
-const builderVersion = /^bb plugin build@(\d+\.\d+\.\d+)$/.exec(
+const builderVersion = /^rift plugin build@(\d+\.\d+\.\d+)$/.exec(
   provenance.builder,
 )?.[1];
 
 if (builderVersion === undefined) {
-  throw new Error("vendored plugin builder has no concrete BB version");
+  throw new Error("vendored plugin builder has no concrete Rift version");
 }
 
-export const pluginBuildBbVersion = builderVersion;
+export const pluginBuildRiftVersion = builderVersion;

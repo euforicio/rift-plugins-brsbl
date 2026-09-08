@@ -44,12 +44,12 @@ async function createFixtureRepository(directory) {
     resolve(directory, "package.json"),
     `${JSON.stringify(
       {
-        name: "bb-plugins-scaffold-smoke",
+        name: "rift-plugins-scaffold-smoke",
         private: true,
         type: "module",
         workspaces: ["plugins/*", "packages/*"],
         devDependencies: {
-          "@get-bb/plugin-sdk": rootManifest.devDependencies["@get-bb/plugin-sdk"],
+          "@riftlabs/plugin-sdk": rootManifest.devDependencies["@riftlabs/plugin-sdk"],
           "@tailwindcss/node": rootManifest.devDependencies["@tailwindcss/node"],
           "@tailwindcss/oxide": rootManifest.devDependencies["@tailwindcss/oxide"],
           esbuild: rootManifest.devDependencies.esbuild,
@@ -61,6 +61,16 @@ async function createFixtureRepository(directory) {
       2,
     )}\n`,
   );
+  const fixtureManifest = JSON.parse(await readFile(resolve(directory, "package.json"), "utf8"));
+  const rootLock = JSON.parse(await readFile(resolve(root, "package-lock.json"), "utf8"));
+  rootLock.name = fixtureManifest.name;
+  rootLock.packages[""] = fixtureManifest;
+  for (const [path, entry] of Object.entries(rootLock.packages)) {
+    if (path.startsWith("plugins/") || path.startsWith("packages/") || entry.link) {
+      delete rootLock.packages[path];
+    }
+  }
+  await writeFile(resolve(directory, "package-lock.json"), `${JSON.stringify(rootLock, null, 2)}\n`);
   await writeFile(resolve(directory, "README.md"), "# Fixture\n");
   await copyFile(
     resolve(root, "tooling/build-plugin.mjs"),
@@ -123,17 +133,17 @@ async function addVisualIndex(repositoryRoot, directory, description) {
 
 ${description}
 
-![Scaffold Smoke in bb](plugins/scaffold-smoke/${screenshot})
+![Scaffold Smoke in rift](plugins/scaffold-smoke/${screenshot})
 
 [Source](plugins/scaffold-smoke) · [README](plugins/scaffold-smoke/README.md)
 
-Install: \`bb plugin install git:https://github.com/brsbl/bb-plugins.git@plugin/scaffold-smoke --yes\`
+Install: \`rift plugin install "path:$PWD/plugins/scaffold-smoke" --yes\`
 `,
   );
   return screenshot;
 }
 
-const fixtureRoot = await mkdtemp(resolve(tmpdir(), "bb-plugin-scaffold-smoke-"));
+const fixtureRoot = await mkdtemp(resolve(tmpdir(), "rift-plugin-scaffold-smoke-"));
 try {
   assert.equal(sdkRangeIncludesVersion("^0.4.1", "0.4.8"), true);
   assert.equal(sdkRangeIncludesVersion(">=0.4.1", "0.4.8"), true);
@@ -173,7 +183,7 @@ try {
   );
   const releasedManifest = JSON.parse(
     releaseManifest({
-      name: "bb-plugin-release-smoke",
+      name: "rift-plugin-release-smoke",
       dependencies: {
         "@fixture/bundled-helper": "0.1.0",
         "external-runtime": "^2.0.0",
@@ -186,14 +196,14 @@ try {
       },
       devDependencies: { typescript: "^5.7.0" },
       scripts: { check: "tsc --noEmit" },
-      bb: {
+      rift: {
         server: "./server.ts",
         app: "./app.tsx",
       },
     }),
   );
-  assert.equal(releasedManifest.bb.server, "./dist/install-server.mjs");
-  assert.equal(releasedManifest.bb.app, "./dist/install-app.mjs");
+  assert.equal(releasedManifest.rift.server, "./dist/install-server.mjs");
+  assert.equal(releasedManifest.rift.app, "./dist/install-app.mjs");
   assert.equal(releasedManifest.dependencies, undefined);
   assert.equal(releasedManifest.optionalDependencies, undefined);
   assert.equal(releasedManifest.peerDependencies, undefined);
@@ -217,7 +227,7 @@ try {
   );
   await createFixtureRepository(fixtureRoot);
 
-  const description = "Verifies the personal bb plugin scaffold.";
+  const description = "Verifies the personal rift plugin scaffold.";
   const generated = await scaffoldPlugin({
     slug: "scaffold-smoke",
     name: "Scaffold Smoke",
@@ -235,7 +245,7 @@ try {
   run("npm", ["install", "--no-audit", "--no-fund"], fixtureRoot);
   run(
     "npm",
-    ["run", "check", "--workspace=bb-plugin-scaffold-smoke"],
+    ["run", "check", "--workspace=rift-plugin-scaffold-smoke"],
     fixtureRoot,
   );
   await validatePluginArtifacts(generated.directory, {
@@ -275,17 +285,17 @@ try {
   await writeFile(resolve(accidentalSkill, "SKILL.md"), "# Accidental skill\n");
   await assert.rejects(
     validatePluginArtifacts(generated.directory),
-    /bb\.skills opts out, but skills\/example-skill\/SKILL\.md exists/,
+    /rift\.skills opts out, but skills\/example-skill\/SKILL\.md exists/,
   );
   const manifestPath = resolve(generated.directory, "package.json");
   const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
-  delete manifest.bb.skills;
+  delete manifest.rift.skills;
   await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
   await assert.rejects(
     validatePluginArtifacts(generated.directory),
-    /would be implicitly auto-imported by bb; declare bb\.skills explicitly/,
+    /would be implicitly auto-imported by rift; declare rift\.skills explicitly/,
   );
-  manifest.bb.skills = [];
+  manifest.rift.skills = [];
   await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
   await rm(resolve(generated.directory, "skills"), {
     recursive: true,

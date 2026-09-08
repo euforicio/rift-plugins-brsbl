@@ -5,13 +5,13 @@ import { join } from "node:path";
 import { build } from "esbuild";
 import { chromium } from "playwright";
 
-const output = mkdtempSync(join(tmpdir(), "bb-timeline-comments-browser-"));
+const output = mkdtempSync(join(tmpdir(), "rift-timeline-comments-browser-"));
 await build({
   entryPoints: [new URL("./harness.ts", import.meta.url).pathname],
   bundle: true,
   format: "esm",
   outfile: join(output, "harness.js"),
-  external: ["@get-bb/plugin-sdk/app"],
+  external: ["@riftlabs/plugin-sdk/app"],
   loader: { ".css": "css" },
 });
 copyFileSync(
@@ -20,7 +20,7 @@ copyFileSync(
 );
 
 const screenshot =
-  process.env.BB_TIMELINE_COMMENTS_SCREENSHOT ?? join(output, "screenshot.png");
+  process.env.RIFT_TIMELINE_COMMENTS_SCREENSHOT ?? join(output, "screenshot.png");
 const server = createServer((request, response) => {
   const file = (request.url ?? "/").replace(/^\//u, "") || "harness.html";
   if (!["harness.html", "harness.js", "harness.css"].includes(file)) {
@@ -46,8 +46,8 @@ try {
   }
   browser = await chromium.launch({
     headless: true,
-    ...(process.env.BB_CHROME_EXECUTABLE_PATH
-      ? { executablePath: process.env.BB_CHROME_EXECUTABLE_PATH }
+    ...(process.env.RIFT_CHROME_EXECUTABLE_PATH
+      ? { executablePath: process.env.RIFT_CHROME_EXECUTABLE_PATH }
       : {}),
   });
   const page = await browser.newPage({ viewport: { width: 900, height: 600 } });
@@ -63,8 +63,8 @@ try {
   await page.setViewportSize({ width: 480, height: 600 });
   await page.waitForTimeout(100);
   const narrow = await page.evaluate(() => {
-    const markers = [...document.querySelectorAll(".bb-comments-marker")];
-    const popover = document.querySelector(".bb-comments-thread");
+    const markers = [...document.querySelectorAll(".rift-comments-marker")];
+    const popover = document.querySelector(".rift-comments-thread");
     const popoverRect = popover?.getBoundingClientRect();
     return {
       markerCount: markers.length,
@@ -77,28 +77,28 @@ try {
     );
   }
   await page.setViewportSize({ width: 900, height: 600 });
-  const restoredMarker = page.locator(".bb-comments-marker").first();
+  const restoredMarker = page.locator(".rift-comments-marker").first();
   await restoredMarker.waitFor({ state: "visible" });
   await restoredMarker.click();
   await page.waitForFunction(
     () =>
-      document.querySelector(".bb-comments-cluster") !== null ||
-      document.querySelector(".bb-comments-thread") !== null,
+      document.querySelector(".rift-comments-cluster") !== null ||
+      document.querySelector(".rift-comments-thread") !== null,
   );
   const restoredCluster = page.locator(
-    '.bb-comments-cluster[aria-label="Comment threads"]',
+    '.rift-comments-cluster[aria-label="Comment threads"]',
   );
   if (await restoredCluster.isVisible()) {
-    await restoredCluster.locator(".bb-comments-cluster-row").first().click();
+    await restoredCluster.locator(".rift-comments-cluster-row").first().click();
   }
-  await page.locator(".bb-comments-thread").waitFor({ state: "visible" });
+  await page.locator(".rift-comments-thread").waitFor({ state: "visible" });
   await page.waitForFunction(() => {
-    const scroller = document.querySelector(".bb-comments-thread-comments");
+    const scroller = document.querySelector(".rift-comments-thread-comments");
     if (!(scroller instanceof HTMLElement)) return false;
     const viewport = scroller.getBoundingClientRect();
     return [
       ...scroller.querySelectorAll(
-        '.bb-comments-actions-menu > button[aria-label="Comment actions"]',
+        '.rift-comments-actions-menu > button[aria-label="Comment actions"]',
       ),
     ].some((candidate) => {
       const rect = candidate.getBoundingClientRect();
@@ -106,12 +106,12 @@ try {
     });
   });
   const openedActions = await page.evaluate(() => {
-    const scroller = document.querySelector(".bb-comments-thread-comments");
+    const scroller = document.querySelector(".rift-comments-thread-comments");
     if (!(scroller instanceof HTMLElement)) return false;
     const viewport = scroller.getBoundingClientRect();
     const trigger = [
       ...scroller.querySelectorAll(
-        '.bb-comments-actions-menu > button[aria-label="Comment actions"]',
+        '.rift-comments-actions-menu > button[aria-label="Comment actions"]',
       ),
     ].find((candidate) => {
       const rect = candidate.getBoundingClientRect();
@@ -124,9 +124,9 @@ try {
   if (!openedActions) {
     throw new Error("Responsive re-entry did not restore a visible comment action");
   }
-  await page.locator(".bb-comments-actions-popover").waitFor({ state: "visible" });
+  await page.locator(".rift-comments-actions-popover").waitFor({ state: "visible" });
   const startedEdit = await page.evaluate(() => {
-    const edit = [...document.querySelectorAll(".bb-comments-actions-popover button")]
+    const edit = [...document.querySelectorAll(".rift-comments-actions-popover button")]
       .find((button) => button.textContent?.trim() === "Edit");
     if (!(edit instanceof HTMLButtonElement)) return false;
     edit.click();
@@ -141,7 +141,7 @@ try {
     .locator('[data-comment-editing="true"] textarea')
     .evaluate((textarea) => {
       const style = getComputedStyle(textarea);
-      const composer = textarea.closest(".bb-comments-mention-input");
+      const composer = textarea.closest(".rift-comments-mention-input");
       const composerStyle =
         composer instanceof HTMLElement ? getComputedStyle(composer) : null;
       return {
@@ -157,7 +157,7 @@ try {
     focusedEditInput.composerBoxShadow === "none"
   ) {
     throw new Error(
-      `Edit input did not use the BB focus ring: ${JSON.stringify(focusedEditInput)}`,
+      `Edit input did not use the Rift focus ring: ${JSON.stringify(focusedEditInput)}`,
     );
   }
   await page.screenshot({ path: screenshot });

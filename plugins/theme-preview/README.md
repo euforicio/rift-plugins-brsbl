@@ -1,24 +1,24 @@
 # Theme Preview
 
-A skeleton of the bb app in every configuration — sidebar, splits, side panels,
+A skeleton of the rift app in every configuration — sidebar, splits, side panels,
 overlays, real thread timelines and controls — drawn from the active theme's
 tokens, so a palette can be judged on app-shaped surfaces before it ships.
 
-![Theme Preview in bb](docs/screenshot.png)
+![Theme Preview in rift](docs/screenshot.png)
 
 ## Install
 
-Requires bb 0.38 or newer.
+Requires rift 0.38 or newer.
 
 ```sh
-bb plugin install git:https://github.com/brsbl/bb-plugins.git@plugin/theme-preview --yes
+rift plugin install "path:$PWD/plugins/theme-preview" --yes
 ```
 
 ## Use
 
 Open **Theme Preview** from the sidebar.
 
-- **Main stage:** an app mock at bb's real sizes — thread, timeline TOC, side
+- **Main stage:** an app mock at rift's real sizes — thread, timeline TOC, side
   panel, and the overlays that sit on top of them. Switch views with the compact
   control in the top bar: Thread · New thread · Split · Settings.
 - **Right:** the live theme picker and surface values. Picking a theme applies
@@ -30,7 +30,7 @@ Open **Theme Preview** from the sidebar.
 
 The picker is one control for palette and mode: each row previews the theme it
 names with its own colours and typefaces, and picking a row applies both at
-once. It lists everything you have — custom themes, plugin themes, and bb's
+once. It lists everything you have — custom themes, plugin themes, and rift's
 bundled palettes.
 
 ### Iterating on a theme with an agent
@@ -39,21 +39,21 @@ The panel is built for a split: your agent in one pane, this preview in the
 other.
 
 1. Open a thread and ask an agent to edit your theme's CSS
-   (`<data-dir>/theme/<name>/theme.css`, or a plugin theme's `bb.themes[].css`).
+   (`<data-dir>/theme/<name>/theme.css`, or a plugin theme's `rift.themes[].css`).
 2. Open Theme Preview in a split beside it (⌘⇧O on the sidebar row).
 3. Keep prompting. The plugin's background watcher detects custom-theme edits
    and tells every open preview to refresh immediately. The panel also checks
    the active custom or plugin theme's file as a fallback; when it changes, the
    plugin re-applies the palette. The mock, token values and ratios update on
-   their own — and so does the rest of bb, since re-applying pushes the palette
+   their own — and so does the rest of rift, since re-applying pushes the palette
    to every open window.
 
 No copy-paste, no restart, no reload: the agent writes the file and you watch
 the surfaces change.
 
-The plugin ships a skill, **bb-theme-authoring**, that is injected into agent
+The plugin ships a skill, **rift-theme-authoring**, that is injected into agent
 threads while the plugin is installed. It tells the agent where themes live,
-the file shape and token vocabulary, how bb uses each token, how to apply and
+the file shape and token vocabulary, how rift uses each token, how to apply and
 verify a theme, and that this panel live-reloads — so "make me a theme" works
 without the user explaining any of it.
 
@@ -62,7 +62,7 @@ without the user explaining any of it.
 ```sh
 npm install
 npm run check   # typecheck, build, test
-bb plugin install "path:$PWD" --yes
+rift plugin install "path:$PWD" --yes
 ```
 
 The preview reads CSS custom properties directly (`var(--sidebar)`,

@@ -7,7 +7,7 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
-import type { PluginComposerScope } from "@get-bb/plugin-sdk";
+import type { PluginComposerScope } from "@riftlabs/plugin-sdk";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { StrictMode, type ComponentType } from "react";
@@ -18,7 +18,7 @@ import {
   renderSlot,
   type PluginRpcTestHandlers,
   type RenderedSlot,
-} from "@get-bb/plugin-sdk/testing/app";
+} from "@riftlabs/plugin-sdk/testing/app";
 
 import type { rpcContract } from "./server";
 import {
@@ -180,8 +180,9 @@ describe("Improve Prompt composer action", () => {
     const builtJs = await readFile(resolve("dist/app.js"), "utf8");
     expect(builtJs).not.toContain("data-vaul-drawer");
     const builtCss = await readFile(resolve("dist/app.css"), "utf8");
-    expect(builtCss).toContain(".bb-improve-prompt-shimmer");
-    expect(builtCss).toContain('@scope ([data-bb-plugin="prompt-shaper"]');
+    expect(builtCss).toContain(".rift-improve-prompt-shimmer");
+    expect(builtCss).toContain(':where([data-rift-plugin=prompt-shaper]');
+    expect(builtCss).not.toContain("@scope");
     expect((improveButton as HTMLButtonElement).disabled).toBe(false);
     expect(fireEvent.mouseDown(improveButton)).toBe(false);
     fireEvent.click(improveButton);
@@ -338,7 +339,7 @@ describe("Improve Prompt composer action", () => {
       expect(getCalls).toBe(1);
       expect(window.sessionStorage.length).toBe(1);
       expect(actionSlot.inspection.composer.textEffect).toEqual({
-        className: "bb-improve-prompt-shimmer",
+        className: "rift-improve-prompt-shimmer",
       });
       expect(actionSlot.inspection.composer.inputLocked).toBe(true);
       expect(
@@ -494,7 +495,7 @@ describe("Improve Prompt composer action", () => {
       expect(cancelEnhancement).toHaveBeenCalledWith({ requestId: REQUEST_ID });
       expect(window.sessionStorage.length).toBe(1);
       expect(actionSlot.inspection.composer.textEffect).toEqual({
-        className: "bb-improve-prompt-shimmer",
+        className: "rift-improve-prompt-shimmer",
       });
       expect(toast.error).toHaveBeenCalledWith(
         "cancel transport rejected during startup",
@@ -576,7 +577,7 @@ describe("Improve Prompt composer action", () => {
       fireEvent.click(screen.getByRole("button", { name: "Improve prompt" }));
       await waitFor(() => {
         expect(actionSlot.inspection.composer.textEffect).toEqual({
-          className: "bb-improve-prompt-shimmer",
+          className: "rift-improve-prompt-shimmer",
         });
         expect(window.sessionStorage.length).toBe(1);
       });
@@ -652,7 +653,7 @@ describe("Improve Prompt composer action", () => {
     fireEvent.click(screen.getByRole("button", { name: "Improve prompt" }));
     await waitFor(() => {
       expect(actionSlot.inspection.composer.textEffect).toEqual({
-        className: "bb-improve-prompt-shimmer",
+        className: "rift-improve-prompt-shimmer",
       });
       expect(window.sessionStorage.length).toBe(1);
     });
@@ -729,7 +730,7 @@ describe("Improve Prompt composer action", () => {
     fireEvent.click(screen.getByRole("button", { name: "Improve prompt" }));
     await waitFor(() => {
       expect(actionSlot.inspection.composer.textEffect).toEqual({
-        className: "bb-improve-prompt-shimmer",
+        className: "rift-improve-prompt-shimmer",
       });
     });
 
@@ -821,7 +822,7 @@ describe("Improve Prompt composer action", () => {
     fireEvent.click(screen.getByRole("button", { name: "Improve prompt" }));
     await waitFor(() => {
       expect(actionSlot.inspection.composer.textEffect).toEqual({
-        className: "bb-improve-prompt-shimmer",
+        className: "rift-improve-prompt-shimmer",
       });
       expect(window.sessionStorage.length).toBe(1);
     });
@@ -850,7 +851,7 @@ describe("Improve Prompt composer action", () => {
         }),
       ).not.toBeNull();
       expect(actionSlot.inspection.composer.textEffect).toEqual({
-        className: "bb-improve-prompt-shimmer",
+        className: "rift-improve-prompt-shimmer",
       });
     });
     expect(cancelEnhancement).not.toHaveBeenCalled();
@@ -1148,7 +1149,7 @@ describe("Improve Prompt composer action", () => {
       expect(getCalls).toBe(2);
       expect(window.sessionStorage.length).toBe(1);
       expect(actionSlot.inspection.composer.textEffect).toEqual({
-        className: "bb-improve-prompt-shimmer",
+        className: "rift-improve-prompt-shimmer",
       });
       expect(
         screen.getByRole("button", { name: "Cancel prompt improvement" }),
@@ -1392,7 +1393,7 @@ describe("Improve Prompt composer action", () => {
     fireEvent.click(screen.getByRole("button", { name: "Improve prompt" }));
     await waitFor(() => {
       expect(actionSlot.inspection.composer.textEffect).toEqual({
-        className: "bb-improve-prompt-shimmer",
+        className: "rift-improve-prompt-shimmer",
       });
     });
 
@@ -1423,7 +1424,7 @@ describe("Improve Prompt composer action", () => {
     fireEvent.click(screen.getByRole("button", { name: "Improve prompt" }));
     await waitFor(() => {
       expect(actionSlot.inspection.composer.textEffect).toEqual({
-        className: "bb-improve-prompt-shimmer",
+        className: "rift-improve-prompt-shimmer",
       });
     });
 
@@ -1449,7 +1450,7 @@ describe("Improve Prompt composer action", () => {
       expect(toast.error).toHaveBeenCalledWith("agent unavailable");
     });
     expect(actionSlot.inspection.composer.textEffectCalls).toContainEqual({
-      className: "bb-improve-prompt-shimmer",
+      className: "rift-improve-prompt-shimmer",
     });
     expect(screen.queryByRole("button", { name: "Undo prompt" })).toBeNull();
   });
@@ -1490,7 +1491,7 @@ describe("Improve Prompt composer action", () => {
     fireEvent.click(screen.getByRole("button", { name: "Improve prompt" }));
     await waitFor(() => {
       expect(actionSlot.inspection.composer.textEffect).toEqual({
-        className: "bb-improve-prompt-shimmer",
+        className: "rift-improve-prompt-shimmer",
       });
       expect(window.sessionStorage.length).toBe(1);
     });
@@ -1736,7 +1737,7 @@ describe("Improve Prompt composer action", () => {
         screen.getByRole("button", { name: "Cancel prompt improvement" }),
       ).not.toBeNull();
       expect(actionSlot.inspection.composer.textEffect).toEqual({
-        className: "bb-improve-prompt-shimmer",
+        className: "rift-improve-prompt-shimmer",
       });
     });
 
@@ -1789,7 +1790,7 @@ describe("Improve Prompt composer action", () => {
         screen.getByRole("button", { name: "Cancel prompt improvement" }),
       ).not.toBeNull();
       expect(actionSlot.inspection.composer.textEffect).toEqual({
-        className: "bb-improve-prompt-shimmer",
+        className: "rift-improve-prompt-shimmer",
       });
       expect(window.sessionStorage.length).toBe(1);
     });

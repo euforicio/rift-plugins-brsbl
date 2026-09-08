@@ -1,11 +1,11 @@
 ---
-name: bb-theme-authoring
-description: Create or edit a bb theme (the app's colour palette) as a custom CSS theme and verify it live in the Theme Preview panel. Use whenever the user asks for a new bb theme, a palette change, a light/dark variant, or wants to iterate on how bb looks.
+name: rift-theme-authoring
+description: Create or edit a rift theme (the app's colour palette) as a custom CSS theme and verify it live in the Theme Preview panel. Use whenever the user asks for a new rift theme, a palette change, a light/dark variant, or wants to iterate on how rift looks.
 ---
 
-# Authoring a bb theme
+# Authoring a rift theme
 
-A bb theme is one CSS file that overrides the app's CSS custom properties. bb
+A rift theme is one CSS file that overrides the app's CSS custom properties. rift
 discovers custom themes on disk and the **Theme Preview** panel shows every
 token, its contrast, and an app mock that repaints as you edit. Work in a
 split: your thread on one side, Theme Preview on the other. Nothing needs a
@@ -14,7 +14,7 @@ restart.
 ## Where themes live
 
 ```sh
-bb theme dir          # the custom-theme directory, e.g. ~/.bb/theme
+rift theme dir          # the custom-theme directory, e.g. ~/.rift/theme
 ```
 
 One directory per theme, one file inside it:
@@ -26,7 +26,7 @@ One directory per theme, one file inside it:
 `<name>` is the theme id: lowercase, letters, digits and dashes, a single path
 segment. Create the directory and the file and it is listed immediately — the
 Theme Preview dropdown picks it up within a couple of seconds while the panel
-is open, and `bb theme list` shows it at once.
+is open, and `rift theme list` shows it at once.
 
 ## File shape
 
@@ -50,7 +50,7 @@ Every declaration is a `--token: value;` custom property.
 }
 ```
 
-You only need to declare what you change; everything else derives from bb's
+You only need to declare what you change; everything else derives from rift's
 base theme. The anchors that drive the most are `--canvas`, `--ink`,
 `--primary` and `--sidebar`.
 
@@ -65,10 +65,10 @@ base theme. The anchors that drive the most are `--canvas`, `--ink`,
 | Lines | `--border` `--border-hairline` `--border-seam` `--sidebar-border` `--input` `--ring` |
 | Type | `--font-sans` `--font-mono` (declare once in `:root`) |
 
-How bb uses them (from bb's own components, so you can predict the result):
+How rift uses them (from rift's own components, so you can predict the result):
 sidebar rows hover with `--sidebar-accent`, the open thread's row is
 `--state-active`, the default button is `--foreground` on `--background`
-(bb has no primary-filled button; `--primary` is links, focus and accents),
+(rift has no primary-filled button; `--primary` is links, focus and accents),
 the composer sits on the canvas with a 1px `--border`, code blocks and message
 bubbles are a faint recessed wash with `--border-seam`.
 
@@ -79,8 +79,8 @@ two top-level blocks so tooling can read them.
 ## Apply and iterate
 
 ```sh
-bb theme set <name>   # activate it app-wide
-bb theme show         # what is active now
+rift theme set <name>   # activate it app-wide
+rift theme show         # what is active now
 ```
 
 Or pick it from the Theme Preview dropdown, which switches palette and
@@ -108,10 +108,10 @@ Keep dark-mode text below ~12:1 on near-black surfaces; higher blooms on OLED.
 A plugin can contribute themes via its manifest instead of the theme dir:
 
 ```json
-"bb": { "themes": [{ "id": "mine", "name": "Mine", "css": "./themes/mine.css" }] }
+"rift": { "themes": [{ "id": "mine", "name": "Mine", "css": "./themes/mine.css" }] }
 ```
 
-bb lists it as `plugin:<pluginId>:mine`. Theme Preview resolves the CSS through
+rift lists it as `plugin:<pluginId>:mine`. Theme Preview resolves the CSS through
 the manifest, so chips and live reload work the same way. Install with
-`bb plugin install path:<dir> --yes`, reload with `bb plugin reload <pluginId>`
+`rift plugin install path:<dir> --yes`, reload with `rift plugin reload <pluginId>`
 after CSS edits.

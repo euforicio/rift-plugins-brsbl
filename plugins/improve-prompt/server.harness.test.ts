@@ -1,15 +1,15 @@
-import { createFakePluginHost } from "@get-bb/plugin-sdk/testing";
+import { createFakePluginHost } from "@riftlabs/plugin-sdk/testing";
 import { describe, expect, it } from "vitest";
 
 import plugin from "./server";
 
 describe("Improve Prompt plugin contract", () => {
   it("registers enhancement RPC and completion events", async () => {
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "prompt-shaper",
     });
 
-    await plugin(bb);
+    await plugin(rift);
 
     expect(harness.inspection.registrations.rpcMethods).toEqual([
       "startEnhancement",

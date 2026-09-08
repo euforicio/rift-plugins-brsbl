@@ -8,11 +8,11 @@ import {
 } from "react";
 import {
   definePluginApp,
-  useBbNavigate,
+  useRiftNavigate,
   useRealtime,
   useRealtimeConnectionState,
   useRpc,
-} from "@get-bb/plugin-sdk/app";
+} from "@riftlabs/plugin-sdk/app";
 
 import {
   detailRowEndIndex,
@@ -453,7 +453,7 @@ function RuleDetail({
 
 function DoctrineLibrary({ subPath }: { subPath: string }) {
   const rpc = useRpc<typeof rpcContract>();
-  const navigate = useBbNavigate();
+  const navigate = useRiftNavigate();
   const connectionState = useRealtimeConnectionState();
   const previousConnectionState = useRef(connectionState);
   const hasConnected = useRef(connectionState !== "connecting");

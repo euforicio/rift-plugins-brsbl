@@ -1,5 +1,5 @@
-import type { BbPluginApi } from "@get-bb/plugin-sdk";
+import type { RiftPluginApi } from "@riftlabs/plugin-sdk";
 
-export default function plugin(bb: BbPluginApi): void {
-  bb.log.info("Endless loaded");
+export default function plugin(rift: RiftPluginApi): void {
+  rift.log.info("Endless loaded");
 }

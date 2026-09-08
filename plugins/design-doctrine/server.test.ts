@@ -224,7 +224,7 @@ describe("design doctrine library", () => {
     expect(rule?.confidence).toBe("medium");
   });
 
-  it("keeps published evidence free of private bb locators", async () => {
+  it("keeps published evidence free of private rift locators", async () => {
     const library = await loadDoctrine(process.cwd());
     const evidence = library.rules.flatMap((rule) => rule.evidence).join("\n");
 

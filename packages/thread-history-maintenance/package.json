@@ -1,5 +1,5 @@
 {
-  "name": "@brsbl/bb-thread-history-maintenance",
+  "name": "@brsbl/rift-thread-history-maintenance",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -12,7 +12,7 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@get-bb/plugin-sdk": "file:../../tooling/vendor/get-bb-plugin-sdk-0.4.8.tgz",
+    "@riftlabs/plugin-sdk": "0.4.48",
     "@types/better-sqlite3": "^7.6.12",
     "@types/node": "^22.0.0",
     "better-sqlite3": "^12.0.0",

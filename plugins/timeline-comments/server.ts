@@ -3,8 +3,8 @@ import { Buffer } from "node:buffer";
 import {
   defineRpcContract,
   PLUGIN_CLI_OUTPUT_MAX_BYTES,
-  type BbPluginApi,
-} from "@get-bb/plugin-sdk";
+  type RiftPluginApi,
+} from "@riftlabs/plugin-sdk";
 import { z } from "zod";
 import { COMMENT_BODY_CODE_POINT_LIMIT } from "./comment-body.js";
 
@@ -246,7 +246,7 @@ export const timelineCommentsRpcContract = defineRpcContract({
   },
 });
 
-type Database = ReturnType<BbPluginApi["storage"]["database"]>;
+type Database = ReturnType<RiftPluginApi["storage"]["database"]>;
 
 const threadRowSchema = z.object({
   id: z.string(),
@@ -653,7 +653,7 @@ function readOpenComments(
   for (const rawRow of rows) {
     const row = handoffRowSchema.parse(rawRow);
     if (currentThreadId === null) {
-      addSection(`# Open timeline comments for BB thread ${bbThreadId}`);
+      addSection(`# Open timeline comments for Rift thread ${bbThreadId}`);
     }
     if (row.commentThreadId !== currentThreadId) {
       currentThreadId = row.commentThreadId;
@@ -665,7 +665,7 @@ function readOpenComments(
   }
 
   if (currentThreadId === null) {
-    const context = `No open comments remain for BB thread ${bbThreadId}.`;
+    const context = `No open comments remain for Rift thread ${bbThreadId}.`;
     return {
       context: includeContext ? context : "",
       threadCount: 0,
@@ -875,13 +875,13 @@ function renderCliPage<T>(input: {
   );
 }
 
-export default function timelineCommentsPlugin(bb: BbPluginApi): void {
-  const db = bb.storage.database();
+export default function timelineCommentsPlugin(rift: RiftPluginApi): void {
+  const db = rift.storage.database();
   db.pragma("foreign_keys = ON");
   if (db.pragma("foreign_keys", { simple: true }) !== 1) {
     throw new Error("Timeline comments requires SQLite foreign keys");
   }
-  bb.storage.migrate(db, [
+  rift.storage.migrate(db, [
     `CREATE TABLE comment_threads (
       id TEXT PRIMARY KEY,
       bb_thread_id TEXT NOT NULL,
@@ -914,7 +914,7 @@ export default function timelineCommentsPlugin(bb: BbPluginApi): void {
   ]);
 
   const publishChanged = (bbThreadId: string, commentThreadId: string) => {
-    bb.realtime.publish("comments-changed", {
+    rift.realtime.publish("comments-changed", {
       bbThreadId,
       commentThreadId,
     });
@@ -978,13 +978,13 @@ export default function timelineCommentsPlugin(bb: BbPluginApi): void {
     return result;
   };
 
-  bb.events.on("thread.deleted", ({ thread }) => {
+  rift.events.on("thread.deleted", ({ thread }) => {
     db.prepare("DELETE FROM comment_threads WHERE bb_thread_id = ?").run(
       thread.id,
     );
   });
 
-  bb.rpc.register(timelineCommentsRpcContract, {
+  rift.rpc.register(timelineCommentsRpcContract, {
     listOpenAnchors(input) {
       return listOpenAnchors(db, input);
     },
@@ -1004,7 +1004,7 @@ export default function timelineCommentsPlugin(bb: BbPluginApi): void {
     },
     createThread(input) {
       if (input.message.threadId !== input.bbThreadId) {
-        throw new Error("Message does not belong to the requested BB thread");
+        throw new Error("Message does not belong to the requested Rift thread");
       }
       const now = Date.now();
       const commentThreadId = randomId();
@@ -1137,7 +1137,7 @@ export default function timelineCommentsPlugin(bb: BbPluginApi): void {
     },
   });
 
-  bb.ui.registerMentionProvider({
+  rift.ui.registerMentionProvider({
     id: "thread-comments",
     label: "Thread comments",
     triggers: ["@"],
@@ -1160,39 +1160,39 @@ export default function timelineCommentsPlugin(bb: BbPluginApi): void {
     },
   });
 
-  bb.cli.register({
+  rift.cli.register({
     name: "comments",
-    summary: "Read and address timeline comments attached to BB threads",
+    summary: "Read and address timeline comments attached to Rift threads",
     commands: [
       {
         name: "list",
         summary: "List comment threads",
         usage:
-          "bb comments list [--thread <id>] [--state open|resolved|all] [--cursor <cursor>] [--limit 1-50] [--json]",
+          "rift comments list [--thread <id>] [--state open|resolved|all] [--cursor <cursor>] [--limit 1-50] [--json]",
       },
       {
         name: "get",
         summary: "Read one comment thread",
         usage:
-          "bb comments get <comment-thread-id> [--thread <id>] [--cursor <cursor>] [--limit 1-100] [--json]",
+          "rift comments get <comment-thread-id> [--thread <id>] [--cursor <cursor>] [--limit 1-100] [--json]",
       },
       {
         name: "reply",
         summary: "Reply to an open comment thread",
         usage:
-          "bb comments reply <comment-thread-id> --body <text> [--thread <id>] [--json]",
+          "rift comments reply <comment-thread-id> --body <text> [--thread <id>] [--json]",
       },
       {
         name: "resolve",
         summary: "Resolve a comment thread",
         usage:
-          "bb comments resolve <comment-thread-id> [--thread <id>] [--json]",
+          "rift comments resolve <comment-thread-id> [--thread <id>] [--json]",
       },
       {
         name: "reopen",
         summary: "Reopen a resolved comment thread",
         usage:
-          "bb comments reopen <comment-thread-id> [--thread <id>] [--json]",
+          "rift comments reopen <comment-thread-id> [--thread <id>] [--json]",
       },
     ],
     run(argv, context) {
@@ -1202,7 +1202,7 @@ export default function timelineCommentsPlugin(bb: BbPluginApi): void {
         if (bbThreadId === undefined) {
           return {
             exitCode: 2,
-            stderr: "A BB thread context or --thread <id> is required.\n",
+            stderr: "A Rift thread context or --thread <id> is required.\n",
           };
         }
         if (
@@ -1264,7 +1264,7 @@ export default function timelineCommentsPlugin(bb: BbPluginApi): void {
             return {
               exitCode: 2,
               stderr:
-                "Usage: bb comments get <comment-thread-id> [--thread <id>] [--cursor <cursor>] [--limit 1-100] [--json]\n",
+                "Usage: rift comments get <comment-thread-id> [--thread <id>] [--cursor <cursor>] [--limit 1-100] [--json]\n",
             };
           }
           const detail = getCommentThread(db, {

@@ -1,7 +1,7 @@
 import { hslToHex, type MeshGradientSpec, type MeshPoint } from "./gradient.js";
 
 /**
- * bb palettes derive every neutral surface from two anchors (--canvas/--ink)
+ * rift palettes derive every neutral surface from two anchors (--canvas/--ink)
  * plus an accent, so a gradient only has to supply a hue family and a few
  * semantic colors. Everything else follows from the host's theme.css.
  */
@@ -46,7 +46,7 @@ export function toThemeCss(spec: MeshGradientSpec, options: ThemeOptions): strin
   const darkPrimary = hslToHex(accentHue, 62, 68);
 
   return `/* ${options.name} — generated from a mesh gradient (seed ${spec.seed}).
-   Only the anchors, accent, and semantics are set; bb derives the rest. */
+   Only the anchors, accent, and semantics are set; rift derives the rest. */
 :root, .light {
   --canvas: ${lightCanvas};
   --ink: ${lightInk};

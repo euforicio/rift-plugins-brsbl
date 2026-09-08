@@ -47,7 +47,7 @@ describe("provider-local item identities", () => {
   it("round-trips all three Community identity fields without a provider prefix", () => {
     const identity = {
       pluginId: "plug:in%一",
-      marketplace: "bb-community",
+      marketplace: "rift-community",
       entryId: "entry:50%二",
     };
     const encoded = encodeCommunityItemId(identity);
@@ -72,7 +72,7 @@ describe("provider-local item identities", () => {
     "one:two:three:four",
     "one::three",
     "one:%E0%A4%A:three",
-    "one:bb-community:%2f",
+    "one:rift-community:%2f",
   ])("rejects malformed Community item id %j", (itemId) => {
     expect(() => decodeCommunityItemId(itemId)).toThrow("Invalid");
   });
@@ -96,7 +96,7 @@ describe("agent-visible plugin contexts", () => {
       buildCommunityPluginContext({
         name: "Noema",
         pluginId: "noema",
-        marketplace: "bb-community",
+        marketplace: "rift-community",
         entryId: "noema",
       }),
     ).toBe(
@@ -105,9 +105,9 @@ describe("agent-visible plugin contexts", () => {
         "Availability: not installed",
         'Name: "Noema"',
         'Plugin id: "noema"',
-        'Marketplace: "bb-community"',
+        'Marketplace: "rift-community"',
         'Catalog entry: "noema"',
-        "None of this plugin's capabilities are available. Do not claim or attempt to use them. Explain that the user must install it through bb's Plugins flow before use. The mention itself is not installation consent.",
+        "None of this plugin's capabilities are available. Do not claim or attempt to use them. Explain that the user must install it through rift's Plugins flow before use. The mention itself is not installation consent.",
         "This mention is a peer of any other plugin mentions in the message and does not establish execution order.",
       ].join("\n"),
     );

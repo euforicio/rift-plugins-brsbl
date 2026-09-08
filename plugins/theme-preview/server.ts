@@ -1,7 +1,7 @@
 import { watch, type FSWatcher } from "node:fs";
 import { readFile, stat } from "node:fs/promises";
 import { resolve } from "node:path";
-import { defineRpcContract, type BbPluginApi } from "@get-bb/plugin-sdk";
+import { defineRpcContract, type RiftPluginApi } from "@riftlabs/plugin-sdk";
 import { z } from "zod";
 
 const swatchSchema = z
@@ -159,8 +159,8 @@ async function readCustomThemeCss(directory: string, id: string, signal?: AbortS
 }
 
 /**
- * bb's bundled palettes, with swatches extracted from bb's own source
- * (apps/app/src/components/ui/theme.css and lib/themes/*.ts at bb@c942421a4):
+ * rift's bundled palettes, with swatches extracted from rift's own source
+ * (apps/app/src/components/ui/theme.css and lib/themes/*.ts at rift@c942421a4):
  * each builtin's overrides overlaid on the base theme, var() references
  * inlined. color-mix() strings are kept verbatim — the browser resolves them.
  */
@@ -347,10 +347,10 @@ export async function buildCatalog(
 
 /**
  * A plugin theme id is `plugin:<pluginId>:<themeId>`; its CSS lives in the
- * plugin's install dir at the path the manifest's `bb.themes[]` entry names.
+ * plugin's install dir at the path the manifest's `rift.themes[]` entry names.
  */
 async function readPluginThemeCss(
-  bb: BbPluginApi,
+  rift: RiftPluginApi,
   themeId: string,
   rootDirs: Map<string, string>,
   signal?: AbortSignal,
@@ -362,14 +362,14 @@ async function readPluginThemeCss(
   if (!rootDir) return null;
   try {
     const manifest = JSON.parse(await readFile(resolve(rootDir, "package.json"), { encoding: "utf8", signal })) as {
-      bb?: { themes?: Array<{ id?: string; css?: string }> };
+      rift?: { themes?: Array<{ id?: string; css?: string }> };
     };
-    const entry = manifest.bb?.themes?.find((theme) => theme.id === localId);
+    const entry = manifest.rift?.themes?.find((theme) => theme.id === localId);
     if (!entry?.css) return null;
     return await readFile(resolve(rootDir, entry.css), { encoding: "utf8", signal });
   } catch (error) {
     signal?.throwIfAborted();
-    bb.log.warn(`theme-preview: could not read ${themeId}: ${String(error)}`);
+    rift.log.warn(`theme-preview: could not read ${themeId}: ${String(error)}`);
     return null;
   }
 }
@@ -386,9 +386,9 @@ async function activeThemePath(
     if (!rootDir) return null;
     try {
       const manifest = JSON.parse(await readFile(resolve(rootDir, "package.json"), { encoding: "utf8", signal })) as {
-        bb?: { themes?: Array<{ id?: string; css?: string }> };
+        rift?: { themes?: Array<{ id?: string; css?: string }> };
       };
-      const entry = manifest.bb?.themes?.find((theme) => theme.id === pluginMatch[2]);
+      const entry = manifest.rift?.themes?.find((theme) => theme.id === pluginMatch[2]);
       return entry?.css ? resolve(rootDir, entry.css) : null;
     } catch {
       signal?.throwIfAborted();
@@ -415,7 +415,7 @@ async function activeThemePath(
  * newer picker action. File stamps are keyed by path: changing the active
  * theme is not itself mistaken for editing the previous theme's stylesheet.
  */
-export function createCatalogLoader(bb: BbPluginApi) {
+export function createCatalogLoader(rift: RiftPluginApi) {
   const slowWarningMs = 5_000;
   const catalogOperationTimeoutMs = 15_000;
   const stamps = new Map<string, string>();
@@ -430,7 +430,7 @@ export function createCatalogLoader(bb: BbPluginApi) {
 
   const warnIfSlow = async <T>(label: string, operation: () => Promise<T>): Promise<T> => {
     const warning = setTimeout(() => {
-      bb.log.warn(`theme-preview: ${label} still pending after ${slowWarningMs}ms`);
+      rift.log.warn(`theme-preview: ${label} still pending after ${slowWarningMs}ms`);
     }, slowWarningMs);
     try {
       return await operation();
@@ -445,7 +445,7 @@ export function createCatalogLoader(bb: BbPluginApi) {
   ): Promise<T> => {
     const controller = new AbortController();
     const warning = setTimeout(() => {
-      bb.log.warn(`theme-preview: ${label} still pending after ${slowWarningMs}ms`);
+      rift.log.warn(`theme-preview: ${label} still pending after ${slowWarningMs}ms`);
     }, slowWarningMs);
     let timeout: ReturnType<typeof setTimeout> | undefined;
     const deadline = new Promise<never>((_resolve, reject) => {
@@ -464,25 +464,25 @@ export function createCatalogLoader(bb: BbPluginApi) {
   };
 
   const loadCatalog = async (selectionAtStart: number) => {
-    const raw = (await observeCatalogOperation("theme catalog", (signal) => bb.sdk.theme.catalog({ signal }))) as {
+    const raw = (await observeCatalogOperation("theme catalog", (signal) => rift.sdk.theme.catalog({ signal }))) as {
       dir?: unknown;
     };
     const dir = typeof raw?.dir === "string" ? raw.dir : null;
     const rootDirs = new Map<string, string>();
     try {
-      const listed = (await observeCatalogOperation("plugin list", (signal) => bb.sdk.plugins.list({ signal }))) as {
+      const listed = (await observeCatalogOperation("plugin list", (signal) => rift.sdk.plugins.list({ signal }))) as {
         plugins?: Array<{ id?: string; rootDir?: string }>;
       };
       for (const entry of listed.plugins ?? []) {
         if (typeof entry.id === "string" && typeof entry.rootDir === "string") rootDirs.set(entry.id, entry.rootDir);
       }
     } catch (error) {
-      bb.log.warn(`theme-preview: plugin list unavailable: ${String(error)}`);
+      rift.log.warn(`theme-preview: plugin list unavailable: ${String(error)}`);
     }
     const built = await observeCatalogOperation("catalog enrichment", (signal) =>
       buildCatalog(raw, async (id) =>
         id.startsWith("plugin:")
-          ? readPluginThemeCss(bb, id, rootDirs, signal)
+          ? readPluginThemeCss(rift, id, rootDirs, signal)
           : dir
             ? readCustomThemeCss(dir, id, signal)
             : null,
@@ -505,19 +505,19 @@ export function createCatalogLoader(bb: BbPluginApi) {
           stamps.set(path, stamp);
           if (previousStamp !== undefined && stamp !== previousStamp) {
             // Everything above can await. Confirm that neither this panel nor
-            // another bb surface selected a different theme in the meantime.
+            // another rift surface selected a different theme in the meantime.
             const current = (await observeCatalogOperation("active theme confirmation", (signal) =>
-              bb.sdk.theme.catalog({ signal }),
+              rift.sdk.theme.catalog({ signal }),
             )) as { active?: { themeId?: unknown } };
             const currentThemeId = typeof current.active?.themeId === "string" ? current.active.themeId : null;
             if (selectionGeneration === selectionAtStart && currentThemeId === built.activeThemeId) {
               revision += 1;
-              await warnIfSlow(`theme re-apply (${built.activeThemeId})`, () => bb.sdk.theme.set(built.activeThemeId!));
-              bb.log.info(`theme-preview: ${built.activeThemeId} changed on disk — re-applied (rev ${revision})`);
+              await warnIfSlow(`theme re-apply (${built.activeThemeId})`, () => rift.sdk.theme.set(built.activeThemeId!));
+              rift.log.info(`theme-preview: ${built.activeThemeId} changed on disk — re-applied (rev ${revision})`);
             }
           }
         } catch (error) {
-          bb.log.warn(`theme-preview: could not stat ${path}: ${String(error)}`);
+          rift.log.warn(`theme-preview: could not stat ${path}: ${String(error)}`);
         }
       }
     }
@@ -545,7 +545,7 @@ export function createCatalogLoader(bb: BbPluginApi) {
       // Theme application is global and not cancellable. Preserve click order
       // so a slower earlier apply cannot land after the user's newer choice.
       const apply = selectionQueue.then(async () => {
-        await warnIfSlow(`theme apply (${themeId})`, () => bb.sdk.theme.set(themeId));
+        await warnIfSlow(`theme apply (${themeId})`, () => rift.sdk.theme.set(themeId));
       });
       selectionQueue = apply.catch(() => undefined);
       await apply;
@@ -562,15 +562,15 @@ export function createCatalogLoader(bb: BbPluginApi) {
   };
 }
 
-export default async function plugin(bb: BbPluginApi) {
-  // Live-reload support. bb reads a custom theme's CSS from disk on demand and
+export default async function plugin(rift: RiftPluginApi) {
+  // Live-reload support. rift reads a custom theme's CSS from disk on demand and
   // never watches the file, so an agent editing `<dataDir>/theme/<id>/theme.css`
   // in one split leaves every open window painted with the previous version.
   // The background watcher below handles custom-theme edits immediately. Each
   // catalog poll also stats the active custom or plugin theme as a fallback;
-  // when it has changed we re-set the same palette, which makes bb re-read the
+  // when it has changed we re-set the same palette, which makes rift re-read the
   // CSS and push it to every client.
-  const catalogLoader = createCatalogLoader(bb);
+  const catalogLoader = createCatalogLoader(rift);
   const catalog = catalogLoader.catalog;
 
   // Instant path. Watch the custom-theme directory (new themes, edits) and push
@@ -578,12 +578,12 @@ export default async function plugin(bb: BbPluginApi) {
   // theme shows up in the dropdown and an edited one repaints within the
   // watcher's latency instead of the next poll. The poll stays as a slow
   // fallback for filesystems where watching is unreliable.
-  bb.background.service("theme-watch", {
+  rift.background.service("theme-watch", {
     async start(signal) {
       let watcher: FSWatcher | null = null;
       let timer: ReturnType<typeof setTimeout> | null = null;
       try {
-        const raw = (await bb.sdk.theme.catalog({ signal })) as { dir?: unknown };
+        const raw = (await rift.sdk.theme.catalog({ signal })) as { dir?: unknown };
         if (signal.aborted) return;
         const dir = typeof raw?.dir === "string" ? raw.dir : null;
         if (!dir) return;
@@ -592,18 +592,18 @@ export default async function plugin(bb: BbPluginApi) {
           timer = setTimeout(async () => {
             try {
               const next = await catalog(); // re-applies the active theme if its file changed
-              bb.realtime.publish("theme-preview:changed", { revision: next.revision, at: Date.now() });
+              rift.realtime.publish("theme-preview:changed", { revision: next.revision, at: Date.now() });
             } catch (error) {
-              bb.log.warn(`theme-preview: watch refresh failed: ${String(error)}`);
+              rift.log.warn(`theme-preview: watch refresh failed: ${String(error)}`);
             }
           }, 120);
         };
         try {
           watcher = watch(dir, { recursive: true }, onChange);
-          watcher.on("error", (error) => bb.log.warn(`theme-preview: watcher error: ${String(error)}`));
-          bb.log.info(`theme-preview: watching ${dir}`);
+          watcher.on("error", (error) => rift.log.warn(`theme-preview: watcher error: ${String(error)}`));
+          rift.log.info(`theme-preview: watching ${dir}`);
         } catch (error) {
-          bb.log.warn(`theme-preview: cannot watch ${dir}: ${String(error)}`);
+          rift.log.warn(`theme-preview: cannot watch ${dir}: ${String(error)}`);
           return;
         }
         await new Promise<void>((resolve) => {
@@ -619,7 +619,7 @@ export default async function plugin(bb: BbPluginApi) {
     },
   });
 
-  bb.rpc.register(rpcContract, {
+  rift.rpc.register(rpcContract, {
     async themeCatalog() {
       return catalog();
     },
@@ -628,5 +628,5 @@ export default async function plugin(bb: BbPluginApi) {
     },
   });
 
-  bb.log.info("theme-preview ready");
+  rift.log.info("theme-preview ready");
 }

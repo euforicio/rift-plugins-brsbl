@@ -1,13 +1,13 @@
 # Doctrine maintenance pass
 
-One bounded pass over new bb design feedback. `governance.md` covers the rules;
+One bounded pass over new rift design feedback. `governance.md` covers the rules;
 this is the procedure.
 
 Limits: change at most five rule files per run. Don't touch plugin code, the
 skill, or `governance.md`. Only the user's own messages are evidence — never
 agent output, including your own.
 
-Run from the worktree bb provisioned for this run. It is a fresh checkout of
+Run from the worktree rift provisioned for this run. It is a fresh checkout of
 the repository on its own branch, so rule edits cannot disturb any other
 checkout and nothing has to be configured by hand. Rules live at
 `plugins/design-doctrine/rules`; every path below is relative to the worktree
@@ -22,7 +22,7 @@ root.
    with the queue.
 
    ```bash
-   bb doctrine history scan \
+   rift doctrine history scan \
      --limit 400 \
      --max-bytes 1048576 \
      --max-message-bytes 8192
@@ -74,7 +74,7 @@ root.
 
    ```bash
    git diff --check -- plugins/design-doctrine/rules
-   bb doctrine validate "$(git rev-parse --show-toplevel)/plugins/design-doctrine"
+   rift doctrine validate "$(git rev-parse --show-toplevel)/plugins/design-doctrine"
    git add -- plugins/design-doctrine/rules
    git commit -m "doctrine: <what changed>" -- plugins/design-doctrine/rules
    ```
@@ -83,7 +83,7 @@ root.
    advance. Go to the release command in step 8, report the failure, and leave
    this thread open.
 
-   `bb doctrine validate <path>` parses every rule under that path and enforces
+   `rift doctrine validate <path>` parses every rule under that path and enforces
    the live schema, evidence counts, relations, and lifecycle constraints. Pass
    an absolute path to this worktree's own plugin directory: a relative path
    would be resolved somewhere else entirely, and could report a different
@@ -115,7 +115,7 @@ root.
    finish — a failed validate, commit, push, or pull request:
 
    ```bash
-   bb doctrine history release --lease-id <lease-id>
+   rift doctrine history release --lease-id <lease-id>
    ```
 
    Advancing is irreversible: it moves the checkpoints past feedback nobody
@@ -123,13 +123,13 @@ root.
    decided nothing in the batch was worth changing:
 
    ```bash
-   bb doctrine history advance --lease-id <lease-id>
+   rift doctrine history advance --lease-id <lease-id>
    ```
 
 9. Check whether an earlier batch is stuck before you finish:
 
    ```bash
-   bb doctrine status --json
+   rift doctrine status --json
    ```
 
    A `stalled_publications` entry means an earlier doctrine pull request has not
@@ -143,7 +143,7 @@ root.
     blocker:
 
     ```bash
-    bb thread archive --self
+    rift thread archive --self
     ```
 
     Do this last, after your report. Runs happen daily and a clean one is not

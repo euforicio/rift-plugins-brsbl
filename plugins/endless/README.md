@@ -1,6 +1,6 @@
 # Endless
 
-Frank Ocean's *Endless* as a bb theme family: `endless`, the achromatic
+Frank Ocean's *Endless* as a rift theme family: `endless`, the achromatic
 silver print, and `endless-color`, the same structure with rare pops sampled
 from the film's painted stair.
 
@@ -11,7 +11,7 @@ Released August 19, 2016. This is the ten-year mark.
 ## Install
 
 ```bash
-bb plugin install git:https://github.com/brsbl/bb-plugins.git@plugin/endless --yes
+rift plugin install "path:$PWD/plugins/endless" --yes
 ```
 
 ## Use
@@ -19,13 +19,13 @@ bb plugin install git:https://github.com/brsbl/bb-plugins.git@plugin/endless --y
 Activate either palette:
 
 ```bash
-bb theme set plugin:endless:endless          # the silver print
-bb theme set plugin:endless:endless-color    # silver + the stair accents
+rift theme set plugin:endless:endless          # the silver print
+rift theme set plugin:endless:endless-color    # silver + the stair accents
 ```
 
 The palette is app-wide and stored server-side; light/dark mode stays a separate
 per-client setting that each stylesheet layers on top of, so one theme covers
-both. `bb theme reset` returns to the default without touching your favicon
+both. `rift theme reset` returns to the default without touching your favicon
 color.
 
 ## The family
@@ -76,7 +76,7 @@ color's job without adding one.
 Semantics keep their hue but are toned rather than saturated, like a hand-tinted
 print: destructive is the darkroom safelight, warning is sepia, success is
 selenium, merged is a dusty violet. The ANSI terminal palette is deliberately
-left at bb's defaults — a greyscale remap would erase the one place in the app
+left at rift's defaults — a greyscale remap would erase the one place in the app
 where color is load-bearing rather than decorative.
 
 ## Notes for anyone editing the stylesheet
@@ -91,22 +91,22 @@ surface away from the contrast value being tested.
 a step above the canvas rather than below it — the cover's own logic, where the
 photographs are the lit planes and the black is the surround.
 
-**`:root` beats bb's `.dark`.** They have equal specificity and this sheet loads
+**`:root` beats rift's `.dark`.** They have equal specificity and this sheet loads
 last, so every token pinned in the light block is pinned again in the dark block.
 Dropping one leaks its light value into dark mode.
 
 Contrast floors held throughout: text ≥ 4.5:1, non-text UI ≥ 3:1, including the
 tight cases (the secondary text tiers over the hover fill).
 
-**Code colors are not part of this plugin.** bb's plugin manifest accepts only
+**Code colors are not part of this plugin.** rift's plugin manifest accepts only
 `{ id, name, description, css }` per theme — there is no field for a Pierre /
 VS Code code theme, and the plugin SDK's `ThemeArea` is read-and-activate only.
-So `bb theme show` reports `pierre-dark / pierre-light` for this palette: diff
+So `rift theme show` reports `pierre-dark / pierre-light` for this palette: diff
 *line* colors still follow `--diff-added` / `--diff-removed` from the stylesheet,
-but syntax highlighting inside code blocks uses bb's default hues rather than
+but syntax highlighting inside code blocks uses rift's default hues rather than
 this theme's toned monochrome. A matching pair exists and works when the palette
 is installed the other way, as a custom theme folder under
-`<bb-data-dir>/theme/endless/` alongside `pierre-dark.json` / `pierre-light.json`.
+`<rift-data-dir>/theme/endless/` alongside `pierre-dark.json` / `pierre-light.json`.
 
 **Fonts are system-native.** The family uses Helvetica Neue and Courier with
 portable fallbacks; it embeds no font files. `theme.test.ts` fails the build if
@@ -120,6 +120,6 @@ From the monorepo root:
 npm ci
 python3 plugins/endless/build/build.py 0.13 0.18 plugins/endless/themes/endless.css local
 python3 plugins/endless/build/build-color.py plugins/endless/themes/endless-color.css plugins/endless/themes/endless.css
-npm run check --workspace=bb-plugin-endless
-bb plugin install "path:$PWD/plugins/endless" --yes
+npm run check --workspace=rift-plugin-endless
+rift plugin install "path:$PWD/plugins/endless" --yes
 ```

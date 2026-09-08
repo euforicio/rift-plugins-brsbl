@@ -1,7 +1,7 @@
 {
   "version": 3,
   "sources": ["../../server.ts"],
-  "sourcesContent": ["import type { BbPluginApi } from \"@get-bb/plugin-sdk\";\n\nexport default function plugin(bb: BbPluginApi): void {\n  bb.log.info(\"Endless loaded\");\n}\n"],
-  "mappings": ";;;;;;;;AAEe,SAAR,OAAwB,IAAuB;AACpD,KAAG,IAAI,KAAK,gBAAgB;AAC9B;",
+  "sourcesContent": ["import type { RiftPluginApi } from \"@riftlabs/plugin-sdk\";\n\nexport default function plugin(rift: RiftPluginApi): void {\n  rift.log.info(\"Endless loaded\");\n}\n"],
+  "mappings": ";;;;;;;;AAEe,SAAR,OAAwB,MAA2B;AACxD,OAAK,IAAI,KAAK,gBAAgB;AAChC;",
   "names": []
 }

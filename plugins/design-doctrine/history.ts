@@ -3,13 +3,13 @@ import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { promisify } from "node:util";
 
-import type { BbPluginApi } from "@get-bb/plugin-sdk";
+import type { RiftPluginApi } from "@riftlabs/plugin-sdk";
 import {
   createThreadHistoryMaintenance,
   type HistoryAdvanceInput,
   type HistoryScanOptions,
   type ScannedEpisode,
-} from "@brsbl/bb-thread-history-maintenance";
+} from "@brsbl/rift-thread-history-maintenance";
 
 const execFileAsync = promisify(execFile);
 const LEGACY_HISTORY_STATE_KEY = "maintenance:thread-history:v2";
@@ -256,7 +256,7 @@ function isMissingFile(error: unknown): boolean {
 }
 
 async function importLegacyStateFile(
-  bb: BbPluginApi,
+  rift: RiftPluginApi,
   pluginRoot: string,
 ): Promise<string | null> {
   const statePath = join(pluginRoot, LEGACY_HISTORY_STATE_PATH);
@@ -268,17 +268,17 @@ async function importLegacyStateFile(
     throw error;
   }
   const state = normalizeLegacyState(JSON.parse(source) as unknown);
-  await bb.storage.kv.set(LEGACY_HISTORY_STATE_KEY, state);
+  await rift.storage.kv.set(LEGACY_HISTORY_STATE_KEY, state);
   return statePath;
 }
 
 async function removeMigratedStateFile(
-  bb: BbPluginApi,
+  rift: RiftPluginApi,
   statePath: string | null,
 ): Promise<void> {
   if (statePath === null) return;
   if (
-    (await bb.storage.kv.get<unknown>(LEGACY_HISTORY_STATE_KEY)) !== undefined
+    (await rift.storage.kv.get<unknown>(LEGACY_HISTORY_STATE_KEY)) !== undefined
   ) {
     return;
   }
@@ -290,7 +290,7 @@ async function removeMigratedStateFile(
 }
 
 export function createHistoryMaintenance(
-  bb: BbPluginApi,
+  rift: RiftPluginApi,
   installedPluginRoot: string,
   skipEpisode?: (episode: ScannedEpisode) => string | null,
 ) {
@@ -298,7 +298,7 @@ export function createHistoryMaintenance(
   // one. The rules tree is guarded where a batch is actually written, in
   // `ensureMaintenanceCheckout`; gating the read as well only ever stranded
   // maintenance behind a checkout it never touches.
-  const history = createThreadHistoryMaintenance(bb, {
+  const history = createThreadHistoryMaintenance(rift, {
     legacyStateKeys: [LEGACY_HISTORY_STATE_KEY],
     skipEpisode,
   });
@@ -306,9 +306,9 @@ export function createHistoryMaintenance(
 
   function withLegacyStateMigration<T>(operation: () => Promise<T>): Promise<T> {
     const result = migrationQueue.then(async () => {
-      const statePath = await importLegacyStateFile(bb, installedPluginRoot);
+      const statePath = await importLegacyStateFile(rift, installedPluginRoot);
       const output = await operation();
-      await removeMigratedStateFile(bb, statePath);
+      await removeMigratedStateFile(rift, statePath);
       return output;
     });
     migrationQueue = result.then(

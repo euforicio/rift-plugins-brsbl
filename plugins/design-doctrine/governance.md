@@ -4,7 +4,7 @@ How rules get made and changed.
 
 ## Where rules come from
 
-Every rule comes from concrete design feedback in bb — something the user asked
+Every rule comes from concrete design feedback in rift — something the user asked
 for, corrected, approved, or rejected. Each rule records where it applies, its
 evidence, and how sure it is. Repeated independent feedback raises confidence.
 
@@ -44,5 +44,5 @@ Everything lands as a Git commit. Read the diff, revert what you don't want.
 
 ## Privacy
 
-Rules carry short, anonymous evidence lines — never bb message IDs, thread IDs,
+Rules carry short, anonymous evidence lines — never rift message IDs, thread IDs,
 transcripts, or credentials.

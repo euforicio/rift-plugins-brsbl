@@ -6,7 +6,7 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
-import { loadPluginApp, renderSlot } from "@get-bb/plugin-sdk/testing/app";
+import { loadPluginApp, renderSlot } from "@riftlabs/plugin-sdk/testing/app";
 import { afterEach, describe, expect, it } from "vitest";
 
 afterEach(() => cleanup());
@@ -29,13 +29,13 @@ describe("GitHub Activity panel", () => {
               actor: "alice",
               avatarUrl: "https://ghe.example.test/avatars/alice",
               number: 42,
-              repo: "get-bb/bb",
+              repo: "euforicio/rift-app",
               resolved: false,
               resourceKind: "pr",
               title: "Scannable activity",
               unread: true,
               updatedAt: "2026-08-12T12:00:00Z",
-              url: "https://github.com/get-bb/bb/pull/42",
+              url: "https://github.com/euforicio/rift-app/pull/42",
             },
             {
               id: "n2",
@@ -100,11 +100,11 @@ describe("GitHub Activity panel", () => {
     expect(desktopUpdatedTime.parentElement?.className).toContain(
       "justify-between",
     );
-    expect(screen.getAllByText("get-bb/bb")).toHaveLength(2);
+    expect(screen.getAllByText("euforicio/rift-app")).toHaveLength(2);
     expect(screen.getByText("Scannable activity")).toBeDefined();
     expect(screen.getByText("#42").parentElement?.className).toContain("mt-0.5");
     const link = screen.getByRole("link", { name: /Scannable activity/u });
-    expect(link.getAttribute("href")).toBe("https://github.com/get-bb/bb/pull/42");
+    expect(link.getAttribute("href")).toBe("https://github.com/euforicio/rift-app/pull/42");
     expect(link.getAttribute("target")).toBe("_blank");
     expect(link.className).toContain("items-start");
     expect(screen.getByText("Scannable activity").className).toContain(
@@ -301,13 +301,13 @@ describe("GitHub Activity panel", () => {
                 actor: "alice",
                 avatarUrl: null,
                 number: 42,
-                repo: "get-bb/bb",
+                repo: "euforicio/rift-app",
                 resolved: false,
                 resourceKind: "pr" as const,
                 title: "Keep stale activity visible",
                 unread: true,
                 updatedAt: "2026-08-12T12:00:00Z",
-                url: "https://github.com/get-bb/bb/pull/42",
+                url: "https://github.com/euforicio/rift-app/pull/42",
               },
             ],
           };
@@ -361,13 +361,13 @@ describe("GitHub Activity panel", () => {
               avatarUrl: null,
               eventKey: "comment:1",
               number: 42,
-              repo: "get-bb/bb",
+              repo: "euforicio/rift-app",
               resolved: false,
               resourceKind: "pr" as const,
               title: "Retry resolve",
               unread: true,
               updatedAt: "2026-08-12T12:00:00Z",
-              url: "https://github.com/get-bb/bb/pull/42",
+              url: "https://github.com/euforicio/rift-app/pull/42",
             },
           ],
         }),

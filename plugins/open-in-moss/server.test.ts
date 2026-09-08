@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { createFakePluginHost } from "@get-bb/plugin-sdk/testing";
+import { createFakePluginHost } from "@riftlabs/plugin-sdk/testing";
 import {
   createOpenInMossPlugin,
   type OpenInMossDependencies,
@@ -19,7 +19,7 @@ function dependencies(
 
 async function loadPlugin(deps: OpenInMossDependencies) {
   const host = createFakePluginHost({ pluginId: "open-in-moss" });
-  await createOpenInMossPlugin(deps)(host.bb);
+  await createOpenInMossPlugin(deps)(host.rift);
   return host;
 }
 

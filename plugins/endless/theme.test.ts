@@ -10,13 +10,13 @@ import { describe, expect, it } from "vitest";
 import manifest from "./package.json" with { type: "json" };
 
 /**
- * bb caps a theme stylesheet at 256 KB and delivers it to the client as an
+ * rift caps a theme stylesheet at 256 KB and delivers it to the client as an
  * inline string, so these are contract tests rather than style tests: they
  * guard the two ways a theme plugin breaks silently after it is installed.
  */
 const CSS_MAX_BYTES = 256_000;
 
-const themes = manifest.bb.themes;
+const themes = manifest.rift.themes;
 const cssFor = (t: (typeof themes)[number]) =>
   readFileSync(resolve(__dirname, t.css), "utf8");
 const [endless, endlessColor] = themes;
@@ -41,13 +41,13 @@ describe("Endless theme contribution", () => {
     expect(override).toContain(".dark {");
   });
 
-  it("stays under bb's stylesheet cap", () => {
+  it("stays under rift's stylesheet cap", () => {
     for (const t of themes)
       expect(Buffer.byteLength(cssFor(t), "utf8")).toBeLessThan(CSS_MAX_BYTES);
   });
 
   it("themes both modes", () => {
-    // bb ships one stylesheet for both; a missing block silently inherits the
+    // rift ships one stylesheet for both; a missing block silently inherits the
     // default palette for that mode instead of failing.
     expect(css).toContain(":root,\n.light {");
     expect(css).toContain(".dark {");

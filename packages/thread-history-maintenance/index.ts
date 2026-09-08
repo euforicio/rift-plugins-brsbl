@@ -1,9 +1,9 @@
 import { randomUUID } from "node:crypto";
 
-import type { BbPluginApi } from "@get-bb/plugin-sdk";
+import type { RiftPluginApi } from "@riftlabs/plugin-sdk";
 
 const THREAD_PAGE_SIZE = 1_000;
-// Larger windows can make BB's whole-item query exceed SQLite's expression depth.
+// Larger windows can make Rift's whole-item query exceed SQLite's expression depth.
 const TIMELINE_SEGMENT_LIMIT = "1";
 const TIMELINE_PAGE_LIMIT = 4;
 const TIMELINE_CONCURRENCY = 1;
@@ -16,10 +16,10 @@ const META_INITIALIZED_AT = "initialized_at";
 const META_LAST_RECONCILED_AT = "last_reconciled_at";
 const META_LAST_PREPARED_AT = "last_prepared_at";
 
-type ThreadList = Awaited<ReturnType<BbPluginApi["sdk"]["threads"]["list"]>>;
+type ThreadList = Awaited<ReturnType<RiftPluginApi["sdk"]["threads"]["list"]>>;
 type ThreadListItem = ThreadList[number];
 type ThreadTimeline = Awaited<
-  ReturnType<BbPluginApi["sdk"]["threads"]["timeline"]>
+  ReturnType<RiftPluginApi["sdk"]["threads"]["timeline"]>
 >;
 
 export interface HistoryThread {
@@ -174,6 +174,10 @@ function clipUtf8(value: string, maxBytes: number): string {
 function isDirectUserMessage(text: string): boolean {
   const stripped = text.trimStart();
   return !(
+    stripped.startsWith("[rift system]") ||
+    stripped.startsWith("[rift message") ||
+    stripped.startsWith("<rift system") ||
+    // Existing timelines can contain messages written before the product rename.
     stripped.startsWith("[bb system]") ||
     stripped.startsWith("[bb message") ||
     stripped.startsWith("<bb system")
@@ -185,13 +189,13 @@ function titleFor(thread: HistoryThread): string {
 }
 
 async function listAllThreads(
-  bb: BbPluginApi,
+  rift: RiftPluginApi,
   signal?: AbortSignal,
 ): Promise<ThreadListItem[]> {
   const byId = new Map<string, ThreadListItem>();
   for (const archived of [false, true]) {
     for (let offset = 0; ; offset += THREAD_PAGE_SIZE) {
-      const page = await bb.sdk.threads.list({
+      const page = await rift.sdk.threads.list({
         archived,
         limit: THREAD_PAGE_SIZE,
         offset,
@@ -251,7 +255,7 @@ function messageFromRow(
 }
 
 async function loadEpisode(
-  bb: BbPluginApi,
+  rift: RiftPluginApi,
   state: StoredThread,
   observedThreadUpdatedAt: number,
   maxMessageBytes: number,
@@ -271,7 +275,7 @@ async function loadEpisode(
       beforeAnchorSeq === undefined
         ? null
         : { anchorSeq: beforeAnchorSeq, anchorId: beforeAnchorId! };
-    const timeline = await bb.sdk.threads.timeline({
+    const timeline = await rift.sdk.threads.timeline({
       threadId: state.thread_id,
       includeNestedRows: "false",
       segmentLimit: TIMELINE_SEGMENT_LIMIT,
@@ -364,11 +368,11 @@ async function loadEpisode(
 }
 
 export function createThreadHistoryMaintenance(
-  bb: BbPluginApi,
+  rift: RiftPluginApi,
   options: ThreadHistoryMaintenanceOptions = {},
 ) {
-  const db = bb.storage.database();
-  bb.storage.migrate(db, [
+  const db = rift.storage.database();
+  rift.storage.migrate(db, [
     `CREATE TABLE IF NOT EXISTS thread_history_meta (
       key TEXT PRIMARY KEY,
       integer_value INTEGER
@@ -489,14 +493,14 @@ export function createThreadHistoryMaintenance(
 
     let legacyAt: number | null = null;
     for (const key of options.legacyStateKeys ?? []) {
-      const value = await bb.storage.kv.get<unknown>(key);
+      const value = await rift.storage.kv.get<unknown>(key);
       const candidate = legacyCursorAt(value, now);
       if (candidate !== null && (legacyAt === null || candidate > legacyAt)) {
         legacyAt = candidate;
       }
     }
 
-    const threads = await listAllThreads(bb, signal);
+    const threads = await listAllThreads(rift, signal);
     const insert = db.prepare(
       `INSERT OR IGNORE INTO thread_history_threads (
         thread_id, project_id, title, checkpoint_sequence, checkpoint_at,
@@ -523,14 +527,14 @@ export function createThreadHistoryMaintenance(
     });
     write();
     for (const key of options.legacyStateKeys ?? []) {
-      await bb.storage.kv.delete(key);
+      await rift.storage.kv.delete(key);
     }
     startupReconcileRequired = false;
     return { established: threads.length > 0, reconciled: true };
   }
 
   async function reconcile(now: number, signal?: AbortSignal): Promise<void> {
-    const threads = await listAllThreads(bb, signal);
+    const threads = await listAllThreads(rift, signal);
     const upsert = db.prepare(
       `INSERT INTO thread_history_threads (
         thread_id, project_id, title, checkpoint_sequence, checkpoint_at,
@@ -805,7 +809,7 @@ export function createThreadHistoryMaintenance(
           inventoryReconciled = true;
         }
 
-        // Timeline projection can synchronously block the BB server for large
+        // Timeline projection can synchronously block the Rift server for large
         // threads. Keep each lease-sized pass small; unvisited candidates stay
         // pending for the next scan.
         const candidateLimit = Math.min(
@@ -853,7 +857,7 @@ export function createThreadHistoryMaintenance(
               .map(async (candidate) => {
                 let before;
                 try {
-                  before = await bb.sdk.threads.get({
+                  before = await rift.sdk.threads.get({
                     threadId: candidate.thread_id,
                     signal: scanOptions.signal,
                   });
@@ -876,7 +880,7 @@ export function createThreadHistoryMaintenance(
                 let episode;
                 try {
                   episode = await loadEpisode(
-                    bb,
+                    rift,
                     candidate,
                     before.updatedAt,
                     scanOptions.maxMessageBytes,
@@ -894,7 +898,7 @@ export function createThreadHistoryMaintenance(
 
                 let after;
                 try {
-                  after = await bb.sdk.threads.get({
+                  after = await rift.sdk.threads.get({
                     threadId: candidate.thread_id,
                     signal: scanOptions.signal,
                   });

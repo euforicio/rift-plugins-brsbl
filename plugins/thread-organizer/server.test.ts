@@ -1,7 +1,7 @@
 import {
   createFakePluginHost,
   makeThreadResponse,
-} from "@get-bb/plugin-sdk/testing";
+} from "@riftlabs/plugin-sdk/testing";
 import { describe, expect, it, vi } from "vitest";
 
 import {
@@ -244,7 +244,7 @@ describe("Thread Organizer server", () => {
       return [];
     });
 
-    const activation = plugin(organizer.bb);
+    const activation = plugin(organizer.rift);
     expect(
       organizer.harness.inspection.registrations.agentConfigurationProvider,
     ).toBeNull();
@@ -258,7 +258,7 @@ describe("Thread Organizer server", () => {
 
   it("registers its workflow surfaces and creates every default native section", async () => {
     const organizer = createHarness();
-    await plugin(organizer.bb);
+    await plugin(organizer.rift);
     const config = await configFor(organizer);
 
     expect(organizer.harness.inspection.registrations.cli?.name).toBe(
@@ -287,7 +287,7 @@ describe("Thread Organizer server", () => {
     });
     organizer.updateThread.mockRejectedValueOnce(new Error("update failed"));
 
-    await expect(plugin(organizer.bb)).resolves.toBeUndefined();
+    await expect(plugin(organizer.rift)).resolves.toBeUndefined();
 
     expect(organizer.harness.inspection.registrations.cli?.name).toBe(
       "organizer",
@@ -318,7 +318,7 @@ describe("Thread Organizer server", () => {
       return [organizer.current()];
     });
 
-    const activation = plugin(organizer.bb);
+    const activation = plugin(organizer.rift);
     await listStarted;
     organizer.setThread({
       status: "idle",
@@ -355,11 +355,11 @@ describe("Thread Organizer server", () => {
       return [stale];
     });
 
-    await plugin(organizer.bb);
+    await plugin(organizer.rift);
 
     expect(organizer.current().sectionId).toBe("sec_4");
     await expect(
-      organizer.bb.storage.kv.get("thread:v3:thr_test"),
+      organizer.rift.storage.kv.get("thread:v3:thr_test"),
     ).resolves.toEqual({ version: 5, rememberedStageKey: "building" });
     await organizer.harness.lifecycle.dispose();
   });
@@ -382,7 +382,7 @@ describe("Thread Organizer server", () => {
       return [organizer.current()];
     });
 
-    const activation = plugin(organizer.bb);
+    const activation = plugin(organizer.rift);
     await listStarted;
     const disposal = organizer.harness.lifecycle.dispose();
 
@@ -394,7 +394,7 @@ describe("Thread Organizer server", () => {
 
   it("migrates an emoji-prefixed default in place and preserves its id", async () => {
     const organizer = createHarness({ legacyPlanning: true });
-    await plugin(organizer.bb);
+    await plugin(organizer.rift);
     const config = await configFor(organizer);
     const planning = config.stages.find((stage) => stage.key === "planning")!;
 
@@ -410,7 +410,7 @@ describe("Thread Organizer server", () => {
 
   it("keeps Inbox sticky across read changes until work resumes", async () => {
     const organizer = createHarness();
-    await plugin(organizer.bb);
+    await plugin(organizer.rift);
     const config = await configFor(organizer);
     const sectionId = (key: string) =>
       config.stages.find((stage) => stage.key === key)!.sectionId;
@@ -432,7 +432,7 @@ describe("Thread Organizer server", () => {
     expect(organizer.current().sectionId).toBe(sectionId("inbox"));
 
     organizer.setThread({ lastReadAt: 20 });
-    await organizer.bb.storage.kv.set("thread:v3:thr_test", {
+    await organizer.rift.storage.kv.set("thread:v3:thr_test", {
       version: 4,
       inboxLatched: false,
       rememberedStageKey: "planning",
@@ -462,7 +462,7 @@ describe("Thread Organizer server", () => {
 
   it("does not remove a running Inbox thread when it becomes read", async () => {
     const organizer = createHarness();
-    await plugin(organizer.bb);
+    await plugin(organizer.rift);
     const config = await configFor(organizer);
     const inboxId = config.stages.find(
       (stage) => stage.key === "inbox",
@@ -492,7 +492,7 @@ describe("Thread Organizer server", () => {
 
   it("routes lifecycle events from current state instead of event snapshots", async () => {
     const organizer = createHarness();
-    await plugin(organizer.bb);
+    await plugin(organizer.rift);
     expect(organizer.harness.inspection.registrations.services).toEqual([]);
     const config = await configFor(organizer);
     const sectionId = (key: string) =>
@@ -523,7 +523,7 @@ describe("Thread Organizer server", () => {
 
   it("reconciles every thread change as a current-state invalidation", async () => {
     const organizer = createHarness();
-    await plugin(organizer.bb);
+    await plugin(organizer.rift);
     const config = await configFor(organizer);
     const onHoldId = config.stages.find(
       (stage) => stage.key === "on-hold",
@@ -539,7 +539,7 @@ describe("Thread Organizer server", () => {
 
     await vi.waitFor(async () => {
       await expect(
-        organizer.bb.storage.kv.get("thread:v3:thr_test"),
+        organizer.rift.storage.kv.get("thread:v3:thr_test"),
       ).resolves.toEqual({ version: 5, rememberedStageKey: "on-hold" });
     });
     await organizer.harness.lifecycle.dispose();
@@ -553,12 +553,12 @@ describe("Thread Organizer server", () => {
       latestAttentionAt: 10,
       sectionId: "sec_1",
     });
-    await organizer.bb.storage.kv.set("thread:v3:thr_test", {
+    await organizer.rift.storage.kv.set("thread:v3:thr_test", {
       version: 3,
       rememberedStageKey: "planning",
       lastObservedSectionId: "sec_1",
     });
-    await plugin(organizer.bb);
+    await plugin(organizer.rift);
     const config = await configFor(organizer);
     const inboxId = config.stages.find(
       (stage) => stage.key === "inbox",
@@ -573,7 +573,7 @@ describe("Thread Organizer server", () => {
     });
     expect(organizer.current().sectionId).toBe(inboxId);
     await expect(
-      organizer.bb.storage.kv.get("thread:v3:thr_test"),
+      organizer.rift.storage.kv.get("thread:v3:thr_test"),
     ).resolves.toEqual({ version: 5, rememberedStageKey: "planning" });
 
     organizer.setThread({ status: "starting" });
@@ -592,14 +592,14 @@ describe("Thread Organizer server", () => {
       latestAttentionAt: 10,
       sectionId: "sec_1",
     });
-    await organizer.bb.storage.kv.set("thread:v3:thr_test", {
+    await organizer.rift.storage.kv.set("thread:v3:thr_test", {
       version: 4,
       inboxLatched: false,
       rememberedStageKey: "planning",
       lastObservedSectionId: "sec_1",
     });
 
-    await plugin(organizer.bb);
+    await plugin(organizer.rift);
     const config = await configFor(organizer);
     const inboxId = config.stages.find(
       (stage) => stage.key === "inbox",
@@ -607,7 +607,7 @@ describe("Thread Organizer server", () => {
 
     expect(organizer.current().sectionId).toBe(inboxId);
     await expect(
-      organizer.bb.storage.kv.get("thread:v3:thr_test"),
+      organizer.rift.storage.kv.get("thread:v3:thr_test"),
     ).resolves.toEqual({ version: 5, rememberedStageKey: "planning" });
     await organizer.harness.lifecycle.dispose();
   });
@@ -618,7 +618,7 @@ describe("Thread Organizer server", () => {
       originPluginId: "automations",
       status: "active",
     });
-    await plugin(organizer.bb);
+    await plugin(organizer.rift);
 
     await expect(
       organizer.harness.behavior.runCli(["phase", "building"], {
@@ -636,7 +636,7 @@ describe("Thread Organizer server", () => {
   it("moves stages without changing the thread title or spawning a worker", async () => {
     const organizer = createHarness();
     organizer.setThread({ status: "active", title: "Durable project title" });
-    await plugin(organizer.bb);
+    await plugin(organizer.rift);
 
     const result = await organizer.harness.behavior.runCli(
       ["phase", "building"],
@@ -660,7 +660,7 @@ describe("Thread Organizer server", () => {
 
   it("keeps unread user moves in Inbox, then accepts an explicit move once read", async () => {
     const organizer = createHarness();
-    await plugin(organizer.bb);
+    await plugin(organizer.rift);
     const config = await configFor(organizer);
     const sectionId = (key: string) =>
       config.stages.find((stage) => stage.key === key)!.sectionId;
@@ -699,7 +699,7 @@ describe("Thread Organizer server", () => {
     await vi.waitFor(async () => {
       expect(organizer.current().sectionId).toBe(sectionId("on-hold"));
       await expect(
-        organizer.bb.storage.kv.get("thread:v3:thr_test"),
+        organizer.rift.storage.kv.get("thread:v3:thr_test"),
       ).resolves.toEqual({ version: 5, rememberedStageKey: "on-hold" });
     });
 
@@ -718,7 +718,7 @@ describe("Thread Organizer server", () => {
 
   it("moves a read Inbox thread through the CLI while unread moves stay in Inbox", async () => {
     const organizer = createHarness();
-    await plugin(organizer.bb);
+    await plugin(organizer.rift);
     const config = await configFor(organizer);
     const sectionId = (key: string) =>
       config.stages.find((stage) => stage.key === key)!.sectionId;
@@ -740,7 +740,7 @@ describe("Thread Organizer server", () => {
     });
     expect(organizer.current().sectionId).toBe(sectionId("inbox"));
     await expect(
-      organizer.bb.storage.kv.get("thread:v3:thr_test"),
+      organizer.rift.storage.kv.get("thread:v3:thr_test"),
     ).resolves.toEqual({ version: 5, rememberedStageKey: "on-hold" });
 
     organizer.setThread({ lastReadAt: 20 });
@@ -755,14 +755,14 @@ describe("Thread Organizer server", () => {
     });
     expect(organizer.current().sectionId).toBe(sectionId("on-hold"));
     await expect(
-      organizer.bb.storage.kv.get("thread:v3:thr_test"),
+      organizer.rift.storage.kv.get("thread:v3:thr_test"),
     ).resolves.toEqual({ version: 5, rememberedStageKey: "on-hold" });
     await organizer.harness.lifecycle.dispose();
   });
 
   it("moves explicitly with dynamic CLI keys and never accepts Inbox", async () => {
     const organizer = createHarness();
-    await plugin(organizer.bb);
+    await plugin(organizer.rift);
     const config = await configFor(organizer);
     organizer.setThread({ status: "active" });
 
@@ -787,7 +787,7 @@ describe("Thread Organizer server", () => {
 
   it("returns a CLI failure when the explicit move cannot be reconciled", async () => {
     const organizer = createHarness();
-    await plugin(organizer.bb);
+    await plugin(organizer.rift);
     organizer.setThread({ status: "active" });
     organizer.updateThread.mockRejectedValueOnce(new Error("update failed"));
 
@@ -807,7 +807,7 @@ describe("Thread Organizer server", () => {
 
   it("serializes configuration reconciliation before a newer explicit move", async () => {
     const organizer = createHarness();
-    await plugin(organizer.bb);
+    await plugin(organizer.rift);
     const current = await configFor(organizer);
     const planning = current.stages.find((stage) => stage.key === "planning")!;
     organizer.setThread({
@@ -850,7 +850,7 @@ describe("Thread Organizer server", () => {
 
   it("saves Inbox presentation and custom rules into the next agent session", async () => {
     const organizer = createHarness();
-    await plugin(organizer.bb);
+    await plugin(organizer.rift);
     const current = await configFor(organizer);
     const edited = editableWorkflowConfig(current);
     edited.stages[0] = {
@@ -895,7 +895,7 @@ describe("Thread Organizer server", () => {
 
   it("migrates remembered work before deleting a removed stage", async () => {
     const organizer = createHarness();
-    await plugin(organizer.bb);
+    await plugin(organizer.rift);
     const current = await configFor(organizer);
     organizer.setThread({ status: "active" });
     await organizer.harness.behavior.runCli(["phase", "handoff"], {
@@ -921,7 +921,7 @@ describe("Thread Organizer server", () => {
     "resumes a partially failed %s cleanup after plugin restart",
     async (failure) => {
       const organizer = createHarness();
-      await plugin(organizer.bb);
+      await plugin(organizer.rift);
       const current = await configFor(organizer);
       organizer.setThread({ status: "active" });
       await organizer.harness.behavior.runCli(["phase", "handoff"], {

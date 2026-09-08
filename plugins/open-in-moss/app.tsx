@@ -1,4 +1,4 @@
-import { definePluginApp } from "@get-bb/plugin-sdk/app";
+import { definePluginApp } from "@riftlabs/plugin-sdk/app";
 import { toast } from "sonner";
 
 const MARKDOWN_EXTENSION = /\.(?:md|markdown)$/iu;
@@ -46,7 +46,7 @@ function markdownFileLinkFromClick(event: MouseEvent): MarkdownFileLink | null {
   return { anchor, path: filePath };
 }
 
-function openInBb(anchor: HTMLAnchorElement): boolean {
+function openInRift(anchor: HTMLAnchorElement): boolean {
   if (!anchor.isConnected) return false;
   const fallbackEvent = new MouseEvent("click", {
     bubbles: true,
@@ -72,10 +72,10 @@ async function requestMossOpen(
     );
     if (!response.ok) throw new Error("Moss did not accept the file");
   } catch {
-    const openedInBb = openInBb(link.anchor);
+    const openedInRift = openInRift(link.anchor);
     toast.error("Moss couldn’t open this file", {
-      description: openedInBb
-        ? "It was opened in bb instead."
+      description: openedInRift
+        ? "It was opened in rift instead."
         : "Right-click the link to choose another app.",
     });
   }

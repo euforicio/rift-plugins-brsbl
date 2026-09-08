@@ -1,6 +1,6 @@
 # Timeline Comments
 
-Timeline Comments keeps review notes attached to the exact part of a bb conversation they refer to.
+Timeline Comments keeps review notes attached to the exact part of a rift conversation they refer to.
 
 ## Screenshots
 
@@ -12,9 +12,9 @@ Comments stay attached through an underline and a compact nearest-gutter thread.
 
 ![An anchored comment pill with comment actions and its reply composer](docs/screenshot.png)
 
-Send an open comment to the agent by copying it into bb's composer for review before submission.
+Send an open comment to the agent by copying it into rift's composer for review before submission.
 
-![An open comment copied into bb's composer](docs/send-to-agent.png)
+![An open comment copied into rift's composer](docs/send-to-agent.png)
 
 Open the thread-scoped Comments List to review open, resolved, or all feedback together.
 
@@ -29,26 +29,26 @@ Open the thread-scoped Comments List to review open, resolved, or all feedback t
 - Adds every open comment to the current thread's draft without submitting it.
 - Gives agents a bundled workflow for reading, addressing, replying to, and resolving review comments.
 
-Comments are stored in plugin-owned SQLite on the bb server. Missing or ambiguous source text remains manageable as **Unanchored** and is never attached to a guess.
+Comments are stored in plugin-owned SQLite on the rift server. Missing or ambiguous source text remains manageable as **Unanchored** and is never attached to a guess.
 
-Agents can manage the same threads from the current bb thread context:
+Agents can manage the same threads from the current rift thread context:
 
 ```bash
-bb comments list --state open --json
-bb comments get <comment-thread-id> --json
-bb comments reply <comment-thread-id> --body "Fixed and verified."
-bb comments resolve <comment-thread-id>
+rift comments list --state open --json
+rift comments get <comment-thread-id> --json
+rift comments reply <comment-thread-id> --body "Fixed and verified."
+rift comments resolve <comment-thread-id>
 ```
 
-Use `bb comments reopen <comment-thread-id>` when later evidence invalidates a resolution.
+Use `rift comments reopen <comment-thread-id>` when later evidence invalidates a resolution.
 
 ## Install
 
 ```bash
-bb plugin install git:https://github.com/brsbl/bb-plugins.git@plugin/timeline-comments --yes
+rift plugin install "path:$PWD/plugins/timeline-comments" --yes
 ```
 
-Timeline Comments requires bb 0.0.34 or newer and the 0.4 plugin SDK.
+Timeline Comments requires rift 0.0.34 or newer and the 0.4 plugin SDK.
 
 ## Develop
 
@@ -56,7 +56,7 @@ From the repository root:
 
 ```bash
 npm ci
-npm run check --workspace=bb-plugin-timeline-comments
-npm run test:browser --workspace=bb-plugin-timeline-comments
-bb plugin install "path:$PWD/plugins/timeline-comments" --yes
+npm run check --workspace=rift-plugin-timeline-comments
+npm run test:browser --workspace=rift-plugin-timeline-comments
+rift plugin install "path:$PWD/plugins/timeline-comments" --yes
 ```

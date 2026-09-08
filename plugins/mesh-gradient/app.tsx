@@ -9,12 +9,12 @@ import {
 import { toast } from "sonner";
 import {
   definePluginApp,
-  useBbContext,
+  useRiftContext,
   useComposer,
   useRealtime,
   useRpc,
   type PluginThreadPanelProps,
-} from "@get-bb/plugin-sdk/app";
+} from "@riftlabs/plugin-sdk/app";
 
 import {
   EDIT_MAX_POINTS,
@@ -487,7 +487,7 @@ function SavedTile({
 function Studio({ threadId }: PluginThreadPanelProps) {
   const rpc = useRpc<typeof meshGradientRpcContract>();
   const composer = useComposer();
-  const { projectId } = useBbContext();
+  const { projectId } = useRiftContext();
   const [state, setState] = useState<StudioState>(() => ({
     draft: { spec: generateMeshGradient({ seed: randomSeed() }), edited: false },
     history: [],
@@ -988,7 +988,7 @@ function Studio({ threadId }: PluginThreadPanelProps) {
               { label: "Save to library", onSelect: () => void save() },
               { label: "Write token file", onSelect: () => void exportTokens() },
               {
-                label: "Copy bb theme CSS",
+                label: "Copy rift theme CSS",
                 onSelect: () =>
                   void copyToClipboard(
                     "Theme CSS",

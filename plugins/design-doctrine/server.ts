@@ -6,7 +6,7 @@ import { basename, dirname, isAbsolute, join, relative, resolve } from "node:pat
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 
-import type { BbPluginApi } from "@get-bb/plugin-sdk";
+import type { RiftPluginApi } from "@riftlabs/plugin-sdk";
 import { z } from "zod";
 
 import {
@@ -865,8 +865,8 @@ function requiredOption(argv: string[], name: string): string {
   return value;
 }
 
-export default async function plugin(bb: BbPluginApi) {
-  const settings = bb.settings.define({
+export default async function plugin(rift: RiftPluginApi) {
+  const settings = rift.settings.define({
     doctrinePath: {
       type: "string",
       label: "Doctrine repository",
@@ -884,7 +884,7 @@ export default async function plugin(bb: BbPluginApi) {
   let loading: Promise<LibraryPayload> | null = null;
   let automaticRules: DoctrineRule[] = [];
 
-  // The plugin keeps its own copy of the published rules. bb owns the
+  // The plugin keeps its own copy of the published rules. rift owns the
   // directory, it is rebuilt whenever the published rules change, and it holds
   // no git metadata — nothing commits into it, so there is nothing to lose by
   // rebuilding it. An explicitly configured doctrinePath still wins.
@@ -909,9 +909,9 @@ export default async function plugin(bb: BbPluginApi) {
     const repositoryRoot = await resolveRepositoryRoot(DEFAULT_DOCTRINE_PATH);
     if (!repositoryRoot) return null;
     githubRepository = await resolveGitHubRepository(repositoryRoot);
-    const dataDirectory = pluginDataDirectory(bb.storage.database().name);
+    const dataDirectory = pluginDataDirectory(rift.storage.database().name);
     const readPath = join(dataDirectory, CORPUS_DIRECTORY);
-    // bb owns the data directory; anything materialized inside the repository
+    // rift owns the data directory; anything materialized inside the repository
     // would surface as untracked work in the user's own checkout.
     if (!isAbsolute(readPath) || !relative(repositoryRoot, readPath).startsWith("..")) {
       return null;
@@ -982,18 +982,18 @@ export default async function plugin(bb: BbPluginApi) {
   }
 
   const historyMaintenance = createHistoryMaintenance(
-    bb,
+    rift,
     DEFAULT_DOCTRINE_PATH,
     (episode) => {
       const reason = skipEpisodeReason(episode);
       if (reason) {
-        bb.log.info(`doctrine history: skipped ${episode.threadId} — ${reason}`);
+        rift.log.info(`doctrine history: skipped ${episode.threadId} — ${reason}`);
       }
       return reason;
     },
   );
   const harvest = createHarvest({
-    bb,
+    rift,
     openPublication: openRulePublication,
     listRuleIds: async (doctrineRoot) =>
       (await loadDoctrine(doctrineRoot)).rules.map((rule) => rule.id),
@@ -1008,20 +1008,20 @@ export default async function plugin(bb: BbPluginApi) {
       await loadDoctrine(doctrineRoot);
     },
     async runAgent({ projectId, title, prompt }) {
-      const spawned = await bb.sdk.threads.spawn({
+      const spawned = await rift.sdk.threads.spawn({
         projectId,
         // Hidden so the harvest never interrupts the user. `spawn` attributes
         // the thread to this plugin, which also keeps it out of its own queue.
         visibility: "hidden",
-        // Both agents read the thread through bb's API and report through the
+        // Both agents read the thread through rift's API and report through the
         // doctrine CLI; neither opens a file. Reusing the archived thread's
-        // environment only tied the harvest to workspaces bb had already
+        // environment only tied the harvest to workspaces rift had already
         // destroyed.
         environment: { type: "host", workspace: { type: "unmanaged", path: null } },
         title,
         prompt,
       });
-      await bb.sdk.threads.wait({
+      await rift.sdk.threads.wait({
         threadId: spawned.id,
         status: "idle",
         timeoutMs: HARVEST_AGENT_TIMEOUT_MS,
@@ -1044,19 +1044,19 @@ export default async function plugin(bb: BbPluginApi) {
         }
       })
       .catch((error: unknown) => {
-        bb.log.warn(
+        rift.log.warn(
           `doctrine harvest: drain failed: ${error instanceof Error ? error.message : String(error)}`,
         );
       });
   }
 
-  bb.events.on("thread.created", async ({ thread }) => {
+  rift.events.on("thread.created", async ({ thread }) => {
     await historyMaintenance.observeCreated(thread);
   });
-  bb.events.on("thread.idle", async ({ thread }) => {
+  rift.events.on("thread.idle", async ({ thread }) => {
     await historyMaintenance.observeThread(thread);
   });
-  bb.events.on("thread.archived", ({ thread }) => {
+  rift.events.on("thread.archived", ({ thread }) => {
     // Observe-only and fire-and-forget: archiving never waits on the harvest,
     // and a harvest failure is a log line, not a user-facing error.
     try {
@@ -1064,12 +1064,12 @@ export default async function plugin(bb: BbPluginApi) {
       if (!queued && !harvest.isPending(thread.id)) return;
       drainHarvest();
     } catch (error) {
-      bb.log.warn(
+      rift.log.warn(
         `doctrine harvest: could not queue ${thread.id}: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
   });
-  bb.events.on("thread.deleted", async ({ thread }) => {
+  rift.events.on("thread.deleted", async ({ thread }) => {
     harvest.cancel(thread.id);
     await historyMaintenance.forgetThread(thread.id);
   });
@@ -1077,7 +1077,7 @@ export default async function plugin(bb: BbPluginApi) {
   // leaves the row pending; rule-watch retries it when that checkout changes.
   drainHarvest();
 
-  bb.http.route(
+  rift.http.route(
     "POST",
     "/github",
     async (context) => {
@@ -1142,7 +1142,7 @@ export default async function plugin(bb: BbPluginApi) {
         }
         return context.json({ ok: true, changed }, 200);
       } catch (error) {
-        bb.log.warn(
+        rift.log.warn(
           `doctrine corpus webhook refresh failed: ${
             error instanceof Error ? error.message : String(error)
           }`,
@@ -1152,8 +1152,8 @@ export default async function plugin(bb: BbPluginApi) {
     },
     { auth: "none" },
   );
-  bb.rpc.register(rpcContract, { getLibrary: currentLibrary });
-  bb.agents.registerTool({
+  rift.rpc.register(rpcContract, { getLibrary: currentLibrary });
+  rift.agents.registerTool({
     name: "design_doctrine_search",
     description:
       "Search the user's active Design Doctrine rules for a product, UX, UI, visual-design, design-system, or AI-interaction task.",
@@ -1173,9 +1173,9 @@ export default async function plugin(bb: BbPluginApi) {
   try {
     await currentLibrary();
   } catch (error) {
-    bb.log.warn(error instanceof Error ? error.message : String(error));
+    rift.log.warn(error instanceof Error ? error.message : String(error));
   }
-  bb.agents.configure(({ thread }) => {
+  rift.agents.configure(({ thread }) => {
     const instructions = automaticDoctrineGuidance(
       automaticRules,
       thread.title,
@@ -1186,16 +1186,16 @@ export default async function plugin(bb: BbPluginApi) {
       ...(instructions ? { instructions } : {}),
     };
   });
-  bb.cli.register({
+  rift.cli.register({
     name: "doctrine",
     summary: "Browse and search product-design rules",
     commands: [
-      { name: "status", summary: "Show rule and Git status", usage: "bb doctrine status [--json]" },
-      { name: "search", summary: "Search current rules", usage: "bb doctrine search <query> [--all] [--json]" },
-      { name: "show", summary: "Show one rule", usage: "bb doctrine show <rule-id> [--json]" },
-      { name: "history", summary: "Scan bb thread history through the SDK", usage: "bb doctrine history <scan|advance|release> [options]" },
-      { name: "harvest", summary: "Report archive-harvest proposals and verdicts", usage: "bb doctrine harvest <propose|verdict|status> [options]" },
-      { name: "validate", summary: "Validate the personalized rule corpus", usage: "bb doctrine validate" },
+      { name: "status", summary: "Show rule and Git status", usage: "rift doctrine status [--json]" },
+      { name: "search", summary: "Search current rules", usage: "rift doctrine search <query> [--all] [--json]" },
+      { name: "show", summary: "Show one rule", usage: "rift doctrine show <rule-id> [--json]" },
+      { name: "history", summary: "Scan rift thread history through the SDK", usage: "rift doctrine history <scan|advance|release> [options]" },
+      { name: "harvest", summary: "Report archive-harvest proposals and verdicts", usage: "rift doctrine harvest <propose|verdict|status> [options]" },
+      { name: "validate", summary: "Validate the personalized rule corpus", usage: "rift doctrine validate" },
     ],
     async run(argv, context) {
       try {
@@ -1250,7 +1250,7 @@ export default async function plugin(bb: BbPluginApi) {
           }
           return {
             exitCode: 2,
-            stderr: "Usage: bb doctrine history <scan|advance|release> [options]\n",
+            stderr: "Usage: rift doctrine history <scan|advance|release> [options]\n",
           };
         }
         if (command === "harvest") {
@@ -1324,7 +1324,7 @@ export default async function plugin(bb: BbPluginApi) {
           return {
             exitCode: 2,
             stderr:
-              "Usage: bb doctrine harvest <propose|verdict|status> [options]\n",
+              "Usage: rift doctrine harvest <propose|verdict|status> [options]\n",
           };
         }
         if (command === "validate") {
@@ -1338,7 +1338,7 @@ export default async function plugin(bb: BbPluginApi) {
             return {
               exitCode: 2,
               stderr:
-                "bb doctrine validate needs an absolute path when the caller's directory is unknown\n",
+                "rift doctrine validate needs an absolute path when the caller's directory is unknown\n",
             };
           }
           const library = await loadDoctrine(
@@ -1382,7 +1382,7 @@ export default async function plugin(bb: BbPluginApi) {
         }
         if (command === "search") {
           const query = argv.slice(1).filter((value) => !value.startsWith("--")).join(" ");
-          if (!query) return { exitCode: 2, stderr: "Usage: bb doctrine search <query> [--all] [--json]\n" };
+          if (!query) return { exitCode: 2, stderr: "Usage: rift doctrine search <query> [--all] [--json]\n" };
           const results = searchDoctrine(library.rules, query, argv.includes("--all"));
           return {
             exitCode: 0,
@@ -1398,7 +1398,7 @@ export default async function plugin(bb: BbPluginApi) {
           if (!rule) return { exitCode: 1, stderr: `Rule not found: ${argv[1] ?? ""}\n` };
           return { exitCode: 0, stdout: json ? `${JSON.stringify(rule, null, 2)}\n` : `${formatRule(rule)}\n` };
         }
-        return { exitCode: 2, stderr: "Usage: bb doctrine <status|search|show|history|harvest|validate>\n" };
+        return { exitCode: 2, stderr: "Usage: rift doctrine <status|search|show|history|harvest|validate>\n" };
       } catch (error) {
         return { exitCode: 1, stderr: `${error instanceof Error ? error.message : String(error)}\n` };
       }
@@ -1419,7 +1419,7 @@ export default async function plugin(bb: BbPluginApi) {
       // A failed query must not leave a stale report standing as current. Rule
       // refreshes still succeed when GitHub's pull-request API is unavailable.
       stalledPublications = [];
-      bb.log.warn(
+      rift.log.warn(
         `doctrine corpus publication check failed: ${
           error instanceof Error ? error.message : String(error)
         }`,
@@ -1430,7 +1430,7 @@ export default async function plugin(bb: BbPluginApi) {
     if (signature !== reportedStalls) {
       reportedStalls = signature;
       for (const stall of stalledPublications) {
-        bb.log.warn(
+        rift.log.warn(
           `doctrine corpus: ${stall.url} has not merged after ${stall.ageHours}h (${stall.mergeStateStatus}); those rules stay unpublished until it does`,
         );
       }
@@ -1452,7 +1452,7 @@ export default async function plugin(bb: BbPluginApi) {
       invalidate();
       await loadCurrentLibrary();
       watchedFingerprint = await safeFingerprint();
-      bb.realtime.publish("rules-changed", {
+      rift.realtime.publish("rules-changed", {
         changed_at: new Date().toISOString(),
       });
     }
@@ -1472,7 +1472,7 @@ export default async function plugin(bb: BbPluginApi) {
   }
 
   /**
-   * Reconcile a webhook missed while bb was offline. Reads at most probe one
+   * Reconcile a webhook missed while rift was offline. Reads at most probe one
    * remote ref per TTL, and only a changed ref downloads git objects.
    */
   async function reconcileCorpusOnRead(): Promise<void> {
@@ -1495,7 +1495,7 @@ export default async function plugin(bb: BbPluginApi) {
           await refreshStalls(source);
         }
       } catch (error) {
-        bb.log.warn(
+        rift.log.warn(
           `doctrine corpus freshness check failed: ${
             error instanceof Error ? error.message : String(error)
           }`,
@@ -1519,20 +1519,20 @@ export default async function plugin(bb: BbPluginApi) {
     try {
       return await watchFingerprint(await doctrineRoot());
     } catch (error) {
-      bb.log.warn(
+      rift.log.warn(
         `doctrine rules unreadable: ${error instanceof Error ? error.message : String(error)}`,
       );
       return "rules:unavailable";
     }
   }
 
-  bb.background.service("rule-watch", {
+  rift.background.service("rule-watch", {
     async start(signal) {
       // Build the read copy before serving anything, rather than a cycle later.
       try {
         await refreshCorpus(signal);
       } catch (error) {
-        bb.log.warn(
+        rift.log.warn(
           `doctrine corpus startup refresh failed: ${
             error instanceof Error ? error.message : String(error)
           }`,
@@ -1540,7 +1540,7 @@ export default async function plugin(bb: BbPluginApi) {
       }
       watchedFingerprint = await safeFingerprint();
       try { await currentLibrary(); } catch (error) {
-        bb.log.warn(error instanceof Error ? error.message : String(error));
+        rift.log.warn(error instanceof Error ? error.message : String(error));
       }
       while (!signal.aborted) {
         await sleep(WATCH_INTERVAL_MS, signal);
@@ -1552,9 +1552,9 @@ export default async function plugin(bb: BbPluginApi) {
           try {
             await currentLibrary();
           } catch (error) {
-            bb.log.warn(error instanceof Error ? error.message : String(error));
+            rift.log.warn(error instanceof Error ? error.message : String(error));
           }
-          bb.realtime.publish("rules-changed", { changed_at: new Date().toISOString() });
+          rift.realtime.publish("rules-changed", { changed_at: new Date().toISOString() });
           drainHarvest();
         }
       }
@@ -1564,13 +1564,13 @@ export default async function plugin(bb: BbPluginApi) {
     if (next.doctrinePath === previous.doctrinePath) return;
     invalidate();
     void currentLibrary().catch((error) => {
-      bb.log.warn(error instanceof Error ? error.message : String(error));
+      rift.log.warn(error instanceof Error ? error.message : String(error));
     });
-    bb.realtime.publish("rules-changed", { changed_at: new Date().toISOString() });
+    rift.realtime.publish("rules-changed", { changed_at: new Date().toISOString() });
   });
 
   void historyMaintenance.prepare().catch((error) => {
-    bb.log.warn(
+    rift.log.warn(
       `could not prepare incremental thread history: ${error instanceof Error ? error.message : String(error)}; the next history scan will retry`,
     );
   });

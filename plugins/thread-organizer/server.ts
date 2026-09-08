@@ -1,4 +1,4 @@
-import { defineRpcContract, type BbPluginApi } from "@get-bb/plugin-sdk";
+import { defineRpcContract, type RiftPluginApi } from "@riftlabs/plugin-sdk";
 import { z } from "zod";
 
 import {
@@ -84,7 +84,7 @@ type Thread = OrganizableThread & {
   id: string;
 };
 type Section = Awaited<
-  ReturnType<BbPluginApi["sdk"]["threadSections"]["list"]>
+  ReturnType<RiftPluginApi["sdk"]["threadSections"]["list"]>
 >[number];
 
 interface ThreadWorkflowState {
@@ -113,7 +113,7 @@ function sectionMatchesName(section: Section, name: string): boolean {
   );
 }
 
-export default async function plugin(bb: BbPluginApi): Promise<void> {
+export default async function plugin(rift: RiftPluginApi): Promise<void> {
   let configSnapshot = cloneWorkflowConfig(DEFAULT_WORKFLOW_CONFIG);
   let disposed = false;
   const reconciliationController = new AbortController();
@@ -131,7 +131,7 @@ export default async function plugin(bb: BbPluginApi): Promise<void> {
     let tail: Promise<void>;
     tail = operation
       .catch((error: unknown) => {
-        bb.log.error(
+        rift.log.error(
           `thread=${threadId} action=reconcile-failed error=${describeError(error)}`,
         );
       })
@@ -153,7 +153,7 @@ export default async function plugin(bb: BbPluginApi): Promise<void> {
     input: WorkflowConfig,
   ): Promise<WorkflowConfig> {
     const config = cloneWorkflowConfig(input);
-    let listed = await bb.sdk.threadSections.list();
+    let listed = await rift.sdk.threadSections.list();
     const claimed = new Set<string>();
 
     for (const stage of config.stages) {
@@ -172,16 +172,16 @@ export default async function plugin(bb: BbPluginApi): Promise<void> {
 
       if (!section) {
         try {
-          const created = await bb.sdk.threadSections.create({
+          const created = await rift.sdk.threadSections.create({
             name: displayName,
           });
           section = created;
           listed = [...listed, section];
-          bb.log.info(
+          rift.log.info(
             `action=workflow-section-created stage=${stage.key} section=${section.id}`,
           );
         } catch (error) {
-          listed = await bb.sdk.threadSections.list();
+          listed = await rift.sdk.threadSections.list();
           section = listed.find((candidate) =>
             sectionMatchesName(candidate, displayName),
           );
@@ -192,7 +192,7 @@ export default async function plugin(bb: BbPluginApi): Promise<void> {
       claimed.add(section.id);
       stage.sectionId = section.id;
       if (section.name !== displayName) {
-        await bb.sdk.threadSections.update({
+        await rift.sdk.threadSections.update({
           id: section.id,
           name: displayName,
         });
@@ -203,30 +203,30 @@ export default async function plugin(bb: BbPluginApi): Promise<void> {
 
   async function loadConfig(): Promise<void> {
     const pendingResult = pendingConfigOperationSchema.safeParse(
-      await bb.storage.kv.get<unknown>(PENDING_CONFIG_OPERATION_KEY),
+      await rift.storage.kv.get<unknown>(PENDING_CONFIG_OPERATION_KEY),
     );
     const pending = pendingResult.success ? pendingResult.data : null;
     const stored = parseWorkflowConfig(
-      await bb.storage.kv.get<unknown>(CONFIG_KEY),
+      await rift.storage.kv.get<unknown>(CONFIG_KEY),
     );
     configSnapshot = await ensureWorkflowSections(
       pending?.nextConfig ??
         stored ??
         cloneWorkflowConfig(DEFAULT_WORKFLOW_CONFIG),
     );
-    await bb.storage.kv.set(CONFIG_KEY, configSnapshot);
+    await rift.storage.kv.set(CONFIG_KEY, configSnapshot);
     if (pending !== null) {
       const resumable = {
         ...pending,
         nextConfig: cloneWorkflowConfig(configSnapshot),
       } satisfies PendingConfigOperation;
-      await bb.storage.kv.set(PENDING_CONFIG_OPERATION_KEY, resumable);
+      await rift.storage.kv.set(PENDING_CONFIG_OPERATION_KEY, resumable);
       await finishConfigOperation(resumable);
     }
-    bb.realtime.publish("workflow-config-changed", {
+    rift.realtime.publish("workflow-config-changed", {
       version: configSnapshot.version,
     });
-    bb.log.info(
+    rift.log.info(
       `Thread Organizer loaded stages=${configSnapshot.stages.length}`,
     );
   }
@@ -239,7 +239,7 @@ export default async function plugin(bb: BbPluginApi): Promise<void> {
   }
 
   async function readThreadState(thread: Thread): Promise<ThreadWorkflowState> {
-    const stored = await bb.storage.kv.get<unknown>(threadStateKey(thread.id));
+    const stored = await rift.storage.kv.get<unknown>(threadStateKey(thread.id));
     if (stored && typeof stored === "object") {
       const value = stored as {
         rememberedStageKey?: unknown;
@@ -260,7 +260,7 @@ export default async function plugin(bb: BbPluginApi): Promise<void> {
       }
     }
 
-    const legacy = await bb.storage.kv.get<unknown>(
+    const legacy = await rift.storage.kv.get<unknown>(
       legacyThreadStateKey(thread.id),
     );
     let remembered = initialRememberedStage(thread);
@@ -280,9 +280,9 @@ export default async function plugin(bb: BbPluginApi): Promise<void> {
       version: 5,
       rememberedStageKey: remembered.key,
     };
-    await bb.storage.kv.set(threadStateKey(thread.id), migrated);
+    await rift.storage.kv.set(threadStateKey(thread.id), migrated);
     if (legacy !== undefined) {
-      await bb.storage.kv.delete(legacyThreadStateKey(thread.id));
+      await rift.storage.kv.delete(legacyThreadStateKey(thread.id));
     }
     return migrated;
   }
@@ -291,14 +291,14 @@ export default async function plugin(bb: BbPluginApi): Promise<void> {
     threadId: string,
     state: ThreadWorkflowState,
   ): Promise<void> {
-    await bb.storage.kv.set(threadStateKey(threadId), state);
+    await rift.storage.kv.set(threadStateKey(threadId), state);
   }
 
   async function reconcileThread(
     threadId: string,
     explicitStageKey?: string,
   ): Promise<void> {
-    const thread = await bb.sdk.threads.get({ threadId });
+    const thread = await rift.sdk.threads.get({ threadId });
     if (!isManageableThread(thread)) return;
     const state = await readThreadState(thread);
     const currentStage = stageForSectionId(configSnapshot, thread.sectionId);
@@ -328,11 +328,11 @@ export default async function plugin(bb: BbPluginApi): Promise<void> {
       throw new Error(`Stage ${destination.key} has no native section.`);
     }
     if (thread.sectionId !== destination.sectionId) {
-      await bb.sdk.threads.update({
+      await rift.sdk.threads.update({
         threadId,
         sectionId: destination.sectionId,
       });
-      bb.log.info(
+      rift.log.info(
         `thread=${threadId} action=section-updated stage=${destination.key}`,
       );
     }
@@ -345,7 +345,7 @@ export default async function plugin(bb: BbPluginApi): Promise<void> {
     const result: string[] = [];
     let offset = 0;
     while (!signal?.aborted) {
-      const page = await bb.sdk.threads.list({
+      const page = await rift.sdk.threads.list({
         archived: false,
         hasParent: false,
         limit: THREAD_LIST_PAGE_SIZE,
@@ -372,14 +372,14 @@ export default async function plugin(bb: BbPluginApi): Promise<void> {
     operation: PendingConfigOperation,
   ): Promise<void> {
     configSnapshot = cloneWorkflowConfig(operation.nextConfig);
-    await bb.storage.kv.set(CONFIG_KEY, configSnapshot);
+    await rift.storage.kv.set(CONFIG_KEY, configSnapshot);
     const removedKeys = new Set(
       operation.removedStages.map((stage) => stage.key),
     );
 
     for (const threadId of await listManageableThreadIds()) {
       await enqueue(threadId, async () => {
-        const thread = await bb.sdk.threads.get({
+        const thread = await rift.sdk.threads.get({
           threadId,
         });
         if (!isManageableThread(thread)) return;
@@ -393,21 +393,21 @@ export default async function plugin(bb: BbPluginApi): Promise<void> {
     }
 
     const existingSectionIds = new Set(
-      (await bb.sdk.threadSections.list()).map((section) => section.id),
+      (await rift.sdk.threadSections.list()).map((section) => section.id),
     );
     for (const stage of operation.removedStages) {
       if (!stage.sectionId || !existingSectionIds.has(stage.sectionId)) {
         continue;
       }
-      await bb.sdk.threadSections.delete({ id: stage.sectionId });
+      await rift.sdk.threadSections.delete({ id: stage.sectionId });
       existingSectionIds.delete(stage.sectionId);
     }
-    await bb.storage.kv.delete(PENDING_CONFIG_OPERATION_KEY);
+    await rift.storage.kv.delete(PENDING_CONFIG_OPERATION_KEY);
   }
 
   async function resumePendingConfigOperation(): Promise<void> {
     const parsed = pendingConfigOperationSchema.safeParse(
-      await bb.storage.kv.get<unknown>(PENDING_CONFIG_OPERATION_KEY),
+      await rift.storage.kv.get<unknown>(PENDING_CONFIG_OPERATION_KEY),
     );
     if (parsed.success) await finishConfigOperation(parsed.data);
   }
@@ -445,10 +445,10 @@ export default async function plugin(bb: BbPluginApi): Promise<void> {
             sectionId,
           })),
         } satisfies PendingConfigOperation;
-        await bb.storage.kv.set(PENDING_CONFIG_OPERATION_KEY, pending);
+        await rift.storage.kv.set(PENDING_CONFIG_OPERATION_KEY, pending);
         await finishConfigOperation(pending);
 
-        bb.realtime.publish("workflow-config-changed", {
+        rift.realtime.publish("workflow-config-changed", {
           version: configSnapshot.version,
         });
         result = cloneWorkflowConfig(configSnapshot);
@@ -461,38 +461,38 @@ export default async function plugin(bb: BbPluginApi): Promise<void> {
   try {
     await loadConfig();
   } catch (error) {
-    bb.log.error(`action=workflow-load-failed error=${describeError(error)}`);
+    rift.log.error(`action=workflow-load-failed error=${describeError(error)}`);
     throw error;
   }
 
-  bb.rpc.register(rpcContract, {
+  rift.rpc.register(rpcContract, {
     getConfig() {
       return cloneWorkflowConfig(configSnapshot);
     },
     saveConfig,
   });
 
-  bb.cli.register({
+  rift.cli.register({
     name: "organizer",
     summary: "Move the current thread to a workflow stage",
     commands: [
       {
         name: "phase",
         summary: "Apply a workflow stage",
-        usage: "bb organizer phase <stage-key>",
+        usage: "rift organizer phase <stage-key>",
       },
     ],
     async run(argv, context) {
       if (argv[0] !== "phase" || !argv[1]) {
         return {
           exitCode: 2,
-          stderr: "Usage: bb organizer phase <stage-key>\n",
+          stderr: "Usage: rift organizer phase <stage-key>\n",
         };
       }
       if (!context.threadId) {
         return {
           exitCode: 2,
-          stderr: "Run inside a bb thread so BB_THREAD_ID is available.\n",
+          stderr: "Run inside a rift thread so RIFT_THREAD_ID is available.\n",
         };
       }
       const key = argv[1].trim().toLocaleLowerCase();
@@ -509,7 +509,7 @@ export default async function plugin(bb: BbPluginApi): Promise<void> {
           stderr: `Unknown or system-managed stage: ${argv[1]}\nAvailable: ${available}\n`,
         };
       }
-      const thread = await bb.sdk.threads.get({
+      const thread = await rift.sdk.threads.get({
         threadId: context.threadId,
       });
       if (!isManageableThread(thread)) {
@@ -530,12 +530,12 @@ export default async function plugin(bb: BbPluginApi): Promise<void> {
     },
   });
 
-  bb.agents.configure(({ thread, origin }) => {
+  rift.agents.configure(({ thread, origin }) => {
     if (
       thread.parentThreadId !== null ||
       thread.sourceThreadId !== null ||
       origin.kind !== null ||
-      origin.pluginId === bb.pluginId
+      origin.pluginId === rift.pluginId
     ) {
       return { tools: [], skills: [] };
     }
@@ -556,20 +556,20 @@ export default async function plugin(bb: BbPluginApi): Promise<void> {
     "thread.idle",
     "thread.failed",
   ] as const) {
-    bb.events.on(event, ({ thread }) =>
+    rift.events.on(event, ({ thread }) =>
       schedule(thread.id, () => reconcileThread(thread.id)),
     );
   }
   for (const event of ["thread.archived", "thread.deleted"] as const) {
-    bb.events.on(event, ({ thread }) =>
+    rift.events.on(event, ({ thread }) =>
       schedule(thread.id, async () => {
-        await bb.storage.kv.delete(threadStateKey(thread.id));
-        await bb.storage.kv.delete(legacyThreadStateKey(thread.id));
+        await rift.storage.kv.delete(threadStateKey(thread.id));
+        await rift.storage.kv.delete(legacyThreadStateKey(thread.id));
       }),
     );
   }
 
-  const unsubscribe = bb.sdk.subscribe({
+  const unsubscribe = rift.sdk.subscribe({
     event: "thread:changed",
     callback(event) {
       if (!event.id) return;
@@ -577,7 +577,7 @@ export default async function plugin(bb: BbPluginApi): Promise<void> {
       const readStateChanged = event.changes.includes("read-state-changed");
       void schedule(threadId, async () => {
         if (readStateChanged) {
-          const thread = await bb.sdk.threads.get({ threadId });
+          const thread = await rift.sdk.threads.get({ threadId });
           if (!isUnreadThread(thread)) return;
         }
         await reconcileThread(threadId);
@@ -585,7 +585,7 @@ export default async function plugin(bb: BbPluginApi): Promise<void> {
     },
   });
 
-  bb.onDispose(async () => {
+  rift.onDispose(async () => {
     disposed = true;
     reconciliationController.abort();
     unsubscribe();
@@ -600,7 +600,7 @@ export default async function plugin(bb: BbPluginApi): Promise<void> {
     reconciliationController.signal,
   ).catch((error: unknown) => {
     if (!reconciliationController.signal.aborted) {
-      bb.log.error(
+      rift.log.error(
         `action=workflow-reconciliation-failed error=${describeError(error)}`,
       );
     }

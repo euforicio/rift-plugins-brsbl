@@ -234,6 +234,16 @@ describe("thread placement precedence", () => {
     ).toBe("building");
   });
 
+  it("keeps work that has not started in its workflow stage", () => {
+    expect(
+      core.placementForThread(
+        config,
+        thread({ status: "pending", lastReadAt: 0, latestAttentionAt: 10 }),
+        "planning",
+      ).key,
+    ).toBe("planning");
+  });
+
   it("keeps idle unread work and existing Inbox placements in Inbox", () => {
     expect(
       core.placementForThread(
@@ -295,7 +305,7 @@ describe("agent guidance", () => {
       `| handoff | Handoff | ${core.HANDOFF_RULE} |`,
     );
     expect(instructions).not.toContain("Agent policy");
-    expect(instructions).not.toContain("bb organizer phase inbox");
+    expect(instructions).not.toContain("rift organizer phase inbox");
   });
 
   it("contains no classifier or prompt-title derivation surface", () => {

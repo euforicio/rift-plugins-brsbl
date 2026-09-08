@@ -1,11 +1,10 @@
 {
-  "package": "@get-bb/plugin-sdk@0.4.8",
-  "registryTarball": "https://registry.npmjs.org/@get-bb/plugin-sdk/-/plugin-sdk-0.4.8.tgz",
-  "registryIntegrity": "sha512-C2gC0OMaAQmndGozFlctmgYwa5WbvhVK389r1KOfjuRpGME3axTQ6p6gq1UHw66y19bIX7VGzEwxvxNILReX0A==",
-  "registryShasum": "8322e2f82a7ca20643fe8145a18fd3d38901a194",
-  "sourceRepository": "https://github.com/get-bb/bb",
-  "sourceCommit": "b33abbff098ac4c857578e7350d492dcaa65d489",
+  "package": "@riftlabs/plugin-sdk@0.4.48",
+  "sourceRepository": "https://github.com/euforicio/rift-app",
+  "sourceCommit": "edc8f6fc3d35f18ac267c6ece44ca57df4074577",
+  "sourceState": "Real artifact supplied by Rift app migration and validated against committed source; package is not published to npm",
   "sourcePath": "packages/plugin-sdk",
-  "archive": "get-bb-plugin-sdk-0.4.8.tgz",
-  "sha256": "0b9221e6ba0f92205bf8414ad62e1c3608ddf1b6cd60e5a90b1a52b1e891a936"
+  "archive": "riftlabs-plugin-sdk-0.4.48.tgz",
+  "sha256": "64a9dd34e7d811bb4dbfb8cc0d846a81be45c4de9825a68a2d8e9c50b20b9d7e",
+  "sha1": "91b55662887614875ae0554b59741bbc2272c3c3"
 }

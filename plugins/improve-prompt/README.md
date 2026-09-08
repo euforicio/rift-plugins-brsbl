@@ -1,15 +1,15 @@
 # Prompt Improver
 
-Improve Prompt gives a rough bb composer draft one focused editing pass. It returns a clearer, context-complete request for you to review, without sending anything.
+Improve Prompt gives a rough Rift composer draft one focused editing pass. It returns a clearer, context-complete request for you to review, without sending anything.
 
-![Improve Prompt working on a draft in the bb composer](docs/screenshot-running.png)
+![Improve Prompt working on a draft in the Rift composer](docs/screenshot-running.png)
 
-![The improved prompt returned for review in the bb composer](docs/screenshot-result.png)
+![The improved prompt returned for review in the Rift composer](docs/screenshot-result.png)
 
 ## Install
 
 ```bash
-bb plugin install git:https://github.com/brsbl/bb-plugins.git@plugin/improve-prompt --yes
+rift plugin install "path:$PWD/plugins/improve-prompt" --yes
 ```
 
 ## Use
@@ -24,7 +24,7 @@ The behavior comes from the installed `prompt-shaper` skill; the stable plugin I
 
 The plugin sends only the current draft to a standalone hidden helper thread. The helper applies the `prompt-shaper` skill to rewrite the draft into one paste-ready prompt, and the result replaces the draft in place. The helper may reuse the source thread's environment and execution settings, but it never reads or inherits that thread's transcript.
 
-bb gives a personal skill in `~/.bb/skills/prompt-shaper/` precedence over this plugin's bundled default, so you can tune the rewriting guidance without forking the plugin.
+Rift gives a personal skill in `~/.rift-app/skills/prompt-shaper/` precedence over this plugin's bundled default, so you can tune the rewriting guidance without forking the plugin.
 
 The UI is registered through `app.composer.customize(...)` as the `improve` composer action. Its component uses the context-bound `useComposer()` and `useComposerView()` hooks, so thread, queued-message, side-chat, and new-thread drafts are handled by their mounted composer instance.
 
@@ -34,6 +34,6 @@ From the monorepo root:
 
 ```bash
 npm ci
-npm run check --workspace=bb-plugin-prompt-shaper
-bb plugin install "path:$PWD/plugins/improve-prompt" --yes
+npm run check --workspace=rift-plugin-prompt-shaper
+rift plugin install "path:$PWD/plugins/improve-prompt" --yes
 ```

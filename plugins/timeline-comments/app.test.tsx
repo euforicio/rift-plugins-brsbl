@@ -1,12 +1,12 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { PluginThreadPanelProps } from "@get-bb/plugin-sdk/app";
+import type { PluginThreadPanelProps } from "@riftlabs/plugin-sdk/app";
 import {
   loadPluginApp,
   mountPluginContentScripts,
   renderSlot,
-} from "@get-bb/plugin-sdk/testing/app";
+} from "@riftlabs/plugin-sdk/testing/app";
 import {
   installTimelineCommentsController,
   requestTimelineCommentHandoff,
@@ -563,12 +563,12 @@ describe("timeline comments app", () => {
       pluginId: "timeline-comments",
     });
     expect(
-      document.querySelectorAll("[data-bb-timeline-comments-owned]"),
+      document.querySelectorAll("[data-rift-timeline-comments-owned]"),
     ).toHaveLength(3);
     await scripts.lifecycle.dispose();
     await scripts.lifecycle.dispose();
     expect(
-      document.querySelectorAll("[data-bb-timeline-comments-owned]"),
+      document.querySelectorAll("[data-rift-timeline-comments-owned]"),
     ).toHaveLength(0);
   });
 

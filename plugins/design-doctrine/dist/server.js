@@ -14710,7 +14710,7 @@ async function publish(source, directory, signal) {
         "--title",
         "doctrine: publish harvested rules",
         "--body",
-        "Rules harvested from bb thread feedback by the Design Doctrine plugin.\n\nMerges itself once the repository's required checks pass."
+        "Rules harvested from rift thread feedback by the Design Doctrine plugin.\n\nMerges itself once the repository's required checks pass."
       ],
       { cwd: directory, encoding: "utf8", timeout: COMMAND_TIMEOUT_MS, signal }
     );
@@ -14804,16 +14804,17 @@ function clipUtf8(value, maxBytes) {
 }
 function isDirectUserMessage(text) {
   const stripped = text.trimStart();
-  return !(stripped.startsWith("[bb system]") || stripped.startsWith("[bb message") || stripped.startsWith("<bb system"));
+  return !(stripped.startsWith("[rift system]") || stripped.startsWith("[rift message") || stripped.startsWith("<rift system") || // Existing timelines can contain messages written before the product rename.
+  stripped.startsWith("[bb system]") || stripped.startsWith("[bb message") || stripped.startsWith("<bb system"));
 }
 function titleFor(thread) {
   return thread.title ?? thread.titleFallback ?? "";
 }
-async function listAllThreads(bb, signal) {
+async function listAllThreads(rift, signal) {
   const byId = /* @__PURE__ */ new Map();
   for (const archived of [false, true]) {
     for (let offset = 0; ; offset += THREAD_PAGE_SIZE) {
-      const page = await bb.sdk.threads.list({
+      const page = await rift.sdk.threads.list({
         archived,
         limit: THREAD_PAGE_SIZE,
         offset,
@@ -14857,7 +14858,7 @@ function messageFromRow(row, maxMessageBytes) {
     truncated: text !== row.text
   };
 }
-async function loadEpisode(bb, state, observedThreadUpdatedAt, maxMessageBytes, signal) {
+async function loadEpisode(rift, state, observedThreadUpdatedAt, maxMessageBytes, signal) {
   const rows = /* @__PURE__ */ new Map();
   const startedFromHydration = state.hydration_before_anchor_seq !== null;
   let beforeAnchorSeq = state.hydration_before_anchor_seq ?? void 0;
@@ -14868,7 +14869,7 @@ async function loadEpisode(bb, state, observedThreadUpdatedAt, maxMessageBytes, 
   let overlapCursor = null;
   for (let pageIndex = 0; pageIndex < TIMELINE_PAGE_LIMIT; pageIndex += 1) {
     overlapCursor = beforeAnchorSeq === void 0 ? null : { anchorSeq: beforeAnchorSeq, anchorId: beforeAnchorId };
-    const timeline = await bb.sdk.threads.timeline({
+    const timeline = await rift.sdk.threads.timeline({
       threadId: state.thread_id,
       includeNestedRows: "false",
       segmentLimit: TIMELINE_SEGMENT_LIMIT,
@@ -14933,9 +14934,9 @@ async function loadEpisode(bb, state, observedThreadUpdatedAt, maxMessageBytes, 
     retrievalDeferred: false
   };
 }
-function createThreadHistoryMaintenance(bb, options = {}) {
-  const db = bb.storage.database();
-  bb.storage.migrate(db, [
+function createThreadHistoryMaintenance(rift, options = {}) {
+  const db = rift.storage.database();
+  rift.storage.migrate(db, [
     `CREATE TABLE IF NOT EXISTS thread_history_meta (
       key TEXT PRIMARY KEY,
       integer_value INTEGER
@@ -15035,13 +15036,13 @@ function createThreadHistoryMaintenance(bb, options = {}) {
     }
     let legacyAt = null;
     for (const key of options.legacyStateKeys ?? []) {
-      const value = await bb.storage.kv.get(key);
+      const value = await rift.storage.kv.get(key);
       const candidate = legacyCursorAt(value, now);
       if (candidate !== null && (legacyAt === null || candidate > legacyAt)) {
         legacyAt = candidate;
       }
     }
-    const threads = await listAllThreads(bb, signal);
+    const threads = await listAllThreads(rift, signal);
     const insert = db.prepare(
       `INSERT OR IGNORE INTO thread_history_threads (
         thread_id, project_id, title, checkpoint_sequence, checkpoint_at,
@@ -15068,13 +15069,13 @@ function createThreadHistoryMaintenance(bb, options = {}) {
     });
     write();
     for (const key of options.legacyStateKeys ?? []) {
-      await bb.storage.kv.delete(key);
+      await rift.storage.kv.delete(key);
     }
     startupReconcileRequired = false;
     return { established: threads.length > 0, reconciled: true };
   }
   async function reconcile(now, signal) {
-    const threads = await listAllThreads(bb, signal);
+    const threads = await listAllThreads(rift, signal);
     const upsert = db.prepare(
       `INSERT INTO thread_history_threads (
         thread_id, project_id, title, checkpoint_sequence, checkpoint_at,
@@ -15342,7 +15343,7 @@ function createThreadHistoryMaintenance(bb, options = {}) {
             candidates.slice(start, start + TIMELINE_CONCURRENCY).map(async (candidate) => {
               let before;
               try {
-                before = await bb.sdk.threads.get({
+                before = await rift.sdk.threads.get({
                   threadId: candidate.thread_id,
                   signal: scanOptions.signal
                 });
@@ -15364,7 +15365,7 @@ function createThreadHistoryMaintenance(bb, options = {}) {
               let episode;
               try {
                 episode = await loadEpisode(
-                  bb,
+                  rift,
                   candidate,
                   before.updatedAt,
                   scanOptions.maxMessageBytes,
@@ -15381,7 +15382,7 @@ function createThreadHistoryMaintenance(bb, options = {}) {
               }
               let after;
               try {
-                after = await bb.sdk.threads.get({
+                after = await rift.sdk.threads.get({
                   threadId: candidate.thread_id,
                   signal: scanOptions.signal
                 });
@@ -15820,7 +15821,7 @@ function normalizeLegacyState(value) {
 function isMissingFile(error51) {
   return typeof error51 === "object" && error51 !== null && "code" in error51 && error51.code === "ENOENT";
 }
-async function importLegacyStateFile(bb, pluginRoot) {
+async function importLegacyStateFile(rift, pluginRoot) {
   const statePath = join2(pluginRoot, LEGACY_HISTORY_STATE_PATH);
   let source;
   try {
@@ -15830,12 +15831,12 @@ async function importLegacyStateFile(bb, pluginRoot) {
     throw error51;
   }
   const state = normalizeLegacyState(JSON.parse(source));
-  await bb.storage.kv.set(LEGACY_HISTORY_STATE_KEY, state);
+  await rift.storage.kv.set(LEGACY_HISTORY_STATE_KEY, state);
   return statePath;
 }
-async function removeMigratedStateFile(bb, statePath) {
+async function removeMigratedStateFile(rift, statePath) {
   if (statePath === null) return;
-  if (await bb.storage.kv.get(LEGACY_HISTORY_STATE_KEY) !== void 0) {
+  if (await rift.storage.kv.get(LEGACY_HISTORY_STATE_KEY) !== void 0) {
     return;
   }
   try {
@@ -15844,17 +15845,17 @@ async function removeMigratedStateFile(bb, statePath) {
     if (!isMissingFile(error51)) throw error51;
   }
 }
-function createHistoryMaintenance(bb, installedPluginRoot, skipEpisode) {
-  const history = createThreadHistoryMaintenance(bb, {
+function createHistoryMaintenance(rift, installedPluginRoot, skipEpisode) {
+  const history = createThreadHistoryMaintenance(rift, {
     legacyStateKeys: [LEGACY_HISTORY_STATE_KEY],
     skipEpisode
   });
   let migrationQueue = Promise.resolve();
   function withLegacyStateMigration(operation) {
     const result = migrationQueue.then(async () => {
-      const statePath = await importLegacyStateFile(bb, installedPluginRoot);
+      const statePath = await importLegacyStateFile(rift, installedPluginRoot);
       const output = await operation();
-      await removeMigratedStateFile(bb, statePath);
+      await removeMigratedStateFile(rift, statePath);
       return output;
     });
     migrationQueue = result.then(
@@ -16085,7 +16086,7 @@ function isHarvestableThread(thread) {
 }
 function createHarvest(dependencies) {
   const {
-    bb,
+    rift,
     openPublication: openPublication2,
     listRuleIds,
     describeExistingRules,
@@ -16096,7 +16097,7 @@ function createHarvest(dependencies) {
   let database = null;
   function db() {
     if (!database) {
-      database = bb.storage.database();
+      database = rift.storage.database();
       for (const statement of HARVEST_SCHEMA) database.exec(statement);
     }
     return database;
@@ -16357,7 +16358,7 @@ function createHarvest(dependencies) {
     return [
       "You are the Design Doctrine harvester. Work silently; nobody is watching this thread.",
       "",
-      `Read the complete history of bb thread ${threadId} with \`bb thread log ${threadId} --format minimal\`,`,
+      `Read the complete history of rift thread ${threadId} with \`rift thread log ${threadId} --format minimal\`,`,
       "paginating with `--format json --limit 500 --after-seq <seq>` if the minimal timeline is windowed.",
       "",
       "Decide whether that thread contains durable product/UX/UI/visual-design/design-system/AI-interaction",
@@ -16371,7 +16372,7 @@ function createHarvest(dependencies) {
       "",
       "Report exactly once, even when you found nothing, by running:",
       "",
-      `  bb doctrine harvest propose --thread ${threadId} --token ${token} --json '<json-array>'`,
+      `  rift doctrine harvest propose --thread ${threadId} --token ${token} --json '<json-array>'`,
       "",
       "The array is empty when nothing is warranted. Each element must be an object with:",
       "title, statement, kind, strength, confidence, domain, products, activities, artifacts,",
@@ -16412,20 +16413,20 @@ function createHarvest(dependencies) {
       "",
       "Report exactly once by running:",
       "",
-      `  bb doctrine harvest verdict --proposal ${stored.id} --token ${token} --approve --reason '<why>'`,
+      `  rift doctrine harvest verdict --proposal ${stored.id} --token ${token} --approve --reason '<why>'`,
       "or",
-      `  bb doctrine harvest verdict --proposal ${stored.id} --token ${token} --reject --reason '<why>'`
+      `  rift doctrine harvest verdict --proposal ${stored.id} --token ${token} --reject --reason '<why>'`
     ].join("\n");
   }
   async function harvestThread(threadId, projectId) {
     const publication = await openPublication2().catch((error51) => {
-      bb.log.warn(
+      rift.log.warn(
         `doctrine harvest: no publication checkout available: ${error51 instanceof Error ? error51.message : String(error51)}`
       );
       return null;
     });
     if (!publication) {
-      bb.log.warn(
+      rift.log.warn(
         "doctrine harvest: nowhere to publish rules; leaving the thread queued"
       );
       return;
@@ -16437,19 +16438,19 @@ function createHarvest(dependencies) {
       });
     } finally {
       const url2 = await publication.finish(committed).catch((error51) => {
-        bb.log.warn(
+        rift.log.warn(
           `doctrine harvest: publishing the batch failed, it will be retried: ${error51 instanceof Error ? error51.message : String(error51)}`
         );
         return null;
       });
-      if (url2) bb.log.info(`doctrine harvest: published ${url2}`);
+      if (url2) rift.log.info(`doctrine harvest: published ${url2}`);
     }
   }
   async function harvestThreadInto(doctrineRoot, threadId, projectId, markCommitted) {
     try {
       await ensureRuleTreeClean(doctrineRoot);
     } catch (error51) {
-      bb.log.warn(
+      rift.log.warn(
         `doctrine harvest: waiting for a clean maintenance checkout: ${error51 instanceof Error ? error51.message : String(error51)}`
       );
       return;
@@ -16467,14 +16468,14 @@ function createHarvest(dependencies) {
           prompt: harvesterPrompt(threadId, token)
         });
       } catch (error51) {
-        bb.log.warn(
+        rift.log.warn(
           `doctrine harvest: harvester failed for ${threadId}: ${error51 instanceof Error ? error51.message : String(error51)}`
         );
         return;
       }
       if (!isPending(threadId)) return;
       if (!hasHarvesterReport(threadId)) {
-        bb.log.warn(
+        rift.log.warn(
           `doctrine harvest: harvester returned without reporting for ${threadId}`
         );
         return;
@@ -16484,7 +16485,7 @@ function createHarvest(dependencies) {
       `SELECT * FROM harvest_proposals WHERE thread_id = ? ORDER BY id`
     ).all(threadId).map((row) => readProposal(row));
     if (allProposals().length === 0) {
-      bb.log.info(`doctrine harvest: no proposals from ${threadId}`);
+      rift.log.info(`doctrine harvest: no proposals from ${threadId}`);
       markProcessed(threadId, "no-proposals");
       return;
     }
@@ -16528,7 +16529,7 @@ function createHarvest(dependencies) {
           const reason = "proposal failed safety validation";
           setSystemVerdict(stored.id, "rejected", reason);
           reviewedIds.push(stored.id);
-          bb.log.warn(
+          rift.log.warn(
             `doctrine harvest: rejected proposal ${stored.id} from ${threadId} \u2014 ${reason}`
           );
           continue;
@@ -16538,7 +16539,7 @@ function createHarvest(dependencies) {
           const reason = `duplicate of an already-approved proposal (${duplicate.writtenPath})`;
           setSystemVerdict(stored.id, "rejected", reason);
           reviewedIds.push(stored.id);
-          bb.log.info(
+          rift.log.info(
             `doctrine harvest: rejected proposal ${stored.id} from ${threadId} \u2014 ${reason}`
           );
           continue;
@@ -16562,7 +16563,7 @@ function createHarvest(dependencies) {
           if (!isPending(threadId)) return;
           const reason = "reviewer agent failed before recording a verdict";
           recordVerdict(stored.id, token, "rejected", reason);
-          bb.log.warn(
+          rift.log.warn(
             `doctrine harvest: rejected proposal ${stored.id} from ${threadId} \u2014 ${reason}: ${error51 instanceof Error ? error51.message : String(error51)}`
           );
           continue;
@@ -16573,13 +16574,13 @@ function createHarvest(dependencies) {
         if (!verdict || verdict.verdict === null) {
           const reason = "reviewer returned no verdict";
           recordVerdict(stored.id, token, "rejected", reason);
-          bb.log.warn(
+          rift.log.warn(
             `doctrine harvest: rejected proposal ${stored.id} from ${threadId} \u2014 ${reason}`
           );
           continue;
         }
         if (verdict.verdict === "rejected") {
-          bb.log.info(
+          rift.log.info(
             `doctrine harvest: rejected proposal ${stored.id} from ${threadId} \u2014 ${verdict.reason ?? "no reason given"}`
           );
           continue;
@@ -16590,7 +16591,7 @@ function createHarvest(dependencies) {
         if (approvedCount > HARVEST_RULE_FILE_LIMIT) {
           const reason = `archive harvests are limited to ${HARVEST_RULE_FILE_LIMIT} rule files`;
           setSystemVerdict(stored.id, "rejected", reason);
-          bb.log.warn(
+          rift.log.warn(
             `doctrine harvest: rejected proposal ${stored.id} from ${threadId} \u2014 ${reason}`
           );
         }
@@ -16618,7 +16619,7 @@ function createHarvest(dependencies) {
       if (committed === "done" || committed === "waiting") return;
       resetReviewDecisions(threadId, reviewedIds);
     }
-    bb.log.warn(
+    rift.log.warn(
       `doctrine harvest: maintenance checkout kept changing for ${threadId}; review remains pending`
     );
     async function commitApproved(root, pendingThreadId, catalogHead, approvedProposals) {
@@ -16646,7 +16647,7 @@ function createHarvest(dependencies) {
         );
         for (const draft of drafts) {
           setWrittenPath(draft.stored.id, draft.file.relativePath);
-          bb.log.info(
+          rift.log.info(
             `doctrine harvest: committed ${draft.file.relativePath} from ${pendingThreadId} \u2014 ${draft.stored.reason ?? "approved"}`
           );
         }
@@ -16661,7 +16662,7 @@ function createHarvest(dependencies) {
           );
           return "retry";
         }
-        bb.log.warn(
+        rift.log.warn(
           `doctrine harvest: approved rule batch for ${pendingThreadId} remains pending: ${error51 instanceof Error ? error51.message : String(error51)}`
         );
         return "waiting";
@@ -17392,8 +17393,8 @@ function requiredOption(argv, name) {
   if (value === void 0) throw new Error(`${name} is required`);
   return value;
 }
-async function plugin(bb) {
-  const settings = bb.settings.define({
+async function plugin(rift) {
+  const settings = rift.settings.define({
     doctrinePath: {
       type: "string",
       label: "Doctrine repository",
@@ -17425,7 +17426,7 @@ async function plugin(bb) {
     const repositoryRoot = await resolveRepositoryRoot(DEFAULT_DOCTRINE_PATH);
     if (!repositoryRoot) return null;
     githubRepository = await resolveGitHubRepository(repositoryRoot);
-    const dataDirectory = pluginDataDirectory(bb.storage.database().name);
+    const dataDirectory = pluginDataDirectory(rift.storage.database().name);
     const readPath = join4(dataDirectory, CORPUS_DIRECTORY);
     if (!isAbsolute(readPath) || !relative(repositoryRoot, readPath).startsWith("..")) {
       return null;
@@ -17483,18 +17484,18 @@ async function plugin(bb) {
     return loadCurrentLibrary();
   }
   const historyMaintenance = createHistoryMaintenance(
-    bb,
+    rift,
     DEFAULT_DOCTRINE_PATH,
     (episode) => {
       const reason = skipEpisodeReason(episode);
       if (reason) {
-        bb.log.info(`doctrine history: skipped ${episode.threadId} \u2014 ${reason}`);
+        rift.log.info(`doctrine history: skipped ${episode.threadId} \u2014 ${reason}`);
       }
       return reason;
     }
   );
   const harvest = createHarvest({
-    bb,
+    rift,
     openPublication: openRulePublication,
     listRuleIds: async (doctrineRoot2) => (await loadDoctrine(doctrineRoot2)).rules.map((rule) => rule.id),
     describeExistingRules: async (doctrineRoot2) => (await loadDoctrine(doctrineRoot2)).rules.map(
@@ -17504,20 +17505,20 @@ async function plugin(bb) {
       await loadDoctrine(doctrineRoot2);
     },
     async runAgent({ projectId, title, prompt }) {
-      const spawned = await bb.sdk.threads.spawn({
+      const spawned = await rift.sdk.threads.spawn({
         projectId,
         // Hidden so the harvest never interrupts the user. `spawn` attributes
         // the thread to this plugin, which also keeps it out of its own queue.
         visibility: "hidden",
-        // Both agents read the thread through bb's API and report through the
+        // Both agents read the thread through rift's API and report through the
         // doctrine CLI; neither opens a file. Reusing the archived thread's
-        // environment only tied the harvest to workspaces bb had already
+        // environment only tied the harvest to workspaces rift had already
         // destroyed.
         environment: { type: "host", workspace: { type: "unmanaged", path: null } },
         title,
         prompt
       });
-      await bb.sdk.threads.wait({
+      await rift.sdk.threads.wait({
         threadId: spawned.id,
         status: "idle",
         timeoutMs: HARVEST_AGENT_TIMEOUT_MS
@@ -17534,34 +17535,34 @@ async function plugin(bb) {
         await harvest.harvestThread(threadId, projectId);
       }
     }).catch((error51) => {
-      bb.log.warn(
+      rift.log.warn(
         `doctrine harvest: drain failed: ${error51 instanceof Error ? error51.message : String(error51)}`
       );
     });
   }
-  bb.events.on("thread.created", async ({ thread }) => {
+  rift.events.on("thread.created", async ({ thread }) => {
     await historyMaintenance.observeCreated(thread);
   });
-  bb.events.on("thread.idle", async ({ thread }) => {
+  rift.events.on("thread.idle", async ({ thread }) => {
     await historyMaintenance.observeThread(thread);
   });
-  bb.events.on("thread.archived", ({ thread }) => {
+  rift.events.on("thread.archived", ({ thread }) => {
     try {
       const queued = harvest.enqueue(thread);
       if (!queued && !harvest.isPending(thread.id)) return;
       drainHarvest();
     } catch (error51) {
-      bb.log.warn(
+      rift.log.warn(
         `doctrine harvest: could not queue ${thread.id}: ${error51 instanceof Error ? error51.message : String(error51)}`
       );
     }
   });
-  bb.events.on("thread.deleted", async ({ thread }) => {
+  rift.events.on("thread.deleted", async ({ thread }) => {
     harvest.cancel(thread.id);
     await historyMaintenance.forgetThread(thread.id);
   });
   drainHarvest();
-  bb.http.route(
+  rift.http.route(
     "POST",
     "/github",
     async (context) => {
@@ -17622,7 +17623,7 @@ async function plugin(bb) {
         }
         return context.json({ ok: true, changed }, 200);
       } catch (error51) {
-        bb.log.warn(
+        rift.log.warn(
           `doctrine corpus webhook refresh failed: ${error51 instanceof Error ? error51.message : String(error51)}`
         );
         return context.json({ ok: false, error: "Corpus refresh failed" }, 500);
@@ -17630,8 +17631,8 @@ async function plugin(bb) {
     },
     { auth: "none" }
   );
-  bb.rpc.register(rpcContract, { getLibrary: currentLibrary });
-  bb.agents.registerTool({
+  rift.rpc.register(rpcContract, { getLibrary: currentLibrary });
+  rift.agents.registerTool({
     name: "design_doctrine_search",
     description: "Search the user's active Design Doctrine rules for a product, UX, UI, visual-design, design-system, or AI-interaction task.",
     instructions: "Use this when automatic Design Doctrine guidance does not cover the exact task. Apply only rules whose Use when fits; current user instructions and hard constraints outrank doctrine.",
@@ -17649,9 +17650,9 @@ async function plugin(bb) {
   try {
     await currentLibrary();
   } catch (error51) {
-    bb.log.warn(error51 instanceof Error ? error51.message : String(error51));
+    rift.log.warn(error51 instanceof Error ? error51.message : String(error51));
   }
-  bb.agents.configure(({ thread }) => {
+  rift.agents.configure(({ thread }) => {
     const instructions = automaticDoctrineGuidance(
       automaticRules,
       thread.title
@@ -17662,16 +17663,16 @@ async function plugin(bb) {
       ...instructions ? { instructions } : {}
     };
   });
-  bb.cli.register({
+  rift.cli.register({
     name: "doctrine",
     summary: "Browse and search product-design rules",
     commands: [
-      { name: "status", summary: "Show rule and Git status", usage: "bb doctrine status [--json]" },
-      { name: "search", summary: "Search current rules", usage: "bb doctrine search <query> [--all] [--json]" },
-      { name: "show", summary: "Show one rule", usage: "bb doctrine show <rule-id> [--json]" },
-      { name: "history", summary: "Scan bb thread history through the SDK", usage: "bb doctrine history <scan|advance|release> [options]" },
-      { name: "harvest", summary: "Report archive-harvest proposals and verdicts", usage: "bb doctrine harvest <propose|verdict|status> [options]" },
-      { name: "validate", summary: "Validate the personalized rule corpus", usage: "bb doctrine validate" }
+      { name: "status", summary: "Show rule and Git status", usage: "rift doctrine status [--json]" },
+      { name: "search", summary: "Search current rules", usage: "rift doctrine search <query> [--all] [--json]" },
+      { name: "show", summary: "Show one rule", usage: "rift doctrine show <rule-id> [--json]" },
+      { name: "history", summary: "Scan rift thread history through the SDK", usage: "rift doctrine history <scan|advance|release> [options]" },
+      { name: "harvest", summary: "Report archive-harvest proposals and verdicts", usage: "rift doctrine harvest <propose|verdict|status> [options]" },
+      { name: "validate", summary: "Validate the personalized rule corpus", usage: "rift doctrine validate" }
     ],
     async run(argv, context) {
       try {
@@ -17729,7 +17730,7 @@ async function plugin(bb) {
           }
           return {
             exitCode: 2,
-            stderr: "Usage: bb doctrine history <scan|advance|release> [options]\n"
+            stderr: "Usage: rift doctrine history <scan|advance|release> [options]\n"
           };
         }
         if (command === "harvest") {
@@ -17802,7 +17803,7 @@ async function plugin(bb) {
           }
           return {
             exitCode: 2,
-            stderr: "Usage: bb doctrine harvest <propose|verdict|status> [options]\n"
+            stderr: "Usage: rift doctrine harvest <propose|verdict|status> [options]\n"
           };
         }
         if (command === "validate") {
@@ -17810,7 +17811,7 @@ async function plugin(bb) {
           if (target && !isAbsolute(expandPath(target)) && !context.cwd) {
             return {
               exitCode: 2,
-              stderr: "bb doctrine validate needs an absolute path when the caller's directory is unknown\n"
+              stderr: "rift doctrine validate needs an absolute path when the caller's directory is unknown\n"
             };
           }
           const library2 = await loadDoctrine(
@@ -17852,7 +17853,7 @@ ${stalledPublications.map(
         }
         if (command === "search") {
           const query = argv.slice(1).filter((value) => !value.startsWith("--")).join(" ");
-          if (!query) return { exitCode: 2, stderr: "Usage: bb doctrine search <query> [--all] [--json]\n" };
+          if (!query) return { exitCode: 2, stderr: "Usage: rift doctrine search <query> [--all] [--json]\n" };
           const results = searchDoctrine(library.rules, query, argv.includes("--all"));
           return {
             exitCode: 0,
@@ -17870,7 +17871,7 @@ ${stalledPublications.map(
 ` : `${formatRule(rule)}
 ` };
         }
-        return { exitCode: 2, stderr: "Usage: bb doctrine <status|search|show|history|harvest|validate>\n" };
+        return { exitCode: 2, stderr: "Usage: rift doctrine <status|search|show|history|harvest|validate>\n" };
       } catch (error51) {
         return { exitCode: 1, stderr: `${error51 instanceof Error ? error51.message : String(error51)}
 ` };
@@ -17886,7 +17887,7 @@ ${stalledPublications.map(
       );
     } catch (error51) {
       stalledPublications = [];
-      bb.log.warn(
+      rift.log.warn(
         `doctrine corpus publication check failed: ${error51 instanceof Error ? error51.message : String(error51)}`
       );
     }
@@ -17894,7 +17895,7 @@ ${stalledPublications.map(
     if (signature !== reportedStalls) {
       reportedStalls = signature;
       for (const stall of stalledPublications) {
-        bb.log.warn(
+        rift.log.warn(
           `doctrine corpus: ${stall.url} has not merged after ${stall.ageHours}h (${stall.mergeStateStatus}); those rules stay unpublished until it does`
         );
       }
@@ -17911,7 +17912,7 @@ ${stalledPublications.map(
       invalidate();
       await loadCurrentLibrary();
       watchedFingerprint = await safeFingerprint();
-      bb.realtime.publish("rules-changed", {
+      rift.realtime.publish("rules-changed", {
         changed_at: (/* @__PURE__ */ new Date()).toISOString()
       });
     }
@@ -17946,7 +17947,7 @@ ${stalledPublications.map(
           await refreshStalls(source);
         }
       } catch (error51) {
-        bb.log.warn(
+        rift.log.warn(
           `doctrine corpus freshness check failed: ${error51 instanceof Error ? error51.message : String(error51)}`
         );
       }
@@ -17962,18 +17963,18 @@ ${stalledPublications.map(
     try {
       return await watchFingerprint(await doctrineRoot());
     } catch (error51) {
-      bb.log.warn(
+      rift.log.warn(
         `doctrine rules unreadable: ${error51 instanceof Error ? error51.message : String(error51)}`
       );
       return "rules:unavailable";
     }
   }
-  bb.background.service("rule-watch", {
+  rift.background.service("rule-watch", {
     async start(signal) {
       try {
         await refreshCorpus(signal);
       } catch (error51) {
-        bb.log.warn(
+        rift.log.warn(
           `doctrine corpus startup refresh failed: ${error51 instanceof Error ? error51.message : String(error51)}`
         );
       }
@@ -17981,7 +17982,7 @@ ${stalledPublications.map(
       try {
         await currentLibrary();
       } catch (error51) {
-        bb.log.warn(error51 instanceof Error ? error51.message : String(error51));
+        rift.log.warn(error51 instanceof Error ? error51.message : String(error51));
       }
       while (!signal.aborted) {
         await sleep(WATCH_INTERVAL_MS, signal);
@@ -17993,9 +17994,9 @@ ${stalledPublications.map(
           try {
             await currentLibrary();
           } catch (error51) {
-            bb.log.warn(error51 instanceof Error ? error51.message : String(error51));
+            rift.log.warn(error51 instanceof Error ? error51.message : String(error51));
           }
-          bb.realtime.publish("rules-changed", { changed_at: (/* @__PURE__ */ new Date()).toISOString() });
+          rift.realtime.publish("rules-changed", { changed_at: (/* @__PURE__ */ new Date()).toISOString() });
           drainHarvest();
         }
       }
@@ -18005,12 +18006,12 @@ ${stalledPublications.map(
     if (next.doctrinePath === previous.doctrinePath) return;
     invalidate();
     void currentLibrary().catch((error51) => {
-      bb.log.warn(error51 instanceof Error ? error51.message : String(error51));
+      rift.log.warn(error51 instanceof Error ? error51.message : String(error51));
     });
-    bb.realtime.publish("rules-changed", { changed_at: (/* @__PURE__ */ new Date()).toISOString() });
+    rift.realtime.publish("rules-changed", { changed_at: (/* @__PURE__ */ new Date()).toISOString() });
   });
   void historyMaintenance.prepare().catch((error51) => {
-    bb.log.warn(
+    rift.log.warn(
       `could not prepare incremental thread history: ${error51 instanceof Error ? error51.message : String(error51)}; the next history scan will retry`
     );
   });

@@ -1,8 +1,8 @@
 /**
- * BB transport adapter for Moss's CommentPopover, CommentMessage, and
+ * Rift transport adapter for Moss's CommentPopover, CommentMessage, and
  * CommentTextInput component model. Keep interaction state and transitions in
  * sync with packages/desktop/src/renderer/editor/components in the Moss repo;
- * only the persisted comment shape and RPC calls are BB-specific here.
+ * only the persisted comment shape and RPC calls are Rift-specific here.
  */
 import {
   useCallback,
@@ -27,7 +27,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import type { PluginRpcClient } from "@get-bb/plugin-sdk/app";
+import type { PluginRpcClient } from "@riftlabs/plugin-sdk/app";
 import type {
   TimelineComment,
   TimelineCommentThreadDetail,
@@ -130,7 +130,7 @@ function focusAdjacentToActionsTrigger(
     (node) =>
       node.getClientRects().length > 0 &&
       node.closest('[aria-hidden="true"], [inert], [hidden]') === null &&
-      node.closest(".bb-comments-actions-popover") === null,
+      node.closest(".rift-comments-actions-popover") === null,
   );
   const current = focusable.indexOf(trigger);
   const adjacent = focusable[current + (backwards ? -1 : 1)];
@@ -141,7 +141,7 @@ function focusAdjacentToActionsTrigger(
 
 function actionsTriggerIsFullyVisible(trigger: HTMLButtonElement): boolean {
   const scrollViewport = trigger.closest<HTMLElement>(
-    ".bb-comments-thread-comments",
+    ".rift-comments-thread-comments",
   );
   if (scrollViewport === null) return true;
   const triggerRect = trigger.getBoundingClientRect();
@@ -613,7 +613,7 @@ function CommentTextInput({
   const submit = (
     <button
       type="button"
-      className="bb-comments-submit-shortcut"
+      className="rift-comments-submit-shortcut"
       disabled={submitPending || submitDisabled}
       aria-label="Submit comment"
       title="Submit comment · ⌘/Ctrl Enter"
@@ -629,14 +629,14 @@ function CommentTextInput({
 
   const footer = (
     <div
-      className="bb-comments-edit-footer"
+      className="rift-comments-edit-footer"
       data-mention-input-footer="true"
       data-mention-input-footer-state="expanded"
       data-persistent-footer="true"
     >
       <button
         type="button"
-        className="bb-comments-context-control"
+        className="rift-comments-context-control"
         aria-label="Mention context"
         disabled={submitPending}
         onMouseDown={(event) => event.preventDefault()}
@@ -651,27 +651,27 @@ function CommentTextInput({
   return (
     <div
       ref={rootRef}
-      className="bb-comments-mention-input"
+      className="rift-comments-mention-input"
       data-mention-input-expanded={footerVisible ? "true" : "false"}
       aria-busy={submitPending || undefined}
     >
-      <div className="bb-comments-input-surface" data-mention-input-surface="true">
+      <div className="rift-comments-input-surface" data-mention-input-surface="true">
         <div
-          className="bb-comments-input-row"
+          className="rift-comments-input-row"
           data-mention-input-row="true"
           data-responsive-compact={responsiveCompact ? "true" : "false"}
         >
           <div
             ref={inputContentRef}
-            className="bb-comments-input-content"
+            className="rift-comments-input-content"
             data-mention-input-content="true"
           >
             <textarea
               ref={textareaRef}
               className={
                 persistentFooter
-                  ? "bb-comments-edit-input"
-                  : "bb-comments-reply-input"
+                  ? "rift-comments-edit-input"
+                  : "rift-comments-reply-input"
               }
               aria-label={ariaLabel}
               placeholder={placeholder}
@@ -694,7 +694,7 @@ function CommentTextInput({
             />
           </div>
         </div>
-        {error ? <div className="bb-comments-error" role="status">{error}</div> : null}
+        {error ? <div className="rift-comments-error" role="status">{error}</div> : null}
       </div>
       {persistentFooter
         ? footerPortalTarget
@@ -703,7 +703,7 @@ function CommentTextInput({
         : (
           <>
             <div
-              className="bb-comments-responsive-footer"
+              className="rift-comments-responsive-footer"
               aria-hidden="true"
               data-mention-input-footer="true"
               data-mention-input-footer-state={
@@ -711,24 +711,24 @@ function CommentTextInput({
               }
             >
               <div
-                className="bb-comments-responsive-footer-divider"
+                className="rift-comments-responsive-footer-divider"
                 data-mention-input-footer-divider="true"
               />
             </div>
             <div
-              className="bb-comments-responsive-actions"
+              className="rift-comments-responsive-actions"
               data-mention-input-responsive-actions="true"
             >
-              <div className="bb-comments-responsive-action-switcher">
+              <div className="rift-comments-responsive-action-switcher">
                 <div
-                  className="bb-comments-compact-actions"
+                  className="rift-comments-compact-actions"
                   aria-hidden={footerVisible}
                   inert={footerVisible || undefined}
                   data-mention-input-compact-actions="true"
                 >
                   <button
                     type="button"
-                    className="bb-comments-context-control"
+                    className="rift-comments-context-control"
                     aria-label="Add comment context"
                     disabled={submitPending}
                     onMouseDown={(event) => event.preventDefault()}
@@ -738,14 +738,14 @@ function CommentTextInput({
                   </button>
                 </div>
                 <div
-                  className="bb-comments-expanded-actions"
+                  className="rift-comments-expanded-actions"
                   aria-hidden={!footerVisible}
                   inert={!footerVisible || undefined}
                   data-mention-input-expanded-actions="true"
                 >
                   <button
                     type="button"
-                    className="bb-comments-context-control"
+                    className="rift-comments-context-control"
                     aria-label="Mention context"
                     disabled={submitPending}
                     onMouseDown={(event) => event.preventDefault()}
@@ -756,7 +756,7 @@ function CommentTextInput({
                 </div>
               </div>
               <div
-                className="bb-comments-responsive-submit"
+                className="rift-comments-responsive-submit"
                 data-mention-input-responsive-submit="true"
               >
                 {submit}
@@ -915,30 +915,30 @@ function CommentMessage({
   };
 
   const menuPortalTarget = rowRef.current?.closest<HTMLElement>(
-    '[data-bb-plugin-decoration="timeline-comments"]',
+    '[data-rift-plugin-decoration="timeline-comments"]',
   );
 
   return (
     <article
       ref={rowRef}
-      className="bb-comments-comment comment-edit-surface"
-      data-bb-comment-id={comment.id}
+      className="rift-comments-comment comment-edit-surface"
+      data-rift-comment-id={comment.id}
       data-comment-message="true"
       data-comment-editing={isEditing ? "true" : undefined}
       data-editing={isEditing ? "true" : undefined}
     >
-      <header className="bb-comments-message-header" data-comment-message-header="true">
+      <header className="rift-comments-message-header" data-comment-message-header="true">
         <div>
           <strong>Me</strong>
           <time dateTime={new Date(comment.createdAt).toISOString()} title={absoluteTime(comment.createdAt)}>
             {relativeTime(comment.createdAt)}
           </time>
         </div>
-        <div className="bb-comments-actions-menu">
+        <div className="rift-comments-actions-menu">
           {isEditing ? (
             <button
               type="button"
-              className="bb-comments-icon-control bb-comments-edit-cancel"
+              className="rift-comments-icon-control rift-comments-edit-cancel"
               aria-label="Cancel comment edit"
               disabled={submitPending}
               onClick={() => runModeTransition(cancelEdit)}
@@ -949,7 +949,7 @@ function CommentMessage({
             <button
               ref={menuTriggerRef}
               type="button"
-              className="bb-comments-icon-control"
+              className="rift-comments-icon-control"
               aria-label="Comment actions"
               aria-haspopup="menu"
               aria-expanded={menuOpen}
@@ -969,7 +969,7 @@ function CommentMessage({
           {menuOpen && menuPortalTarget ? createPortal(
             <div
               ref={menuRef}
-              className="bb-comments-actions-popover"
+              className="rift-comments-actions-popover"
               role="menu"
               style={{ top: menuPosition.top, left: menuPosition.left }}
               onKeyDown={onMenuKeyDown}
@@ -984,7 +984,7 @@ function CommentMessage({
               >
                 <Pencil aria-hidden="true" /> Edit
               </button>
-              <button type="button" role="menuitem" className="bb-comments-destructive" onClick={onDelete}>
+              <button type="button" role="menuitem" className="rift-comments-destructive" onClick={onDelete}>
                 <Trash2 aria-hidden="true" /> Delete
               </button>
             </div>,
@@ -993,7 +993,7 @@ function CommentMessage({
         </div>
       </header>
       <div
-        className="bb-comments-edit-composer"
+        className="rift-comments-edit-composer"
         data-comment-edit-composer={isEditing ? "true" : undefined}
         data-comment-view-content={isEditing ? undefined : "true"}
       >
@@ -1015,7 +1015,7 @@ function CommentMessage({
             submitPending={submitPending}
           />
         ) : (
-          <p className="bb-comments-comment-body">{comment.body}</p>
+          <p className="rift-comments-comment-body">{comment.body}</p>
         )}
       </div>
     </article>
@@ -1161,16 +1161,16 @@ function MossCommentPopover({
   };
 
   return (
-    <div className="bb-comments-thread-inner moss-comment-popover">
-      <header className="bb-comments-thread-header" data-comment-thread-header="true">
-        <div className="bb-comments-thread-source">
+    <div className="rift-comments-thread-inner moss-comment-popover">
+      <header className="rift-comments-thread-header" data-comment-thread-header="true">
+        <div className="rift-comments-thread-source">
           <MessageSquareText aria-hidden="true" />
           <span>Comment</span>
         </div>
-        <div className="bb-comments-header-actions" data-comment-thread-actions="true">
+        <div className="rift-comments-header-actions" data-comment-thread-actions="true">
           <button
             type="button"
-            className="bb-comments-icon-control"
+            className="rift-comments-icon-control"
             aria-label={detail.thread.resolvedAt === null ? "Resolve thread" : "Reopen thread"}
             aria-pressed={detail.thread.resolvedAt !== null}
             disabled={busy}
@@ -1187,12 +1187,12 @@ function MossCommentPopover({
           >
             <CheckCheck aria-hidden="true" />
           </button>
-          <button type="button" className="bb-comments-icon-control" aria-label="Send thread to agent" onClick={onSendToAgent}>
+          <button type="button" className="rift-comments-icon-control" aria-label="Send thread to agent" onClick={onSendToAgent}>
             <Send aria-hidden="true" />
           </button>
           <button
             type="button"
-            className="bb-comments-icon-control bb-comments-destructive"
+            className="rift-comments-icon-control rift-comments-destructive"
             aria-label="Delete thread"
             disabled={busy}
             onClick={() => {
@@ -1206,7 +1206,7 @@ function MossCommentPopover({
           </button>
         </div>
       </header>
-      <div className="bb-comments-thread-comments comment-thread-scroll">
+      <div className="rift-comments-thread-comments comment-thread-scroll">
         {detail.comments.map((comment) => (
           <CommentMessage
             key={comment.id}
@@ -1252,7 +1252,7 @@ function MossCommentPopover({
       {detail.thread.resolvedAt === null ? (
         <form
           ref={replyRegionRef}
-          className="bb-comments-reply comment-reply-region"
+          className="rift-comments-reply comment-reply-region"
           data-comment-reply-region="true"
           data-editing={editingId && !isEditingLast ? "true" : "false"}
           data-last-editing={isEditingLast ? "true" : "false"}
@@ -1260,10 +1260,10 @@ function MossCommentPopover({
           inert={editingId && !isEditingLast ? true : undefined}
           onSubmit={(event) => event.preventDefault()}
         >
-          <div className="bb-comments-reply-inner comment-reply-region-inner">
+          <div className="rift-comments-reply-inner comment-reply-region-inner">
             <div
-              className="bb-comments-inline-composer"
-              data-bb-comment-reply-composer="true"
+              className="rift-comments-inline-composer"
+              data-rift-comment-reply-composer="true"
               data-comment-reply-composer="true"
               aria-hidden={editingId ? true : undefined}
               inert={editingId ? true : undefined}
@@ -1297,14 +1297,14 @@ function MossCommentPopover({
             </div>
             <div
               ref={setEditFooterHost}
-              className="bb-comments-edit-footer-host"
-              data-bb-comment-edit-footer-host="true"
+              className="rift-comments-edit-footer-host"
+              data-rift-comment-edit-footer-host="true"
               data-comment-edit-footer-host="true"
             />
           </div>
         </form>
       ) : null}
-      {error ? <div className="bb-comments-error" role="status">{error}</div> : null}
+      {error ? <div className="rift-comments-error" role="status">{error}</div> : null}
     </div>
   );
 }
@@ -1349,7 +1349,7 @@ function MossNewCommentComposer({
   const busyRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
   return (
-    <div className="bb-comments-new-comment-input" data-comment-new-composer="true">
+    <div className="rift-comments-new-comment-input" data-comment-new-composer="true">
       <CommentTextInput
         value={value}
         onChange={(next) => {
@@ -1378,7 +1378,7 @@ function MossNewCommentComposer({
         autoFocus
         submitPending={busy}
       />
-      {error ? <div className="bb-comments-error" role="status">{error}</div> : null}
+      {error ? <div className="rift-comments-error" role="status">{error}</div> : null}
     </div>
   );
 }

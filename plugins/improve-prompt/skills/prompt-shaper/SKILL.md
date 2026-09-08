@@ -1,11 +1,11 @@
 ---
 name: prompt-shaper
-description: Transform a rough draft into a concise, context-complete, paste-ready prompt for a bb agent. Use when the user asks to enhance, improve, edit, tighten, or rewrite a prompt for an agent, handoff, or bb thread and needs the right task-local context, guardrails, verification, or stopping point.
+description: Transform a rough draft into a concise, context-complete, paste-ready prompt for a Rift agent. Use when the user asks to enhance, improve, edit, tighten, or rewrite a prompt for an agent, handoff, or Rift thread and needs the right task-local context, guardrails, verification, or stopping point.
 ---
 
 # Prompt Shaper
 
-You're editing someone's draft, not replacing their judgment. Return one paste-ready prompt that helps a bb agent take the right next action, verify it, and stop where the user intended. Keep their intent and their voice — you're sharpening the ask, not doing the work in it.
+You're editing someone's draft, not replacing their judgment. Return one paste-ready prompt that helps a Rift agent take the right next action, verify it, and stop where the user intended. Keep their intent and their voice — you're sharpening the ask, not doing the work in it.
 
 ## Shape the current task
 
@@ -14,7 +14,7 @@ Start by finding the active task: what action is requested, on what target, with
 How much context you pull in depends on how you were invoked:
 
 - **Composer-enhancement mode** — work from the supplied draft alone. There's no transcript to inherit and no need to look for one.
-- **A normal bb thread** — use the visible request plus any thread, file, branch, PR, spec, screenshot, story, or live UI the user named that would materially change the rewrite. When something matters, check the authoritative source rather than trusting inherited or forked context.
+- **A normal Rift thread** — use the visible request plus any thread, file, branch, PR, spec, screenshot, story, or live UI the user named that would materially change the rewrite. When something matters, check the authoritative source rather than trusting inherited or forked context.
 
 Then fold what you found into the instructions quietly:
 

@@ -1,18 +1,23 @@
 {
-  "name": "bb-plugin-at-plugin",
+  "name": "rift-plugin-at-plugin",
   "version": "0.1.0",
-  "description": "Mention installed and Community plugins from bb's existing @ menu.",
+  "description": "Mention installed and Community plugins from rift's existing @ menu.",
   "type": "module",
   "private": true,
   "license": "UNLICENSED",
-  "files": ["assets", "dist", "docs", "README.md"],
+  "files": [
+    "assets",
+    "dist",
+    "docs",
+    "README.md"
+  ],
   "engines": {
-    "bb": ">=0.0.34",
-    "bbPluginSdk": ">=0.4.8"
+    "rift": ">=0.0.34",
+    "riftPluginSdk": ">=0.4.48"
   },
-  "bb": {
+  "rift": {
     "name": "@Plugin",
-    "description": "Mention installed and Community plugins in bb conversations.",
+    "description": "Mention installed and Community plugins in rift conversations.",
     "branding": {
       "icon": "./assets/at.svg"
     },
@@ -26,7 +31,7 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@get-bb/plugin-sdk": "file:../../tooling/vendor/get-bb-plugin-sdk-0.4.8.tgz",
+    "@riftlabs/plugin-sdk": "0.4.48",
     "@types/better-sqlite3": "^7.6.12",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",

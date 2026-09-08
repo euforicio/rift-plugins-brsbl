@@ -42,8 +42,8 @@ async function git(
 }
 
 /**
- * The plugin's own data directory, derived from the SQLite file bb opens for
- * it. Everything this module materializes lives there, so it belongs to bb
+ * The plugin's own data directory, derived from the SQLite file rift opens for
+ * it. Everything this module materializes lives there, so it belongs to rift
  * rather than to a source tree somebody might delete.
  */
 export function pluginDataDirectory(databasePath: string): string {
@@ -299,7 +299,7 @@ async function publish(
         "--title",
         "doctrine: publish harvested rules",
         "--body",
-        "Rules harvested from bb thread feedback by the Design Doctrine plugin.\n\nMerges itself once the repository's required checks pass.",
+        "Rules harvested from rift thread feedback by the Design Doctrine plugin.\n\nMerges itself once the repository's required checks pass.",
       ],
       { cwd: directory, encoding: "utf8", timeout: COMMAND_TIMEOUT_MS, signal },
     );

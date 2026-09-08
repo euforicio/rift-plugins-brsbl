@@ -1,7 +1,7 @@
 import { execFile } from "node:child_process";
 import { realpath, stat } from "node:fs/promises";
 import { extname, isAbsolute } from "node:path";
-import type { BbPluginApi } from "@get-bb/plugin-sdk";
+import type { RiftPluginApi } from "@riftlabs/plugin-sdk";
 
 type FileStat = { isFile(): boolean };
 
@@ -123,7 +123,7 @@ export async function openMarkdownInMoss(
 }
 
 function errorResponse(
-  context: Parameters<Parameters<BbPluginApi["http"]["route"]>[2]>[0],
+  context: Parameters<Parameters<RiftPluginApi["http"]["route"]>[2]>[0],
   error: OpenInMossError,
 ): Response {
   const body = { ok: false, error: { code: error.code, message: error.message } };
@@ -145,8 +145,8 @@ function errorResponse(
 export function createOpenInMossPlugin(
   dependencies: OpenInMossDependencies = systemDependencies,
 ) {
-  return async function plugin(bb: BbPluginApi) {
-    bb.http.route(
+  return async function plugin(rift: RiftPluginApi) {
+    rift.http.route(
       "POST",
       "/open",
       async (context) => {
@@ -190,7 +190,7 @@ export function createOpenInMossPlugin(
           return context.json({ ok: true, opened: true, path: openedPath });
         } catch (error) {
           if (error instanceof OpenInMossError) {
-            bb.log.warn(`Open in Moss failed (${error.code}): ${error.message}`);
+            rift.log.warn(`Open in Moss failed (${error.code}): ${error.message}`);
             return errorResponse(context, error);
           }
           throw error;
@@ -199,7 +199,7 @@ export function createOpenInMossPlugin(
       { auth: "local" },
     );
 
-    bb.log.info("Markdown file links will open in Moss");
+    rift.log.info("Markdown file links will open in Moss");
   };
 }
 

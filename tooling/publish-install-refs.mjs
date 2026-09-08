@@ -104,12 +104,12 @@ export function releaseManifest(sourceManifest) {
   // Git installs rebuild their declared server entry. Point them at the
   // self-contained release entry generated from the prebuilt bundle instead
   // of authored TypeScript whose development dependencies are not shipped.
-  if (manifest.bb?.server) manifest.bb.server = releaseServerEntry;
-  // bb recompiles frontend entries for direct git installs. Point the
+  if (manifest.rift?.server) manifest.rift.server = releaseServerEntry;
+  // rift recompiles frontend entries for direct git installs. Point the
   // release-only manifest at a self-contained wrapper around the prebuilt app
   // so installation never depends on development node_modules. The wrapper
   // also carries plugin-authored CSS through that second build.
-  if (manifest.bb?.app) manifest.bb.app = releaseAppEntry;
+  if (manifest.rift?.app) manifest.rift.app = releaseAppEntry;
   for (const field of productionDependencyFields) {
     delete manifest[field];
   }
@@ -148,7 +148,7 @@ async function createReleaseTree(plugin, sourceCommit) {
     await readFile(resolve(pluginDirectory, "package.json"), "utf8"),
   );
   const stagingDirectory = await mkdtemp(
-    resolve(tmpdir(), `bb-plugin-ref-${plugin.slug}-`),
+    resolve(tmpdir(), `rift-plugin-ref-${plugin.slug}-`),
   );
   const indexPath = resolve(stagingDirectory, "index");
 
@@ -176,7 +176,7 @@ async function createReleaseTree(plugin, sourceCommit) {
       addBlobFile(indexPath, `dist/${file.relativePath}`, file.absolutePath);
     }
 
-    if (sourceManifest.bb?.server) {
+    if (sourceManifest.rift?.server) {
       const serverBundle = await readFile(
         resolve(pluginDirectory, "dist/server.js"),
         "utf8",
@@ -188,7 +188,7 @@ async function createReleaseTree(plugin, sourceCommit) {
       );
     }
 
-    if (sourceManifest.bb?.app) {
+    if (sourceManifest.rift?.app) {
       const authoredCss = await readFile(resolve(pluginDirectory, "app.css"), "utf8").catch(
         (error) => {
           if (error?.code === "ENOENT") return null;
@@ -204,7 +204,7 @@ async function createReleaseTree(plugin, sourceCommit) {
         addBlob(
           indexPath,
           releaseAppCss,
-          `[data-bb-plugin-release-style="${plugin.pluginId}"] { --bb-plugin-release-style: 1; }\n${authoredCss}`,
+          `[data-rift-plugin-release-style="${plugin.pluginId}"] { --rift-plugin-release-style: 1; }\n${authoredCss}`,
         );
       }
       addBlob(indexPath, releaseAppEntry.replace(/^\.\//, ""), `${wrapper.join("\n")}\n`);
@@ -232,10 +232,10 @@ function createReleaseCommit(plugin, tree, sourceRevision) {
     ],
     {
       env: {
-        GIT_AUTHOR_NAME: "bb-plugins release",
-        GIT_AUTHOR_EMAIL: "bb-plugins@users.noreply.github.com",
-        GIT_COMMITTER_NAME: "bb-plugins release",
-        GIT_COMMITTER_EMAIL: "bb-plugins@users.noreply.github.com",
+        GIT_AUTHOR_NAME: "rift-plugins release",
+        GIT_AUTHOR_EMAIL: "rift-plugins@users.noreply.github.com",
+        GIT_COMMITTER_NAME: "rift-plugins release",
+        GIT_COMMITTER_EMAIL: "rift-plugins@users.noreply.github.com",
       },
     },
   );
@@ -316,7 +316,7 @@ export function assertPublishWorktreeClean(
 
 async function verifyReleaseCommit(plugin, releaseCommit) {
   const checkoutRoot = await mkdtemp(
-    resolve(tmpdir(), `bb-plugin-install-${plugin.slug}-`),
+    resolve(tmpdir(), `rift-plugin-install-${plugin.slug}-`),
   );
   const checkout = resolve(checkoutRoot, "checkout");
   const indexPath = resolve(checkoutRoot, "index");
@@ -340,10 +340,10 @@ async function verifyReleaseCommit(plugin, releaseCommit) {
         );
       }
     }
-    if (manifest.bb?.app && manifest.bb.app !== releaseAppEntry) {
+    if (manifest.rift?.app && manifest.rift.app !== releaseAppEntry) {
       throw new Error(`${plugin.installRef}: release app entry is not the prebuilt wrapper`);
     }
-    if (manifest.bb?.server && manifest.bb.server !== releaseServerEntry) {
+    if (manifest.rift?.server && manifest.rift.server !== releaseServerEntry) {
       throw new Error(`${plugin.installRef}: release server entry is not the prebuilt bundle`);
     }
 
@@ -378,7 +378,7 @@ async function verifyReleaseCommit(plugin, releaseCommit) {
     }
     if (hasAuthoredCss) {
       const rebuiltCss = await readFile(resolve(checkout, "dist/app.css"), "utf8");
-      if (!rebuiltCss.includes("bb-plugin-release-style")) {
+      if (!rebuiltCss.includes("rift-plugin-release-style")) {
         throw new Error(`${plugin.installRef}: install build dropped plugin-authored CSS`);
       }
     }

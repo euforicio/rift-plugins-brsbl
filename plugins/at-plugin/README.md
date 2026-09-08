@@ -1,13 +1,13 @@
 # @Plugin
 
-Adds installed and Community plugins to bb's existing `@` menu.
+Adds installed and Community plugins to rift's existing `@` menu.
 
-![Plugin mentions in bb](docs/screenshot.png)
+![Plugin mentions in rift](docs/screenshot.png)
 
 ## Install
 
 ```sh
-bb plugin install git:https://github.com/brsbl/bb-plugins.git@plugin/at-plugin --yes
+rift plugin install "path:$PWD/plugins/at-plugin" --yes
 ```
 
 ## Use
@@ -26,5 +26,5 @@ plugin by itself.
 
 ```sh
 npm install
-npm run check --workspace=bb-plugin-at-plugin
+npm run check --workspace=rift-plugin-at-plugin
 ```

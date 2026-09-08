@@ -5,7 +5,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { readPluginWorkspaces } from "./plugin-workspaces.mjs";
-import { pluginBuildBbVersion } from "./plugin-build-provenance.mjs";
+import { pluginBuildRiftVersion } from "./plugin-build-provenance.mjs";
 import {
   pluginSdkVersion,
   sdkRangeIncludesVersion,
@@ -25,13 +25,13 @@ async function requireNonEmpty(path) {
 }
 
 function expectedPluginId(packageName) {
-  if (!packageName.startsWith("bb-plugin-")) {
-    throw new Error(`plugin package ${packageName} must start with bb-plugin-`);
+  if (!packageName.startsWith("rift-plugin-")) {
+    throw new Error(`plugin package ${packageName} must start with rift-plugin-`);
   }
-  return packageName.slice("bb-plugin-".length);
+  return packageName.slice("rift-plugin-".length);
 }
 
-async function validateMetadata(path, manifest, id, bbVersion) {
+async function validateMetadata(path, manifest, id, riftVersion) {
   const metadata = await readJson(path);
   const expected = {
     artifactFormatVersion: 1,
@@ -46,8 +46,8 @@ async function validateMetadata(path, manifest, id, bbVersion) {
   if (metadata.sdkVersion !== pluginSdkVersion) {
     throw new Error(`${path}: expected sdkVersion=${pluginSdkVersion}`);
   }
-  if (metadata.builtWith?.bbVersion !== bbVersion) {
-    throw new Error(`${path}: expected bb ${bbVersion} build metadata`);
+  if (metadata.builtWith?.riftVersion !== riftVersion) {
+    throw new Error(`${path}: expected rift ${riftVersion} build metadata`);
   }
   if (metadata.builtWith?.pluginSdkVersion !== pluginSdkVersion) {
     throw new Error(
@@ -60,7 +60,7 @@ const builtinModuleNames = new Set(
   builtinModules.flatMap((name) => [name, `node:${name}`]),
 );
 const managedServerRuntimeImports = new Set([
-  "@get-bb/plugin-sdk",
+  "@riftlabs/plugin-sdk",
   "better-sqlite3",
 ]);
 
@@ -115,18 +115,18 @@ function normalizeManifestDirectory(path, label) {
 }
 
 export function effectiveSkillsDirectories(manifest) {
-  const configured = manifest.bb?.skills;
+  const configured = manifest.rift?.skills;
   if (configured === undefined) {
     return { directories: ["skills"], implicit: true };
   }
   if (!Array.isArray(configured)) {
-    throw new Error(`${manifest.name}: bb.skills must be an array`);
+    throw new Error(`${manifest.name}: rift.skills must be an array`);
   }
   const directories = configured.map((path) =>
-    normalizeManifestDirectory(path, `${manifest.name}: bb.skills`),
+    normalizeManifestDirectory(path, `${manifest.name}: rift.skills`),
   );
   if (new Set(directories).size !== directories.length) {
-    throw new Error(`${manifest.name}: bb.skills contains duplicate paths`);
+    throw new Error(`${manifest.name}: rift.skills contains duplicate paths`);
   }
   return { directories, implicit: false };
 }
@@ -158,7 +158,7 @@ async function validateSkills(directory, manifest, packed) {
       .filter((path) => path === "SKILL.md" || path.endsWith("/SKILL.md"));
     if (disabledSkillFiles.length > 0) {
       throw new Error(
-        `${directory}: bb.skills opts out, but skills/${disabledSkillFiles[0]} exists`,
+        `${directory}: rift.skills opts out, but skills/${disabledSkillFiles[0]} exists`,
       );
     }
   }
@@ -168,19 +168,19 @@ async function validateSkills(directory, manifest, packed) {
       .filter((path) => path === "SKILL.md" || path.endsWith("/SKILL.md"));
     if (skills.implicit && skillFiles.length > 0) {
       throw new Error(
-        `${directory}: ${skillsDirectory}/${skillFiles[0]} would be implicitly auto-imported by bb; declare bb.skills explicitly`,
+        `${directory}: ${skillsDirectory}/${skillFiles[0]} would be implicitly auto-imported by rift; declare rift.skills explicitly`,
       );
     }
     if (!skills.implicit && skillFiles.length === 0) {
       throw new Error(
-        `${directory}: bb.skills declares ${skillsDirectory}, but it contains no SKILL.md`,
+        `${directory}: rift.skills declares ${skillsDirectory}, but it contains no SKILL.md`,
       );
     }
     for (const skillFile of skillFiles) {
       const repositoryPath = `${skillsDirectory}/${skillFile}`;
       if (!packed.has(repositoryPath)) {
         throw new Error(
-          `${directory}: ${repositoryPath} is declared by bb but omitted by the package allowlist`,
+          `${directory}: ${repositoryPath} is declared by rift but omitted by the package allowlist`,
         );
       }
     }
@@ -214,17 +214,17 @@ export async function validatePluginArtifacts(pluginDirectory, options = {}) {
   const directory = resolve(pluginDirectory);
   const manifest = await readJson(resolve(directory, "package.json"));
   const id = expectedPluginId(manifest.name);
-  const buildBbVersion = options.buildBbVersion ?? pluginBuildBbVersion;
+  const buildRiftVersion = options.buildRiftVersion ?? pluginBuildRiftVersion;
 
   if (options.expectedId && id !== options.expectedId) {
     throw new Error(`${directory}: expected plugin id ${options.expectedId}`);
   }
-  if (options.expectedName && manifest.bb.name !== options.expectedName) {
+  if (options.expectedName && manifest.rift.name !== options.expectedName) {
     throw new Error(`${directory}: expected display name ${options.expectedName}`);
   }
-  if (!sdkRangeIncludesVersion(manifest.engines?.bbPluginSdk, pluginSdkVersion)) {
+  if (!sdkRangeIncludesVersion(manifest.engines?.riftPluginSdk, pluginSdkVersion)) {
     throw new Error(
-      `${directory}: engines.bbPluginSdk must be a compatible floor at or below ${pluginSdkVersion}`,
+      `${directory}: engines.riftPluginSdk must be a compatible floor at or below ${pluginSdkVersion}`,
     );
   }
 
@@ -235,16 +235,16 @@ export async function validatePluginArtifacts(pluginDirectory, options = {}) {
     resolve(directory, "dist/server.meta.json"),
     manifest,
     id,
-    buildBbVersion,
+    buildRiftVersion,
   );
 
-  if (manifest.bb.app) {
+  if (manifest.rift.app) {
     await requireNonEmpty(resolve(directory, "dist/app.js"));
     await validateMetadata(
       resolve(directory, "dist/app.meta.json"),
       manifest,
       id,
-      buildBbVersion,
+      buildRiftVersion,
     );
   }
 
@@ -252,12 +252,12 @@ export async function validatePluginArtifacts(pluginDirectory, options = {}) {
   for (const path of ["package.json", "README.md", "dist/server.js", "dist/server.meta.json"]) {
     requirePacked(files, path, directory);
   }
-  if (manifest.bb.app) {
+  if (manifest.rift.app) {
     for (const path of ["dist/app.js", "dist/app.css", "dist/app.meta.json"]) {
       requirePacked(files, path, directory);
     }
   }
-  for (const path of Object.values(manifest.bb.branding?.logo ?? {})) {
+  for (const path of Object.values(manifest.rift.branding?.logo ?? {})) {
     requirePacked(files, path, directory);
   }
   if (options.expectedScreenshot) {
@@ -273,7 +273,7 @@ export async function validatePluginArtifacts(pluginDirectory, options = {}) {
     throw new Error(`${directory}: package contains a nested lockfile`);
   }
 
-  return { id, name: manifest.bb.name, packedFileCount: files.size };
+  return { id, name: manifest.rift.name, packedFileCount: files.size };
 }
 
 async function main() {

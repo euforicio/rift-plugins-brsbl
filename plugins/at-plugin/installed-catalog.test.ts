@@ -13,6 +13,10 @@ function installed(
 ): InstalledPluginRecord {
   return {
     app: { bundle: null, hasApp: false },
+    collections: [],
+    screenshots: [],
+    providerIds: [],
+    icons: {},
     capabilities: [],
     cliCommand: null,
     description: "Plugin description",

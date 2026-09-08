@@ -1,4 +1,4 @@
-import { createFakePluginHost } from "@get-bb/plugin-sdk/testing";
+import { createFakePluginHost } from "@riftlabs/plugin-sdk/testing";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -15,13 +15,13 @@ function notification(index: number, overrides: Record<string, unknown> = {}) {
     reason: "comment",
     unread: true,
     updated_at: "2026-08-12T12:00:00Z",
-    repository: { full_name: "get-bb/bb" },
+    repository: { full_name: "euforicio/rift-app" },
     subject: {
       latest_comment_url:
-        "https://api.github.com/repos/get-bb/bb/issues/comments/1",
+        "https://api.github.com/repos/euforicio/rift-app/issues/comments/1",
       title: `Notification ${index}`,
       type: "PullRequest",
-      url: `https://api.github.com/repos/get-bb/bb/pulls/${index + 1}`,
+      url: `https://api.github.com/repos/euforicio/rift-app/pulls/${index + 1}`,
     },
     ...overrides,
   };
@@ -77,7 +77,7 @@ describe("GitHub Activity plugin", () => {
               author: { login: "brsbl" },
               number: 42,
               title: "Scannable activity",
-              url: "https://github.com/get-bb/bb/pull/42",
+              url: "https://github.com/euforicio/rift-app/pull/42",
             },
           },
         },
@@ -110,10 +110,10 @@ describe("GitHub Activity plugin", () => {
         },
       })
       .mockResolvedValue(identity());
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "github-notifications",
     });
-    createGithubNotificationsPlugin(runGh)(bb);
+    createGithubNotificationsPlugin(runGh)(rift);
 
     expect(harness.inspection.registrations.rpcMethods).toEqual([
       "listNotifications",
@@ -154,13 +154,13 @@ describe("GitHub Activity plugin", () => {
       }),
     );
     await expect(
-      bb.storage.kv.get("resolved-notification-ids"),
+      rift.storage.kv.get("resolved-notification-ids"),
     ).resolves.toBeUndefined();
     await expect(
-      bb.storage.kv.get("resolved-notification-ids:api.github.com/brsbl"),
+      rift.storage.kv.get("resolved-notification-ids:api.github.com/brsbl"),
     ).resolves.toBeUndefined();
     await expect(
-      bb.storage.kv.get(resolvedStateKey()),
+      rift.storage.kv.get(resolvedStateKey()),
     ).resolves.toEqual({
       cursors: {
         n41: expect.objectContaining({
@@ -184,10 +184,10 @@ describe("GitHub Activity plugin", () => {
         return [
           notification(0, {
             subject: {
-              latest_comment_url: `https://api.github.com/repos/get-bb/bb/issues/comments/${activityId}`,
+              latest_comment_url: `https://api.github.com/repos/euforicio/rift-app/issues/comments/${activityId}`,
               title: "Activity lifecycle",
               type: "PullRequest",
-              url: "https://api.github.com/repos/get-bb/bb/pulls/1",
+              url: "https://api.github.com/repos/euforicio/rift-app/pulls/1",
             },
             updated_at: activityAt,
           }),
@@ -203,7 +203,7 @@ describe("GitHub Activity plugin", () => {
                 author: { login: "brsbl" },
                 number: 1,
                 title: "Activity lifecycle",
-                url: "https://github.com/get-bb/bb/pull/1",
+                url: "https://github.com/euforicio/rift-app/pull/1",
               },
             },
           },
@@ -229,10 +229,10 @@ describe("GitHub Activity plugin", () => {
         },
       };
     });
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "github-notifications",
     });
-    createGithubNotificationsPlugin(runGh)(bb);
+    createGithubNotificationsPlugin(runGh)(rift);
 
     const initial = (await harness.behavior.callRpc("listNotifications", {
       force: false,
@@ -270,7 +270,7 @@ describe("GitHub Activity plugin", () => {
       }),
     );
     await expect(
-      bb.storage.kv.get(resolvedStateKey()),
+      rift.storage.kv.get(resolvedStateKey()),
     ).resolves.toEqual({
       cursors: {},
       legacyCutoffAt: null,
@@ -298,7 +298,7 @@ describe("GitHub Activity plugin", () => {
       }
       if (
         args.includes(
-          "https://api.github.com/repos/get-bb/bb/issues/comments/1",
+          "https://api.github.com/repos/euforicio/rift-app/issues/comments/1",
         )
       ) {
         return {
@@ -319,7 +319,7 @@ describe("GitHub Activity plugin", () => {
                 author: { login: "brsbl" },
                 number: 1,
                 title: "Edited comment",
-                url: "https://github.com/get-bb/bb/pull/1",
+                url: "https://github.com/euforicio/rift-app/pull/1",
               },
             },
           },
@@ -345,10 +345,10 @@ describe("GitHub Activity plugin", () => {
         },
       };
     });
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "github-notifications",
     });
-    createGithubNotificationsPlugin(runGh)(bb);
+    createGithubNotificationsPlugin(runGh)(rift);
 
     const initial = (await harness.behavior.callRpc("listNotifications", {
       force: false,
@@ -396,7 +396,7 @@ describe("GitHub Activity plugin", () => {
                 author: { login: "brsbl" },
                 number: 1,
                 title: "Legacy resolved activity",
-                url: "https://github.com/get-bb/bb/pull/1",
+                url: "https://github.com/euforicio/rift-app/pull/1",
               },
             },
             notification1: {
@@ -404,7 +404,7 @@ describe("GitHub Activity plugin", () => {
                 author: { login: "brsbl" },
                 number: 2,
                 title: "Second legacy activity",
-                url: "https://github.com/get-bb/bb/pull/2",
+                url: "https://github.com/euforicio/rift-app/pull/2",
               },
             },
           },
@@ -445,21 +445,21 @@ describe("GitHub Activity plugin", () => {
         },
       };
     });
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "github-notifications",
     });
-    await bb.storage.kv.set(
+    await rift.storage.kv.set(
       "resolved-notification-ids:api.github.com/brsbl",
       ["n0", "n1"],
     );
-    createGithubNotificationsPlugin(runGh)(bb);
+    createGithubNotificationsPlugin(runGh)(rift);
 
     const migrated = (await harness.behavior.callRpc("listNotifications", {
       force: false,
     })) as NotificationsPayload;
     expect(migrated.items[0]?.resolved).toBe(true);
     await expect(
-      bb.storage.kv.get(
+      rift.storage.kv.get(
         resolvedStateKey(),
       ),
     ).resolves.toEqual({
@@ -484,7 +484,7 @@ describe("GitHub Activity plugin", () => {
       expect.objectContaining({ id: "n1", resolved: true }),
     ]);
     await expect(
-      bb.storage.kv.get(
+      rift.storage.kv.get(
         resolvedStateKey(),
       ),
     ).resolves.toEqual(
@@ -527,7 +527,7 @@ describe("GitHub Activity plugin", () => {
                 author: { login: "brsbl" },
                 number: 1,
                 title: "New activity after migration",
-                url: "https://github.com/get-bb/bb/pull/1",
+                url: "https://github.com/euforicio/rift-app/pull/1",
               },
             },
           },
@@ -551,14 +551,14 @@ describe("GitHub Activity plugin", () => {
         },
       };
     });
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "github-notifications",
     });
-    await bb.storage.kv.set(
+    await rift.storage.kv.set(
       "resolved-notification-ids:api.github.com/brsbl",
       ["n0"],
     );
-    createGithubNotificationsPlugin(runGh)(bb);
+    createGithubNotificationsPlugin(runGh)(rift);
 
     await harness.behavior.callRpc("listNotifications", { force: false });
     includeActivity = true;
@@ -569,7 +569,7 @@ describe("GitHub Activity plugin", () => {
     expect(refreshed.items).toEqual([
       expect.objectContaining({ id: "n0", resolved: false }),
     ]);
-    await expect(bb.storage.kv.get(resolvedStateKey())).resolves.toEqual(
+    await expect(rift.storage.kv.get(resolvedStateKey())).resolves.toEqual(
       expect.objectContaining({ pendingLegacyIds: [] }),
     );
     await harness.lifecycle.dispose();
@@ -609,7 +609,7 @@ describe("GitHub Activity plugin", () => {
                     author: { login: owned ? "brsbl" : "someone-else" },
                     number: owned ? 1000 : index + 1,
                     title: owned ? "Later owned PR" : `Unrelated ${index}`,
-                    url: `https://github.com/get-bb/bb/pull/${owned ? 1000 : index + 1}`,
+                    url: `https://github.com/euforicio/rift-app/pull/${owned ? 1000 : index + 1}`,
                   },
                 },
               ];
@@ -636,10 +636,10 @@ describe("GitHub Activity plugin", () => {
         },
       };
     });
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "github-notifications",
     });
-    createGithubNotificationsPlugin(runGh)(bb);
+    createGithubNotificationsPlugin(runGh)(rift);
 
     const result = (await harness.behavior.callRpc("listNotifications", {
       force: false,
@@ -677,10 +677,10 @@ describe("GitHub Activity plugin", () => {
     const inlineNotification = notification(41, {
       subject: {
         latest_comment_url:
-          "https://api.github.example.test/repos/get-bb/bb/pulls/comments/501",
+          "https://api.github.example.test/repos/euforicio/rift-app/pulls/comments/501",
         title: "Inline feedback",
         type: "PullRequest",
-        url: "https://api.github.example.test/repos/get-bb/bb/pulls/42",
+        url: "https://api.github.example.test/repos/euforicio/rift-app/pulls/42",
       },
     });
     const runGh = vi.fn<RunGh>(async (args) => {
@@ -690,7 +690,7 @@ describe("GitHub Activity plugin", () => {
       if (args.includes("notifications")) return [inlineNotification];
       if (
         args.includes(
-          "https://api.github.example.test/repos/get-bb/bb/pulls/comments/501",
+          "https://api.github.example.test/repos/euforicio/rift-app/pulls/comments/501",
         )
       ) {
         return {
@@ -713,7 +713,7 @@ describe("GitHub Activity plugin", () => {
                 author: { login: "brsbl" },
                 number: 42,
                 title: "Inline feedback",
-                url: "https://github.example.test/get-bb/bb/pull/42",
+                url: "https://github.example.test/euforicio/rift-app/pull/42",
               },
             },
           },
@@ -730,10 +730,10 @@ describe("GitHub Activity plugin", () => {
         },
       };
     });
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "github-notifications",
     });
-    createGithubNotificationsPlugin(runGh)(bb);
+    createGithubNotificationsPlugin(runGh)(rift);
 
     await expect(
       harness.behavior.callRpc("listNotifications", { force: false }),
@@ -750,7 +750,7 @@ describe("GitHub Activity plugin", () => {
     );
     expect(runGh).toHaveBeenCalledWith([
       "api",
-      "https://api.github.example.test/repos/get-bb/bb/pulls/comments/501",
+      "https://api.github.example.test/repos/euforicio/rift-app/pulls/comments/501",
     ]);
     await harness.lifecycle.dispose();
   });
@@ -759,10 +759,10 @@ describe("GitHub Activity plugin", () => {
     const staleInline = notification(0, {
       subject: {
         latest_comment_url:
-          "https://api.github.com/repos/get-bb/bb/pulls/comments/404",
+          "https://api.github.com/repos/euforicio/rift-app/pulls/comments/404",
         title: "Deleted inline feedback",
         type: "PullRequest",
-        url: "https://api.github.com/repos/get-bb/bb/pulls/1",
+        url: "https://api.github.com/repos/euforicio/rift-app/pulls/1",
       },
     });
     const runGh = vi.fn<RunGh>(async (args) => {
@@ -772,7 +772,7 @@ describe("GitHub Activity plugin", () => {
       }
       if (
         args.includes(
-          "https://api.github.com/repos/get-bb/bb/pulls/comments/404",
+          "https://api.github.com/repos/euforicio/rift-app/pulls/comments/404",
         )
       ) {
         throw new Error("HTTP 404: review comment was deleted");
@@ -794,7 +794,7 @@ describe("GitHub Activity plugin", () => {
                     author: { login: "brsbl" },
                     number: index + 1,
                     title: `Notification ${index}`,
-                    url: `https://github.com/get-bb/bb/pull/${index + 1}`,
+                    url: `https://github.com/euforicio/rift-app/pull/${index + 1}`,
                   },
                 },
               ];
@@ -825,10 +825,10 @@ describe("GitHub Activity plugin", () => {
         },
       };
     });
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "github-notifications",
     });
-    createGithubNotificationsPlugin(runGh)(bb);
+    createGithubNotificationsPlugin(runGh)(rift);
 
     await expect(
       harness.behavior.callRpc("listNotifications", { force: false }),
@@ -845,10 +845,10 @@ describe("GitHub Activity plugin", () => {
       if (isIdentityCall(args)) return identity();
       throw new Error("HTTP 500: GitHub is temporarily unavailable");
     });
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "github-notifications",
     });
-    createGithubNotificationsPlugin(runGh)(bb);
+    createGithubNotificationsPlugin(runGh)(rift);
 
     const failure = harness.behavior.callRpc("listNotifications", {
       force: false,
@@ -886,7 +886,7 @@ describe("GitHub Activity plugin", () => {
                   author: { login },
                   number: 1,
                   title: `Private activity for ${login}`,
-                  url: "https://github.com/get-bb/bb/pull/1",
+                  url: "https://github.com/euforicio/rift-app/pull/1",
                 },
               },
             ]),
@@ -916,10 +916,10 @@ describe("GitHub Activity plugin", () => {
         ),
       };
     });
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "github-notifications",
     });
-    createGithubNotificationsPlugin(runGh)(bb);
+    createGithubNotificationsPlugin(runGh)(rift);
 
     const accountA = (await harness.behavior.callRpc("listNotifications", {
       force: false,
@@ -978,7 +978,7 @@ describe("GitHub Activity plugin", () => {
                       author: { login },
                       number: 1,
                       title: "Account A private activity",
-                      url: "https://github.com/get-bb/bb/pull/1",
+                      url: "https://github.com/euforicio/rift-app/pull/1",
                     },
                   },
                 }
@@ -1006,10 +1006,10 @@ describe("GitHub Activity plugin", () => {
         },
       };
     });
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "github-notifications",
     });
-    createGithubNotificationsPlugin(runGh)(bb);
+    createGithubNotificationsPlugin(runGh)(rift);
 
     const result = (await harness.behavior.callRpc("listNotifications", {
       force: false,
@@ -1037,7 +1037,7 @@ describe("GitHub Activity plugin", () => {
                 author: { login },
                 number: 1,
                 title: "Same notification ID",
-                url: "https://github.com/get-bb/bb/pull/1",
+                url: "https://github.com/euforicio/rift-app/pull/1",
               },
             },
           },
@@ -1063,10 +1063,10 @@ describe("GitHub Activity plugin", () => {
         },
       };
     });
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "github-notifications",
     });
-    createGithubNotificationsPlugin(runGh)(bb);
+    createGithubNotificationsPlugin(runGh)(rift);
     const accountA = (await harness.behavior.callRpc("listNotifications", {
       force: false,
     })) as NotificationsPayload;
@@ -1081,7 +1081,7 @@ describe("GitHub Activity plugin", () => {
     )) as NotificationsPayload;
     expect(otherAccount.items[0]?.resolved).toBe(false);
     await expect(
-      bb.storage.kv.get(
+      rift.storage.kv.get(
         "resolved-notification-ids:api.github.com/someone-else",
       ),
     ).resolves.toBeUndefined();
@@ -1092,10 +1092,10 @@ describe("GitHub Activity plugin", () => {
     })) as NotificationsPayload;
     expect(enterprise.items[0]?.resolved).toBe(false);
     await expect(
-      bb.storage.kv.get("resolved-notification-ids:api.github.com/brsbl"),
+      rift.storage.kv.get("resolved-notification-ids:api.github.com/brsbl"),
     ).resolves.toBeUndefined();
     await expect(
-      bb.storage.kv.get(resolvedStateKey()),
+      rift.storage.kv.get(resolvedStateKey()),
     ).resolves.toEqual({
       cursors: {
         n0: expect.objectContaining({ updatedAt: "2026-08-12T11:00:00Z" }),
@@ -1105,7 +1105,7 @@ describe("GitHub Activity plugin", () => {
       version: 2,
     });
     await expect(
-      bb.storage.kv.get(
+      rift.storage.kv.get(
         "resolved-notification-ids:api.enterprise.test/brsbl",
       ),
     ).resolves.toBeUndefined();
@@ -1132,7 +1132,7 @@ describe("GitHub Activity plugin", () => {
                 author: { login },
                 number: 1,
                 title: "Identity-scoped state",
-                url: "https://github.example.test/get-bb/bb/pull/1",
+                url: "https://github.example.test/euforicio/rift-app/pull/1",
               },
             },
           },
@@ -1156,10 +1156,10 @@ describe("GitHub Activity plugin", () => {
         },
       };
     });
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "github-notifications",
     });
-    createGithubNotificationsPlugin(runGh)(bb);
+    createGithubNotificationsPlugin(runGh)(rift);
     const initial = (await harness.behavior.callRpc("listNotifications", {
       force: false,
     })) as NotificationsPayload;
@@ -1211,10 +1211,10 @@ describe("GitHub Activity plugin", () => {
       if (args.includes("notifications")) return notifications;
       return { data: { viewer: { login: "brsbl" } } };
     });
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "github-notifications",
     });
-    createGithubNotificationsPlugin(runGh)(bb);
+    createGithubNotificationsPlugin(runGh)(rift);
 
     const first = harness.behavior.callRpc("listNotifications", {
       force: false,
@@ -1239,10 +1239,10 @@ describe("GitHub Activity plugin", () => {
       if (args.includes("notifications")) return [];
       return { data: { viewer: { login: "brsbl" } } };
     });
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "github-notifications",
     });
-    createGithubNotificationsPlugin(runGh)(bb);
+    createGithubNotificationsPlugin(runGh)(rift);
 
     await harness.behavior.callRpc("listNotifications", { force: false });
     await harness.behavior.callRpc("listNotifications", { force: true });
@@ -1277,7 +1277,7 @@ describe("GitHub Activity plugin", () => {
                 author: { login: "brsbl" },
                 number: 1,
                 title: "Activity that disappears",
-                url: "https://github.com/get-bb/bb/pull/1",
+                url: "https://github.com/euforicio/rift-app/pull/1",
               },
             },
           },
@@ -1301,10 +1301,10 @@ describe("GitHub Activity plugin", () => {
         },
       };
     });
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "github-notifications",
     });
-    createGithubNotificationsPlugin(runGh)(bb);
+    createGithubNotificationsPlugin(runGh)(rift);
 
     const initial = (await harness.behavior.callRpc("listNotifications", {
       force: false,
@@ -1333,10 +1333,10 @@ describe("GitHub Activity plugin", () => {
                 reason: "mention",
                 subject: {
                   latest_comment_url:
-                    "https://api.github.com/repos/get-bb/bb/pulls/1",
+                    "https://api.github.com/repos/euforicio/rift-app/pulls/1",
                   title: "Review-only update",
                   type: "PullRequest",
-                  url: "https://api.github.com/repos/get-bb/bb/pulls/1",
+                  url: "https://api.github.com/repos/euforicio/rift-app/pulls/1",
                 },
               }),
             ];
@@ -1351,7 +1351,7 @@ describe("GitHub Activity plugin", () => {
                 author: { login: "brsbl" },
                 number: 1,
                 title: "Cached comment",
-                url: "https://github.com/get-bb/bb/pull/1",
+                url: "https://github.com/euforicio/rift-app/pull/1",
               },
             },
           },
@@ -1375,10 +1375,10 @@ describe("GitHub Activity plugin", () => {
         },
       };
     });
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "github-notifications",
     });
-    createGithubNotificationsPlugin(runGh)(bb);
+    createGithubNotificationsPlugin(runGh)(rift);
 
     const initial = (await harness.behavior.callRpc("listNotifications", {
       force: false,
@@ -1431,7 +1431,7 @@ describe("GitHub Activity plugin", () => {
                     },
                     number: index + 1,
                     title: `Notification ${index}`,
-                    url: `https://github.com/get-bb/bb/pull/${index + 1}`,
+                    url: `https://github.com/euforicio/rift-app/pull/${index + 1}`,
                   },
                 },
               ];
@@ -1459,10 +1459,10 @@ describe("GitHub Activity plugin", () => {
         },
       };
     });
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "github-notifications",
     });
-    createGithubNotificationsPlugin(runGh)(bb);
+    createGithubNotificationsPlugin(runGh)(rift);
 
     const result = (await harness.behavior.callRpc("listNotifications", {
       force: false,
@@ -1500,7 +1500,7 @@ describe("GitHub Activity plugin", () => {
                     author: { login: "brsbl" },
                     number: Number(alias.replace("notification", "")) + 1,
                     title: alias,
-                    url: `https://github.com/get-bb/bb/pull/${Number(alias.replace("notification", "")) + 1}`,
+                    url: `https://github.com/euforicio/rift-app/pull/${Number(alias.replace("notification", "")) + 1}`,
                   }
                 : {
                     comments: {
@@ -1518,22 +1518,22 @@ describe("GitHub Activity plugin", () => {
         ]),
       };
     });
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "github-notifications",
     });
-    createGithubNotificationsPlugin(runGh)(bb);
+    createGithubNotificationsPlugin(runGh)(rift);
     const payload = (await harness.behavior.callRpc("listNotifications", {
       force: false,
     })) as NotificationsPayload;
 
     const key = resolvedStateKey();
-    const originalGet = bb.storage.kv.get.bind(bb.storage.kv);
+    const originalGet = rift.storage.kv.get.bind(rift.storage.kv);
     let reads = 0;
     let releaseReads!: () => void;
     const readsReleased = new Promise<void>((resolve) => {
       releaseReads = resolve;
     });
-    vi.spyOn(bb.storage.kv, "get").mockImplementation(async (requestedKey) => {
+    vi.spyOn(rift.storage.kv, "get").mockImplementation(async (requestedKey) => {
       const value = await originalGet(requestedKey);
       if (requestedKey !== key) return value;
       reads += 1;
@@ -1577,7 +1577,7 @@ describe("GitHub Activity plugin", () => {
                 author: { login: "brsbl" },
                 number: 1,
                 title: "Atomic resolved state",
-                url: "https://github.com/get-bb/bb/pull/1",
+                url: "https://github.com/euforicio/rift-app/pull/1",
               },
             },
           },
@@ -1603,17 +1603,17 @@ describe("GitHub Activity plugin", () => {
         },
       };
     });
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "github-notifications",
     });
-    createGithubNotificationsPlugin(runGh)(bb);
+    createGithubNotificationsPlugin(runGh)(rift);
     const payload = (await harness.behavior.callRpc("listNotifications", {
       force: false,
     })) as NotificationsPayload;
 
     const key = resolvedStateKey();
-    const originalSet = bb.storage.kv.set.bind(bb.storage.kv);
-    vi.spyOn(bb.storage.kv, "set").mockImplementation(
+    const originalSet = rift.storage.kv.set.bind(rift.storage.kv);
+    vi.spyOn(rift.storage.kv, "set").mockImplementation(
       async (requestedKey, value) => {
         if (requestedKey === key) throw new Error("storage unavailable");
         return originalSet(requestedKey, value);
@@ -1625,7 +1625,7 @@ describe("GitHub Activity plugin", () => {
         ...resolutionInput(payload, "n0", true),
       }),
     ).rejects.toThrow("storage unavailable");
-    await expect(bb.storage.kv.get(key)).resolves.toEqual({
+    await expect(rift.storage.kv.get(key)).resolves.toEqual({
       cursors: {},
       legacyCutoffAt: null,
       pendingLegacyIds: [],
@@ -1647,10 +1647,10 @@ describe("GitHub Activity plugin", () => {
         return [
           notification(0, {
             subject: {
-              latest_comment_url: `https://api.github.com/repos/get-bb/bb/issues/comments/${notificationFetches}`,
+              latest_comment_url: `https://api.github.com/repos/euforicio/rift-app/issues/comments/${notificationFetches}`,
               title: "Race-safe activity",
               type: "PullRequest",
-              url: "https://api.github.com/repos/get-bb/bb/pulls/1",
+              url: "https://api.github.com/repos/euforicio/rift-app/pulls/1",
             },
           }),
         ];
@@ -1665,7 +1665,7 @@ describe("GitHub Activity plugin", () => {
                 author: { login: "brsbl" },
                 number: 1,
                 title: "Race-safe activity",
-                url: "https://github.com/get-bb/bb/pull/1",
+                url: "https://github.com/euforicio/rift-app/pull/1",
               },
             },
           },
@@ -1691,22 +1691,22 @@ describe("GitHub Activity plugin", () => {
         },
       };
     });
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "github-notifications",
     });
-    createGithubNotificationsPlugin(runGh)(bb);
+    createGithubNotificationsPlugin(runGh)(rift);
     const initial = (await harness.behavior.callRpc("listNotifications", {
       force: false,
     })) as NotificationsPayload;
 
     const key = resolvedStateKey();
-    const originalGet = bb.storage.kv.get.bind(bb.storage.kv);
+    const originalGet = rift.storage.kv.get.bind(rift.storage.kv);
     let blockedRefreshRead = false;
     let releaseRefresh!: () => void;
     const refreshReleased = new Promise<void>((resolve) => {
       releaseRefresh = resolve;
     });
-    vi.spyOn(bb.storage.kv, "get").mockImplementation(async (requestedKey) => {
+    vi.spyOn(rift.storage.kv, "get").mockImplementation(async (requestedKey) => {
       const value = await originalGet(requestedKey);
       if (requestedKey === key && !blockedRefreshRead) {
         blockedRefreshRead = true;
@@ -1788,10 +1788,10 @@ describe("GitHub Activity plugin", () => {
         ]),
       };
     });
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "github-notifications",
     });
-    createGithubNotificationsPlugin(runGh)(bb);
+    createGithubNotificationsPlugin(runGh)(rift);
 
     let settled = false;
     const failedRefresh = harness.behavior
@@ -1845,7 +1845,7 @@ describe("GitHub Activity plugin", () => {
                     author: { login: "brsbl" },
                     number: index + 1,
                     title: `Notification ${index}`,
-                    url: `https://github.com/get-bb/bb/pull/${index + 1}`,
+                    url: `https://github.com/euforicio/rift-app/pull/${index + 1}`,
                   },
                 },
               ];
@@ -1876,10 +1876,10 @@ describe("GitHub Activity plugin", () => {
         ),
       };
     });
-    const { bb, harness } = createFakePluginHost({
+    const { rift, harness } = createFakePluginHost({
       pluginId: "github-notifications",
     });
-    createGithubNotificationsPlugin(runGh)(bb);
+    createGithubNotificationsPlugin(runGh)(rift);
 
     const result = (await harness.behavior.callRpc("listNotifications", {
       force: false,

@@ -1,4 +1,4 @@
-import { definePluginApp } from "@get-bb/plugin-sdk/app";
+import { definePluginApp } from "@riftlabs/plugin-sdk/app";
 import { findColorMatches } from "./colors";
 
 // ---------------------------------------------------------------------------
@@ -15,7 +15,7 @@ import { findColorMatches } from "./colors";
 // not part of the document, so React never sees it, selection never selects it,
 // and copying a line still yields the original text.
 //
-// Placement relies on how bb highlights code: every token is its own span, so a
+// Placement relies on how rift highlights code: every token is its own span, so a
 // literal always begins at a child boundary (`<span>#</span><span>f4f4f4</span>`)
 // and the chip can sit on the token that starts the match.
 //
@@ -28,9 +28,9 @@ import { findColorMatches } from "./colors";
 // the visual chip remains generated content.
 // ---------------------------------------------------------------------------
 
-const ATTR = "data-bb-color-swatch";
-const PROSE_ATTR = "data-bb-color-swatch-prose";
-const PROP = "--bb-color-swatch";
+const ATTR = "data-rift-color-swatch";
+const PROSE_ATTR = "data-rift-color-swatch-prose";
+const PROP = "--rift-color-swatch";
 const USER_PROSE_SELECTOR =
   "[data-message-column] > .ml-auto [data-markdown-preview]";
 
@@ -43,13 +43,13 @@ interface ProseDecoration {
 const STYLESHEET = `
 [${ATTR}] {
   /* The chip inherits the line's font size, so it tracks code and prose. */
-  --bb-color-swatch-size: 0.78em;
+  --rift-color-swatch-size: 0.78em;
 }
 [${ATTR}]::before {
   content: "";
   display: inline-block;
-  width: var(--bb-color-swatch-size);
-  height: var(--bb-color-swatch-size);
+  width: var(--rift-color-swatch-size);
+  height: var(--rift-color-swatch-size);
   margin-inline-end: 0.34em;
   vertical-align: -0.085em;
   border-radius: 3px;
@@ -260,7 +260,7 @@ export default definePluginApp((app) => {
     id: "swatches",
     mount({ signal }) {
       const style = document.createElement("style");
-      style.dataset.bbColorSwatches = "";
+      style.dataset.riftColorSwatches = "";
       style.textContent = STYLESHEET;
       document.head.append(style);
       const proseDecorator = new ProseDecorator();

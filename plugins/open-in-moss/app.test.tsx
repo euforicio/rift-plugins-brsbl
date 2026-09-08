@@ -4,7 +4,7 @@ import {
   loadPluginApp,
   mountPluginContentScripts,
   type MountedPluginContentScripts,
-} from "@get-bb/plugin-sdk/testing/app";
+} from "@riftlabs/plugin-sdk/testing/app";
 import { toast } from "sonner";
 
 vi.mock("sonner", () => ({
@@ -75,7 +75,7 @@ describe("Markdown link interception", () => {
     expect(toast.error).not.toHaveBeenCalled();
   });
 
-  it("falls back to the original bb click when Moss cannot open the file", async () => {
+  it("falls back to the original rift click when Moss cannot open the file", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false })));
     const anchor = link("file:///workspace/spec.markdown");
     const bbPreview = vi.fn((event: Event) => event.preventDefault());
@@ -85,11 +85,11 @@ describe("Markdown link interception", () => {
 
     await vi.waitFor(() => expect(bbPreview).toHaveBeenCalledOnce());
     expect(toast.error).toHaveBeenCalledWith("Moss couldn’t open this file", {
-      description: "It was opened in bb instead.",
+      description: "It was opened in rift instead.",
     });
   });
 
-  it("intercepts modified primary clicks so they cannot open bb's viewer", async () => {
+  it("intercepts modified primary clicks so they cannot open rift's viewer", async () => {
     const fetch = vi.fn(async () => ({ ok: true }));
     vi.stubGlobal("fetch", fetch);
     const anchor = link("file:///workspace/spec.md");

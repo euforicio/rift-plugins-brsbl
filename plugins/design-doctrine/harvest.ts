@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { join } from "node:path";
 
-import type { BbPluginApi } from "@get-bb/plugin-sdk";
+import type { RiftPluginApi } from "@riftlabs/plugin-sdk";
 import { z } from "zod";
 
 import {
@@ -27,9 +27,9 @@ import {
  */
 
 /**
- * Created with plain idempotent DDL rather than `bb.storage.migrate`.
+ * Created with plain idempotent DDL rather than `rift.storage.migrate`.
  * `migrate` keys each statement by its index in one shared `_bb_migrations`
- * table, and `@brsbl/bb-thread-history-maintenance` is already a caller on this
+ * table, and `@brsbl/rift-thread-history-maintenance` is already a caller on this
  * same per-plugin database. A second independent caller would see the first
  * caller's indices as already applied and silently skip its own statements.
  */
@@ -303,7 +303,7 @@ export interface HarvestPublication {
 }
 
 export interface HarvestDependencies {
-  bb: BbPluginApi;
+  rift: RiftPluginApi;
   /**
    * Opens somewhere safe to write one batch of rules, or null when there is
    * nowhere legitimate to commit. The harvest declines rather than guessing.
@@ -333,7 +333,7 @@ export function isHarvestableThread(thread: HarvestThread): boolean {
 
 export function createHarvest(dependencies: HarvestDependencies) {
   const {
-    bb,
+    rift,
     openPublication,
     listRuleIds,
     describeExistingRules,
@@ -341,11 +341,11 @@ export function createHarvest(dependencies: HarvestDependencies) {
     runAgent,
   } = dependencies;
   const now = dependencies.now ?? (() => Date.now());
-  let database: ReturnType<BbPluginApi["storage"]["database"]> | null = null;
+  let database: ReturnType<RiftPluginApi["storage"]["database"]> | null = null;
 
   function db() {
     if (!database) {
-      database = bb.storage.database();
+      database = rift.storage.database();
       for (const statement of HARVEST_SCHEMA) database.exec(statement);
     }
     return database;
@@ -714,7 +714,7 @@ export function createHarvest(dependencies: HarvestDependencies) {
     return [
       "You are the Design Doctrine harvester. Work silently; nobody is watching this thread.",
       "",
-      `Read the complete history of bb thread ${threadId} with \`bb thread log ${threadId} --format minimal\`,`,
+      `Read the complete history of rift thread ${threadId} with \`rift thread log ${threadId} --format minimal\`,`,
       "paginating with `--format json --limit 500 --after-seq <seq>` if the minimal timeline is windowed.",
       "",
       "Decide whether that thread contains durable product/UX/UI/visual-design/design-system/AI-interaction",
@@ -728,7 +728,7 @@ export function createHarvest(dependencies: HarvestDependencies) {
       "",
       "Report exactly once, even when you found nothing, by running:",
       "",
-      `  bb doctrine harvest propose --thread ${threadId} --token ${token} --json '<json-array>'`,
+      `  rift doctrine harvest propose --thread ${threadId} --token ${token} --json '<json-array>'`,
       "",
       "The array is empty when nothing is warranted. Each element must be an object with:",
       "title, statement, kind, strength, confidence, domain, products, activities, artifacts,",
@@ -782,9 +782,9 @@ export function createHarvest(dependencies: HarvestDependencies) {
       "",
       "Report exactly once by running:",
       "",
-      `  bb doctrine harvest verdict --proposal ${stored.id} --token ${token} --approve --reason '<why>'`,
+      `  rift doctrine harvest verdict --proposal ${stored.id} --token ${token} --approve --reason '<why>'`,
       "or",
-      `  bb doctrine harvest verdict --proposal ${stored.id} --token ${token} --reject --reason '<why>'`,
+      `  rift doctrine harvest verdict --proposal ${stored.id} --token ${token} --reject --reason '<why>'`,
     ].join("\n");
   }
 
@@ -794,7 +794,7 @@ export function createHarvest(dependencies: HarvestDependencies) {
     projectId: string,
   ): Promise<void> {
     const publication = await openPublication().catch((error: unknown) => {
-      bb.log.warn(
+      rift.log.warn(
         `doctrine harvest: no publication checkout available: ${
           error instanceof Error ? error.message : String(error)
         }`,
@@ -802,7 +802,7 @@ export function createHarvest(dependencies: HarvestDependencies) {
       return null;
     });
     if (!publication) {
-      bb.log.warn(
+      rift.log.warn(
         "doctrine harvest: nowhere to publish rules; leaving the thread queued",
       );
       return;
@@ -816,14 +816,14 @@ export function createHarvest(dependencies: HarvestDependencies) {
       const url = await publication
         .finish(committed)
         .catch((error: unknown) => {
-          bb.log.warn(
+          rift.log.warn(
             `doctrine harvest: publishing the batch failed, it will be retried: ${
               error instanceof Error ? error.message : String(error)
             }`,
           );
           return null;
         });
-      if (url) bb.log.info(`doctrine harvest: published ${url}`);
+      if (url) rift.log.info(`doctrine harvest: published ${url}`);
     }
   }
 
@@ -836,7 +836,7 @@ export function createHarvest(dependencies: HarvestDependencies) {
     try {
       await ensureRuleTreeClean(doctrineRoot);
     } catch (error) {
-      bb.log.warn(
+      rift.log.warn(
         `doctrine harvest: waiting for a clean maintenance checkout: ${
           error instanceof Error ? error.message : String(error)
         }`,
@@ -858,7 +858,7 @@ export function createHarvest(dependencies: HarvestDependencies) {
           prompt: harvesterPrompt(threadId, token),
         });
       } catch (error) {
-        bb.log.warn(
+        rift.log.warn(
           `doctrine harvest: harvester failed for ${threadId}: ${
             error instanceof Error ? error.message : String(error)
           }`,
@@ -867,7 +867,7 @@ export function createHarvest(dependencies: HarvestDependencies) {
       }
       if (!isPending(threadId)) return;
       if (!hasHarvesterReport(threadId)) {
-        bb.log.warn(
+        rift.log.warn(
           `doctrine harvest: harvester returned without reporting for ${threadId}`,
         );
         return;
@@ -882,7 +882,7 @@ export function createHarvest(dependencies: HarvestDependencies) {
         .all(threadId)
         .map((row) => readProposal(row as Record<string, unknown>));
     if (allProposals().length === 0) {
-      bb.log.info(`doctrine harvest: no proposals from ${threadId}`);
+      rift.log.info(`doctrine harvest: no proposals from ${threadId}`);
       markProcessed(threadId, "no-proposals");
       return;
     }
@@ -932,7 +932,7 @@ export function createHarvest(dependencies: HarvestDependencies) {
           const reason = "proposal failed safety validation";
           setSystemVerdict(stored.id, "rejected", reason);
           reviewedIds.push(stored.id);
-          bb.log.warn(
+          rift.log.warn(
             `doctrine harvest: rejected proposal ${stored.id} from ${threadId} — ${reason}`,
           );
           continue;
@@ -942,7 +942,7 @@ export function createHarvest(dependencies: HarvestDependencies) {
           const reason = `duplicate of an already-approved proposal (${duplicate.writtenPath})`;
           setSystemVerdict(stored.id, "rejected", reason);
           reviewedIds.push(stored.id);
-          bb.log.info(
+          rift.log.info(
             `doctrine harvest: rejected proposal ${stored.id} from ${threadId} — ${reason}`,
           );
           continue;
@@ -966,7 +966,7 @@ export function createHarvest(dependencies: HarvestDependencies) {
           if (!isPending(threadId)) return;
           const reason = "reviewer agent failed before recording a verdict";
           recordVerdict(stored.id, token, "rejected", reason);
-          bb.log.warn(
+          rift.log.warn(
             `doctrine harvest: rejected proposal ${stored.id} from ${threadId} — ${reason}: ${
               error instanceof Error ? error.message : String(error)
             }`,
@@ -983,13 +983,13 @@ export function createHarvest(dependencies: HarvestDependencies) {
         if (!verdict || verdict.verdict === null) {
           const reason = "reviewer returned no verdict";
           recordVerdict(stored.id, token, "rejected", reason);
-          bb.log.warn(
+          rift.log.warn(
             `doctrine harvest: rejected proposal ${stored.id} from ${threadId} — ${reason}`,
           );
           continue;
         }
         if (verdict.verdict === "rejected") {
-          bb.log.info(
+          rift.log.info(
             `doctrine harvest: rejected proposal ${stored.id} from ${threadId} — ${verdict.reason ?? "no reason given"}`,
           );
           continue;
@@ -1000,7 +1000,7 @@ export function createHarvest(dependencies: HarvestDependencies) {
         if (approvedCount > HARVEST_RULE_FILE_LIMIT) {
           const reason = `archive harvests are limited to ${HARVEST_RULE_FILE_LIMIT} rule files`;
           setSystemVerdict(stored.id, "rejected", reason);
-          bb.log.warn(
+          rift.log.warn(
             `doctrine harvest: rejected proposal ${stored.id} from ${threadId} — ${reason}`,
           );
         }
@@ -1030,7 +1030,7 @@ export function createHarvest(dependencies: HarvestDependencies) {
       resetReviewDecisions(threadId, reviewedIds);
     }
 
-    bb.log.warn(
+    rift.log.warn(
       `doctrine harvest: maintenance checkout kept changing for ${threadId}; review remains pending`,
     );
 
@@ -1064,7 +1064,7 @@ export function createHarvest(dependencies: HarvestDependencies) {
         );
         for (const draft of drafts) {
           setWrittenPath(draft.stored.id, draft.file.relativePath);
-          bb.log.info(
+          rift.log.info(
             `doctrine harvest: committed ${draft.file.relativePath} from ${pendingThreadId} — ${draft.stored.reason ?? "approved"}`,
           );
         }
@@ -1079,7 +1079,7 @@ export function createHarvest(dependencies: HarvestDependencies) {
           );
           return "retry";
         }
-        bb.log.warn(
+        rift.log.warn(
           `doctrine harvest: approved rule batch for ${pendingThreadId} remains pending: ${
             error instanceof Error ? error.message : String(error)
           }`,
